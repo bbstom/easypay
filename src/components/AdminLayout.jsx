@@ -30,6 +30,7 @@ const AdminLayout = ({ children }) => {
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingTicketsCount, setPendingTicketsCount] = useState(0);
+  const [expandedMenus, setExpandedMenus] = useState({}); // 跟踪哪些菜单是展开的
 
   useEffect(() => {
     fetchPendingTicketsCount();
@@ -123,26 +124,55 @@ const AdminLayout = ({ children }) => {
 
   const handleNavigation = (path, subItemId) => {
     if (subItemId) {
+      // 点击子菜单项，直接导航
       navigate(`${path}?tab=${subItemId}`);
     } else {
-      // 如果是系统设置且没有subItemId，默认导航到第一个子项
       const menuItem = menuItems.find(item => item.path === path);
       if (menuItem?.subItems) {
-        navigate(`${path}?tab=${menuItem.subItems[0].id}`);
+        // 如果有子菜单，切换展开/折叠状态
+        const isCurrentlyExpanded = expandedMenus[path];
+        
+        if (isCurrentlyExpanded) {
+          // 如果当前是展开的，折叠它
+          setExpandedMenus(prev => ({
+            ...prev,
+            [path]: false
+          }));
+        } else {
+          // 如果当前是折叠的，展开并导航到第一个子项
+          setExpandedMenus(prev => ({
+            ...prev,
+            [path]: true
+          }));
+          navigate(`${path}?tab=${menuItem.subItems[0].id}`);
+        }
       } else {
+        // 没有子菜单，直接导航
         navigate(path);
       }
     }
   };
 
+  // 当路由变化时，自动展开对应的菜单
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const currentMenu = menuItems.find(item => item.path === currentPath);
+    if (currentMenu?.subItems && !expandedMenus[currentPath]) {
+      setExpandedMenus(prev => ({
+        ...prev,
+        [currentPath]: true
+      }));
+    }
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* 侧边栏 */}
-      <aside className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200 transition-all duration-300 z-50 overflow-y-auto ${
+      <aside className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200 transition-all duration-300 z-50 flex flex-col ${
         sidebarOpen ? 'w-56' : 'w-16'
       }`}>
         {/* Logo区域 */}
-        <div className="h-16 border-b border-slate-200 flex items-center justify-between px-4">
+        <div className="h-16 border-b border-slate-200 flex items-center justify-between px-4 flex-shrink-0">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -159,8 +189,8 @@ const AdminLayout = ({ children }) => {
           </button>
         </div>
 
-        {/* 菜单列表 */}
-        <nav className="p-3 space-y-1.5">
+        {/* 菜单列表 - 可滚动区域 */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {menuItems.map((item) => (
             <div key={item.path}>
               <button
@@ -181,12 +211,12 @@ const AdminLayout = ({ children }) => {
               </button>
               
               {/* 二级菜单 */}
-              {item.subItems && sidebarOpen && isActive(item.path) && (
+              {item.subItems && sidebarOpen && expandedMenus[item.path] && (
                 <div className="mt-1.5 ml-3 space-y-1">
                   {item.subItems.map((subItem) => {
                     const searchParams = new URLSearchParams(location.search);
                     const currentTab = searchParams.get('tab') || item.subItems[0].id;
-                    const isSubActive = currentTab === subItem.id;
+                    const isSubActive = currentTab === subItem.id && isActive(item.path);
                     
                     return (
                       <button
@@ -209,8 +239,8 @@ const AdminLayout = ({ children }) => {
           ))}
         </nav>
 
-        {/* 底部退出按钮 */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200">
+        {/* 底部退出按钮 - 固定在底部 */}
+        <div className="flex-shrink-0 p-3 border-t border-slate-200 bg-white">
           <button
             onClick={logout}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm ${
