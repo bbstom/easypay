@@ -159,18 +159,90 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 支付回调接口（POST）
+// 支付回调接口（GET - 这个支付平台使用GET请求）
+router.get('/notify', async (req, res) => {
+  try {
+    const settings = await Settings.findOne();
+    
+    console.log('收到支付回调（GET）:', req.query);
+    console.log('使用API版本:', settings.paymentApiVersion);
+    
+    // 验证签名
+    if (!paymentService.verifySign(req.query, settings)) {
+      console.error('签名验证失败');
+      console.error('回调参数:', req.query);
+      return res.send('fail'); // 返回小写的fail
+    }
+
+    // 获取订单号和状态
+    const out_trade_no = req.query.out_trade_no;
+    const trade_status = req.query.trade_status;
+    
+    console.log('订单号:', out_trade_no, '状态:', trade_status);
+    
+    // 查找订单
+    const payment = await Payment.findOne({ platformOrderId: out_trade_no });
+    if (!payment) {
+      console.error('订单不存在:', out_trade_no);
+      return res.send('fail');
+    }
+
+    // 检查订单是否已经处理过
+    if (payment.paymentStatus === 'paid') {
+      console.log('订单已处理过，直接返回成功');
+      return res.send('success');
+    }
+
+    // 更新支付状态
+    if (trade_status === 'TRADE_SUCCESS') {
+      payment.paymentStatus = 'paid';
+      payment.paymentTime = new Date();
+      payment.status = 'paid';
+      await payment.save();
+
+      console.log('✅ 支付成功，订单:', payment._id);
+
+      // 🔔 发送支付成功邮件（第一封）
+      if (payment.email) {
+        try {
+          await emailService.sendPaymentSuccessEmail(payment, settings);
+          console.log(`📧 支付成功邮件已发送: ${payment.email}`);
+        } catch (emailError) {
+          console.error('❌ 发送支付成功邮件失败:', emailError);
+        }
+      }
+
+      console.log('🔄 开始执行 ' + payment.payType + ' 代付:', payment._id);
+
+      // 异步执行代付
+      processTransfer(payment._id).catch(err => {
+        console.error('代付失败:', err);
+      });
+
+      // 必须返回 success（小写）
+      res.send('success');
+    } else {
+      console.log('支付状态不是成功:', trade_status);
+      res.send('fail');
+    }
+  } catch (error) {
+    console.error('支付回调处理失败:', error);
+    res.send('fail');
+  }
+});
+
+// 支付回调接口（POST - 保留兼容性）
 router.post('/notify', async (req, res) => {
   try {
     const settings = await Settings.findOne();
     
-    console.log('收到支付回调:', req.body);
+    console.log('收到支付回调（POST）:', req.body);
     console.log('使用API版本:', settings.paymentApiVersion);
     
     // 验证签名
     if (!paymentService.verifySign(req.body, settings)) {
       console.error('签名验证失败');
-      return res.status(400).send('FAIL');
+      return res.send('fail');
     }
 
     // 根据API版本获取订单号和状态
@@ -192,7 +264,13 @@ router.post('/notify', async (req, res) => {
     const payment = await Payment.findOne({ platformOrderId: out_trade_no });
     if (!payment) {
       console.error('订单不存在:', out_trade_no);
-      return res.status(404).send('FAIL');
+      return res.send('fail');
+    }
+
+    // 检查订单是否已经处理过
+    if (payment.paymentStatus === 'paid') {
+      console.log('订单已处理过，直接返回成功');
+      return res.send('success');
     }
 
     // 更新支付状态
@@ -221,85 +299,14 @@ router.post('/notify', async (req, res) => {
         console.error('代付失败:', err);
       });
 
-      res.send('SUCCESS');
+      res.send('success');
     } else {
       console.log('支付状态不是成功:', trade_status);
-      res.send('FAIL');
+      res.send('fail');
     }
   } catch (error) {
     console.error('支付回调处理失败:', error);
-    res.status(500).send('FAIL');
-  }
-});
-
-// 支付回调接口（GET - 仅用于测试）
-router.get('/notify', async (req, res) => {
-  try {
-    const settings = await Settings.findOne();
-    
-    console.log('收到GET支付回调（测试模式）:', req.query);
-    console.log('使用API版本:', settings.paymentApiVersion);
-    
-    // 验证签名
-    if (!paymentService.verifySign(req.query, settings)) {
-      console.error('签名验证失败');
-      return res.status(400).send('FAIL - 签名验证失败');
-    }
-
-    // 根据API版本获取订单号和状态
-    let out_trade_no, trade_status;
-    
-    if (settings.paymentApiVersion === 'v2') {
-      out_trade_no = req.query.out_trade_no;
-      trade_status = req.query.trade_status || req.query.status;
-    } else {
-      out_trade_no = req.query.out_trade_no;
-      trade_status = req.query.trade_status;
-    }
-    
-    console.log('订单号:', out_trade_no, '状态:', trade_status);
-    
-    // 查找订单
-    const payment = await Payment.findOne({ platformOrderId: out_trade_no });
-    if (!payment) {
-      console.error('订单不存在:', out_trade_no);
-      return res.status(404).send('FAIL - 订单不存在: ' + out_trade_no);
-    }
-
-    // 更新支付状态
-    if (trade_status === 'TRADE_SUCCESS' || trade_status === 'success' || trade_status === '1') {
-      payment.paymentStatus = 'paid';
-      payment.paymentTime = new Date();
-      payment.status = 'paid';
-      await payment.save();
-
-      console.log('✅ 支付成功，订单:', payment._id);
-
-      // 🔔 发送支付成功邮件（第一封）
-      if (payment.email) {
-        try {
-          await emailService.sendPaymentSuccessEmail(payment, settings);
-          console.log(`📧 支付成功邮件已发送: ${payment.email}`);
-        } catch (emailError) {
-          console.error('❌ 发送支付成功邮件失败:', emailError);
-        }
-      }
-
-      console.log('🔄 开始执行 ' + payment.payType + ' 代付:', payment._id);
-
-      // 异步执行代付
-      processTransfer(payment._id).catch(err => {
-        console.error('代付失败:', err);
-      });
-
-      res.send('SUCCESS - 订单已处理，正在执行代付');
-    } else {
-      console.log('支付状态不是成功:', trade_status);
-      res.send('FAIL - 支付状态不正确: ' + trade_status);
-    }
-  } catch (error) {
-    console.error('支付回调处理失败:', error);
-    res.status(500).send('FAIL - ' + error.message);
+    res.send('fail');
   }
 });
 
