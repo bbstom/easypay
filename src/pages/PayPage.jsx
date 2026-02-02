@@ -357,13 +357,23 @@ const PayPage = () => {
   const startPollingOrderStatus = (orderId) => {
     let paymentNotified = false;
     
+    console.log('🔄 开始轮询订单状态:', orderId);
+    
     const interval = setInterval(async () => {
       try {
         const { data } = await axios.get(`/api/payments/order/${orderId}`);
         
+        console.log('📊 订单状态:', {
+          orderId: data.platformOrderId,
+          paymentStatus: data.paymentStatus,
+          transferStatus: data.transferStatus,
+          status: data.status
+        });
+        
         // 支付完成（第一个通知）
         if (data.paymentStatus === 'paid' && !paymentNotified) {
           paymentNotified = true;
+          console.log('✅ 支付成功，显示通知');
           showNotification(
             '支付成功', 
             `您的订单支付已确认！\n正在处理 ${data.payType} 代付，请稍候...`, 
@@ -374,6 +384,7 @@ const PayPage = () => {
         // 代付完成（第二个通知）
         if (data.status === 'completed') {
           clearInterval(interval);
+          console.log('✅ 代付完成，显示通知');
           showNotification(
             `${data.payType} 代付完成`, 
             `${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash.slice(0, 10)}...${data.txHash.slice(-8)}\n\n点击历史订单可查看详情`, 
@@ -387,9 +398,10 @@ const PayPage = () => {
           fetchRecentPayments();
         } else if (data.status === 'failed') {
           clearInterval(interval);
+          console.log('❌ 代付失败，显示通知');
           showNotification(
             `${data.payType} 代付失败`, 
-            '转账失败，请联系客服处理', 
+            '转账失败，请联系客服处理。\n\n可能原因：\n• 钱包余额不足\n• 网络拥堵\n\n请联系客服处理或稍后重试', 
             'error'
           );
           setShowPayment(false);
@@ -401,7 +413,10 @@ const PayPage = () => {
     }, 3000); // 每3秒查询一次
 
     // 5分钟后停止轮询
-    setTimeout(() => clearInterval(interval), 300000);
+    setTimeout(() => {
+      clearInterval(interval);
+      console.log('⏱️ 轮询超时（5分钟），停止查询');
+    }, 300000);
   };
 
   const showNotification = (title, message, type) => {

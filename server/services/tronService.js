@@ -39,19 +39,19 @@ class TronService {
     }
   }
 
+  /**
+   * 初始化 TronWeb（仅用于 API 节点连接和地址验证）
+   * 注意：多钱包系统不依赖此方法进行转账，每个钱包创建独立的 TronWeb 实例
+   */
   async initialize() {
     if (this.initialized && this.tronWeb) return;
     
     const settings = await Settings.findOne();
-    if (!settings || !settings.tronPrivateKeyEncrypted) {
-      throw new Error('TRON配置未完成：未设置私钥');
+    if (!settings) {
+      throw new Error('系统配置未完成');
     }
 
     try {
-      // 解密私钥
-      const masterKey = getMasterKey();
-      const privateKey = decryptPrivateKey(settings.tronPrivateKeyEncrypted, masterKey);
-
       // 加载配置的 API 节点
       this.apiNodes = [];
       if (settings.tronApiNodes) {
@@ -70,10 +70,9 @@ class TronService {
 
       // 如果没有配置节点，使用默认节点
       if (this.apiNodes.length === 0) {
-        const apiUrl = settings.tronApiUrl || 'https://api.trongrid.io';
         this.apiNodes.push({
-          url: apiUrl,
-          apiKey: settings.tronGridApiKey || null,
+          url: 'https://api.trongrid.io',
+          apiKey: null,
           name: 'Default'
         });
       }
@@ -83,24 +82,75 @@ class TronService {
         console.log(`   ${index + 1}. ${node.name}: ${node.url}${node.apiKey ? ' (有 API Key)' : ''}`);
       });
 
-      // 尝试连接第一个节点
-      const connected = await this.connectToNode(0, privateKey);
+      // 创建一个临时的 TronWeb 实例（不需要私钥，仅用于 API 调用）
+      const connected = await this.connectToNodeWithoutPrivateKey(0);
       
       if (connected) {
         this.initialized = true;
-        console.log('✅ TronWeb 初始化成功');
+        console.log('✅ TronWeb 初始化成功（API 节点模式）');
         console.log(`📍 当前节点: ${this.currentApiUrl}`);
       } else {
         throw new Error('所有 API 节点均不可用');
       }
     } catch (error) {
       console.error('❌ TronWeb 初始化失败:', error.message);
-      throw new Error('TRON 钱包初始化失败：' + error.message);
+      throw new Error('TRON API 初始化失败：' + error.message);
     }
   }
 
-  // 连接到指定节点
+  /**
+   * 连接到指定节点（不需要私钥）
+   * 用于 API 查询和地址验证
+   */
+  async connectToNodeWithoutPrivateKey(nodeIndex) {
+    if (nodeIndex >= this.apiNodes.length) {
+      console.log('❌ 所有配置的节点都已尝试失败');
+      return false;
+    }
+
+    const node = this.apiNodes[nodeIndex];
+    console.log(`🔗 尝试连接节点 ${nodeIndex + 1}/${this.apiNodes.length}: ${node.name} (${node.url})`);
+
+    try {
+      const tronWebConfig = {
+        fullHost: node.url
+      };
+
+      // 如果有 API Key，添加到 headers
+      if (node.apiKey) {
+        tronWebConfig.headers = {
+          'TRON-PRO-API-KEY': node.apiKey
+        };
+        console.log(`✅ 使用 API Key: ${node.apiKey.slice(0, 10)}...`);
+      }
+
+      this.tronWeb = new TronWeb.TronWeb(tronWebConfig);
+      this.apiKey = node.apiKey;
+      this.currentApiUrl = node.url;
+      this.currentNodeIndex = nodeIndex;
+
+      // 测试连接（使用一个已知的地址测试）
+      await this.retryApiCall(async () => {
+        await this.tronWeb.trx.getBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t');
+      }, 2, 5000);
+
+      console.log(`✅ 节点连接成功: ${node.name}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ 节点连接失败 (${node.name}):`, error.message);
+      // 尝试下一个节点
+      return await this.connectToNodeWithoutPrivateKey(nodeIndex + 1);
+    }
+  }
+
+  /**
+   * @deprecated 此方法已弃用，多钱包系统不再使用
+   * 连接到指定节点（带私钥）
+   * 保留用于向后兼容
+   */
   async connectToNode(nodeIndex, privateKey) {
+    console.warn('⚠️  connectToNode() 方法已弃用，建议使用 connectToNodeWithoutPrivateKey()');
+    
     if (nodeIndex >= this.apiNodes.length) {
       console.log('❌ 所有配置的节点都已尝试失败');
       throw new Error('所有配置的 API 节点均不可用，请检查节点配置');
@@ -183,12 +233,13 @@ class TronService {
   }
 
   // 通过转账方式租赁能量（原有方式）
-  async rentEnergyViaTransfer(isFirstTransfer, beforeEnergy, settings) {
+  async rentEnergyViaTransfer(isFirstTransfer, beforeEnergy, settings, walletAddress = null) {
     if (!settings.energyRentalAddress) {
       throw new Error('未配置能量租赁地址');
     }
 
-    const address = this.getWalletAddress();
+    // 使用传入的钱包地址，如果没有则使用默认钱包地址
+    const address = walletAddress || this.getWalletAddress();
 
     // 根据是否首次转账选择租赁金额
     const rentalAmount = isFirstTransfer 
@@ -242,12 +293,13 @@ class TronService {
   }
 
   // 通过 CatFee API 购买能量（新方式）
-  async rentEnergyViaCatFee(isFirstTransfer, beforeEnergy, settings) {
+  async rentEnergyViaCatFee(isFirstTransfer, beforeEnergy, settings, walletAddress = null) {
     if (!settings.catfeeApiKey) {
       throw new Error('未配置 CatFee API Key');
     }
 
-    const address = this.getWalletAddress();
+    // 使用传入的钱包地址，如果没有则使用默认钱包地址
+    const address = walletAddress || this.getWalletAddress();
 
     // 设置 API URL（如果有自定义）
     if (settings.catfeeApiUrl) {
@@ -332,8 +384,14 @@ class TronService {
     }
   }
 
-  // 发送USDT（带能量租赁）
+  /**
+   * @deprecated 此方法已弃用，请使用 sendUSDTWithWallet(wallet, toAddress, amount)
+   * 发送USDT（带能量租赁）- 使用全局钱包配置
+   * 保留用于向后兼容和能量租赁内部使用
+   */
   async sendUSDT(toAddress, amount) {
+    console.warn('⚠️  sendUSDT() 方法已弃用，建议使用 sendUSDTWithWallet()');
+    
     if (!this.tronWeb) await this.initialize();
 
     try {
@@ -411,8 +469,14 @@ class TronService {
     }
   }
 
-  // 发送TRX
+  /**
+   * @deprecated 此方法已弃用，请使用 sendTRXWithWallet(wallet, toAddress, amount)
+   * 发送TRX - 使用全局钱包配置
+   * 保留用于向后兼容和能量租赁内部使用
+   */
   async sendTRX(toAddress, amount) {
+    console.warn('⚠️  sendTRX() 方法已弃用，建议使用 sendTRXWithWallet()');
+    
     if (!this.tronWeb) await this.initialize();
 
     try {
@@ -514,8 +578,14 @@ class TronService {
     });
   }
 
-  // 获取钱包地址
+  /**
+   * @deprecated 此方法已弃用，多钱包系统不再使用全局钱包地址
+   * 获取钱包地址 - 返回全局 TronWeb 实例的地址
+   * 保留用于向后兼容
+   */
   getWalletAddress() {
+    console.warn('⚠️  getWalletAddress() 方法已弃用，多钱包系统使用 Wallet 模型管理地址');
+    
     if (!this.tronWeb) {
       throw new Error('TronWeb未初始化');
     }
@@ -662,6 +732,11 @@ class TronService {
       console.log(`\n💼 使用钱包: ${wallet.name} (${wallet.address})`);
       console.log(`🔄 准备发送 ${amount} USDT 到 ${toAddress}`);
 
+      // 确保 TronWeb 已初始化（用于地址验证和其他功能）
+      if (!this.tronWeb) {
+        await this.initialize();
+      }
+
       // 验证地址
       if (!this.isValidAddress(toAddress)) {
         throw new Error('无效的接收地址');
@@ -679,9 +754,18 @@ class TronService {
       });
 
       // 检查 USDT 余额
-      const usdtContract = await tempTronWeb.contract().at(this.USDT_CONTRACT);
-      const balance = await usdtContract.balanceOf(wallet.address).call();
-      const usdtBalance = balance / 1000000;
+      const usdtContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+      const contract = await tempTronWeb.contract().at(usdtContract);
+      const balance = await contract.balanceOf(wallet.address).call();
+      
+      let usdtBalance;
+      if (typeof balance === 'object' && balance.toNumber) {
+        usdtBalance = balance.toNumber() / 1000000;
+      } else if (typeof balance === 'object' && balance.toString) {
+        usdtBalance = parseInt(balance.toString()) / 1000000;
+      } else {
+        usdtBalance = parseInt(balance) / 1000000;
+      }
 
       if (usdtBalance < amount) {
         throw new Error(`USDT 余额不足: ${usdtBalance} < ${amount}`);
@@ -706,14 +790,26 @@ class TronService {
         if (energyRemaining < requiredEnergy) {
           console.log(`⚠️  能量不足，开始租赁...`);
           
+          // 使用当前钱包的 TronWeb 实例进行能量租赁
           if (settings.energyRentalMode === 'catfee') {
-            energyRentalResult = await this.rentEnergyViaCatFee(isFirstTransfer, resources, settings);
+            energyRentalResult = await this.rentEnergyViaCatFeeWithWallet(
+              wallet.address, 
+              isFirstTransfer, 
+              { energyRemaining }, 
+              settings
+            );
           } else {
-            energyRentalResult = await this.rentEnergyViaTransfer(isFirstTransfer, resources, settings);
+            energyRentalResult = await this.rentEnergyViaTransferWithWallet(
+              tempTronWeb,
+              wallet.address,
+              isFirstTransfer, 
+              { energyRemaining }, 
+              settings
+            );
           }
 
           if (!energyRentalResult.success) {
-            throw new Error('能量租赁失败');
+            console.log('⚠️  能量租赁失败，将使用 TRX 支付 gas 费用');
           }
         } else {
           console.log(`✅ 能量充足，无需租赁`);
@@ -722,21 +818,34 @@ class TronService {
 
       // 执行转账
       console.log(`💸 开始转账...`);
-      const tx = await usdtContract.transfer(toAddress, amount * 1000000).send({
+      const tx = await contract.transfer(toAddress, amount * 1000000).send({
         feeLimit: 150000000,
         callValue: 0,
-        shouldPollResponse: true
+        shouldPollResponse: false // 不等待确认，直接返回交易哈希
       });
 
+      // 提取交易哈希
+      let txHash;
+      if (typeof tx === 'string') {
+        txHash = tx;
+      } else if (tx.txid) {
+        txHash = tx.txid;
+      } else if (tx.transaction && tx.transaction.txID) {
+        txHash = tx.transaction.txID;
+      } else {
+        console.error('无法提取交易哈希:', tx);
+        txHash = JSON.stringify(tx);
+      }
+
       console.log(`✅ 转账成功！`);
-      console.log(`   交易哈希: ${tx}`);
+      console.log(`   交易哈希: ${txHash}`);
 
       // 更新钱包统计
       await this.updateWalletStats(wallet._id, true);
 
       return {
         success: true,
-        txid: tx,
+        txid: txHash,
         from: wallet.address,
         to: toAddress,
         amount: amount,
@@ -770,6 +879,11 @@ class TronService {
     try {
       console.log(`\n💼 使用钱包: ${wallet.name} (${wallet.address})`);
       console.log(`🔄 准备发送 ${amount} TRX 到 ${toAddress}`);
+
+      // 确保 TronWeb 已初始化（用于地址验证）
+      if (!this.tronWeb) {
+        await this.initialize();
+      }
 
       // 验证地址
       if (!this.isValidAddress(toAddress)) {
@@ -852,6 +966,155 @@ class TronService {
       }
     } catch (error) {
       console.error('更新钱包统计失败:', error);
+    }
+  }
+  /**
+   * 使用指定钱包通过转账方式租赁能量
+   * @param {Object} tempTronWeb - 钱包的 TronWeb 实例
+   * @param {string} walletAddress - 钱包地址
+   * @param {boolean} isFirstTransfer - 是否首次转账
+   * @param {Object} beforeEnergy - 租赁前的能量信息
+   * @param {Object} settings - 系统设置
+   */
+  async rentEnergyViaTransferWithWallet(tempTronWeb, walletAddress, isFirstTransfer, beforeEnergy, settings) {
+    if (!settings.energyRentalAddress) {
+      throw new Error('未配置能量租赁地址');
+    }
+
+    try {
+      // 根据是否首次转账选择租赁金额
+      const rentalAmount = isFirstTransfer 
+        ? settings.energyRentalAmountFirst 
+        : settings.energyRentalAmountNormal;
+
+      console.log(`💰 ${isFirstTransfer ? '首次转账' : '正常转账'}，向 ${settings.energyRentalAddress} 发送 ${rentalAmount} TRX 租赁能量...`);
+      
+      // 使用当前钱包的 TronWeb 实例发送 TRX
+      const tx = await tempTronWeb.trx.sendTransaction(
+        settings.energyRentalAddress, 
+        rentalAmount * 1000000
+      );
+
+      if (!tx.result) {
+        throw new Error('租赁支付失败');
+      }
+
+      const txHash = tx.txid || tx.transaction?.txID;
+      console.log(`✅ 租赁支付成功，交易哈希: ${txHash}`);
+      console.log(`⏳ 等待 ${settings.energyRentalWaitTime} 秒，等待能量到账...`);
+
+      // 等待能量到账
+      await new Promise(resolve => setTimeout(resolve, settings.energyRentalWaitTime * 1000));
+
+      // 检查能量是否到账
+      const afterResources = await tempTronWeb.trx.getAccountResources(walletAddress);
+      const afterEnergy = (afterResources.EnergyLimit || 0) - (afterResources.EnergyUsed || 0);
+      const energyReceived = afterEnergy - beforeEnergy.energyRemaining;
+
+      console.log(`📊 租赁后能量: ${afterEnergy}`);
+      console.log(`✨ 获得能量: ${energyReceived}`);
+
+      if (energyReceived > 0) {
+        return {
+          success: true,
+          mode: 'transfer',
+          energyBefore: beforeEnergy.energyRemaining,
+          energyAfter: afterEnergy,
+          energyReceived: energyReceived,
+          txid: txHash,
+          cost: rentalAmount
+        };
+      } else {
+        console.log('⚠️  能量未到账，可能需要更长等待时间');
+        return {
+          success: false,
+          message: '能量未到账',
+          energyBefore: beforeEnergy.energyRemaining,
+          energyAfter: afterEnergy,
+          txid: txHash
+        };
+      }
+    } catch (error) {
+      console.error('❌ 租赁能量失败:', error.message);
+      return {
+        success: false,
+        message: error.message
+      };
+    }
+  }
+
+  /**
+   * 使用指定钱包通过 CatFee API 购买能量
+   * @param {string} walletAddress - 钱包地址
+   * @param {boolean} isFirstTransfer - 是否首次转账
+   * @param {Object} beforeEnergy - 购买前的能量信息
+   * @param {Object} settings - 系统设置
+   */
+  async rentEnergyViaCatFeeWithWallet(walletAddress, isFirstTransfer, beforeEnergy, settings) {
+    if (!settings.catfeeApiKey) {
+      throw new Error('未配置 CatFee API Key');
+    }
+
+    try {
+      // 设置 API URL（如果有自定义）
+      if (settings.catfeeApiUrl) {
+        catfeeService.setApiUrl(settings.catfeeApiUrl);
+      }
+
+      // 设置 API Key
+      catfeeService.setApiKey(settings.catfeeApiKey);
+
+      // 根据是否首次转账选择能量数量
+      const energyAmount = isFirstTransfer 
+        ? settings.catfeeEnergyFirst 
+        : settings.catfeeEnergyNormal;
+
+      // 转换时长格式
+      const duration = `${settings.catfeePeriod || 1}h`;
+
+      console.log(`🔋 ${isFirstTransfer ? '首次转账' : '正常转账'}，通过 CatFee 购买 ${energyAmount} 能量（${duration}）...`);
+
+      // 购买能量
+      const result = await catfeeService.buyEnergy(walletAddress, energyAmount, duration);
+
+      if (result.success) {
+        console.log(`✅ CatFee 购买成功`);
+        console.log(`   订单号: ${result.orderNo}`);
+        console.log(`   能量: ${result.energyAmount}`);
+        console.log(`⏳ 等待 10 秒，等待能量到账...`);
+
+        // 等待能量到账
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        // 检查能量是否到账（需要初始化 TronWeb）
+        if (!this.tronWeb) {
+          await this.initialize();
+        }
+        
+        const afterResources = await this.getAccountResources(walletAddress);
+        const energyReceived = afterResources.energyRemaining - beforeEnergy.energyRemaining;
+
+        console.log(`📊 购买后能量: ${afterResources.energyRemaining}`);
+        console.log(`✨ 获得能量: ${energyReceived}`);
+
+        return {
+          success: true,
+          mode: 'catfee',
+          energyBefore: beforeEnergy.energyRemaining,
+          energyAfter: afterResources.energyRemaining,
+          energyReceived: energyReceived,
+          orderNo: result.orderNo,
+          energyPurchased: result.energyAmount
+        };
+      } else {
+        throw new Error('CatFee 购买失败');
+      }
+    } catch (error) {
+      console.error('❌ 购买能量失败:', error.message);
+      return {
+        success: false,
+        message: error.message
+      };
     }
   }
 }

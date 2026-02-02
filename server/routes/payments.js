@@ -310,9 +310,11 @@ router.post('/notify', async (req, res) => {
   }
 });
 
-// 执行代付（带重试机制）
+// 执行代付（带重试机制，使用多钱包系统）
 async function processTransfer(paymentId, retryCount = 0) {
   const maxRetries = 3;
+  const walletSelector = require('../services/walletSelector');
+  const Wallet = require('../models/Wallet');
   
   try {
     const payment = await Payment.findById(paymentId);
@@ -331,25 +333,53 @@ async function processTransfer(paymentId, retryCount = 0) {
     payment.transferStatus = 'processing';
     await payment.save();
 
-    console.log(`🔄 开始处理转账 (尝试 ${retryCount + 1}/${maxRetries + 1}): ${payment.platformOrderId}`);
+    console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`🔄 开始处理转账 (尝试 ${retryCount + 1}/${maxRetries + 1})`);
+    console.log(`   订单号: ${payment.platformOrderId}`);
+    console.log(`   类型: ${payment.payType}`);
+    console.log(`   金额: ${payment.amount}`);
+    console.log(`   地址: ${payment.address}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 
+    // 1. 选择最优钱包
+    console.log('📊 正在选择最优钱包...');
+    const selectedWallet = await walletSelector.selectBestWallet({
+      amount: payment.amount,
+      type: payment.payType,
+      estimatedFee: 15 // 预估手续费
+    });
+
+    // 2. 使用选中的钱包执行转账
     let txResult;
     if (payment.payType === 'USDT') {
-      txResult = await tronService.sendUSDT(payment.address, payment.amount);
+      console.log(`💸 使用钱包 "${selectedWallet.name}" 发送 ${payment.amount} USDT...`);
+      txResult = await tronService.sendUSDTWithWallet(selectedWallet, payment.address, payment.amount);
     } else {
-      txResult = await tronService.sendTRX(payment.address, payment.amount);
+      console.log(`💸 使用钱包 "${selectedWallet.name}" 发送 ${payment.amount} TRX...`);
+      txResult = await tronService.sendTRXWithWallet(selectedWallet, payment.address, payment.amount);
     }
 
-    // 更新订单状态
-    payment.txHash = txResult.txid || txResult;
+    // 3. 更新订单状态
+    payment.txHash = txResult.txid;
     payment.transferStatus = 'completed';
     payment.transferTime = new Date();
     payment.status = 'completed';
+    payment.walletId = selectedWallet._id; // 记录使用的钱包
+    payment.walletName = selectedWallet.name; // 记录钱包名称
     await payment.save();
 
-    console.log(`✅ ${payment.payType} 代付成功: ${payment.platformOrderId}, txHash: ${payment.txHash}`);
+    console.log(`\n✅ ${payment.payType} 代付成功!`);
+    console.log(`   订单号: ${payment.platformOrderId}`);
+    console.log(`   使用钱包: ${selectedWallet.name}`);
+    console.log(`   交易哈希: ${payment.txHash}`);
+    console.log(`   查看交易: https://tronscan.org/#/transaction/${payment.txHash}\n`);
 
-    // 🔔 发送代付完成邮件（第二封）
+    // 4. 更新钱包余额（异步，不阻塞）
+    updateWalletBalance(selectedWallet._id).catch(err => {
+      console.error('更新钱包余额失败:', err.message);
+    });
+
+    // 5. 发送代付完成邮件（第二封）
     if (payment.email) {
       try {
         const settings = await Settings.findOne();
@@ -362,14 +392,14 @@ async function processTransfer(paymentId, retryCount = 0) {
       }
     }
   } catch (error) {
-    console.error(`❌ 代付失败 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, error.message);
+    console.error(`\n❌ 代付失败 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, error.message);
     
     const payment = await Payment.findById(paymentId);
     if (payment) {
       // 如果还有重试次数，等待后重试
       if (retryCount < maxRetries) {
         const waitTime = 5000 * (retryCount + 1); // 5秒、10秒、15秒
-        console.log(`⏳ ${waitTime/1000}秒后重试...`);
+        console.log(`⏳ ${waitTime/1000}秒后重试...\n`);
         
         payment.transferStatus = 'pending';
         await payment.save();
@@ -384,9 +414,37 @@ async function processTransfer(paymentId, retryCount = 0) {
         payment.transferStatus = 'failed';
         payment.status = 'failed';
         await payment.save();
-        console.error(`❌ 转账最终失败: ${payment.platformOrderId}`);
+        console.error(`❌ 转账最终失败: ${payment.platformOrderId}\n`);
       }
     }
+  }
+}
+
+// 异步更新钱包余额
+async function updateWalletBalance(walletId) {
+  try {
+    const Wallet = require('../models/Wallet');
+    const wallet = await Wallet.findById(walletId);
+    if (!wallet) return;
+
+    // 初始化 TronWeb
+    await tronService.initialize();
+
+    // 获取余额
+    const trxBalance = await tronService.getBalance(wallet.address);
+    const usdtBalance = await tronService.getUSDTBalance(wallet.address);
+
+    // 更新钱包余额
+    wallet.balance.trx = trxBalance;
+    wallet.balance.usdt = usdtBalance;
+    wallet.balance.lastUpdated = new Date();
+    await wallet.save();
+
+    console.log(`✅ 钱包余额已更新: ${wallet.name}`);
+    console.log(`   TRX: ${trxBalance.toFixed(2)}`);
+    console.log(`   USDT: ${usdtBalance.toFixed(2)}\n`);
+  } catch (error) {
+    console.error('更新钱包余额失败:', error.message);
   }
 }
 

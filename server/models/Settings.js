@@ -70,13 +70,8 @@ const settingsSchema = new mongoose.Schema({
   paymentAlipayEnabled: { type: Boolean, default: false }, // 支付宝是否可用
   paymentWechatEnabled: { type: Boolean, default: true }, // 微信支付是否可用
   
-  // 代付配置（加密存储）
-  tronApiUrl: { type: String, default: 'https://api.trongrid.io' },
-  tronGridApiKey: { type: String, default: '' }, // TronGrid API Key（可选，用于提升请求限制）
-  tronPrivateKeyEncrypted: { type: String, default: '' }, // 加密后的私钥
-  tronWalletAddress: { type: String, default: '' }, // 钱包地址（用于显示）
-  
   // TRON API 节点配置（多节点支持）
+  // 注意：代付钱包配置已迁移到 Wallet 模型，使用多钱包系统
   tronApiNodes: { 
     type: String, 
     default: JSON.stringify([

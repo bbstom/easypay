@@ -28,6 +28,10 @@ const paymentSchema = new mongoose.Schema({
   },
   transferTime: { type: Date },
   
+  // 使用的钱包信息（多钱包系统）
+  walletId: { type: mongoose.Schema.Types.ObjectId, ref: 'Wallet' },
+  walletName: { type: String },
+  
   // 邮件通知
   emailSent: { type: Boolean, default: false },
   
