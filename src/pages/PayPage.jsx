@@ -356,40 +356,50 @@ const PayPage = () => {
 
   const startPollingOrderStatus = (orderId) => {
     let paymentNotified = false;
+    let pollCount = 0;
     
     console.log('🔄 开始轮询订单状态:', orderId);
+    console.log('📍 轮询 URL:', `/api/payments/order/${orderId}`);
     
     const interval = setInterval(async () => {
+      pollCount++;
       try {
+        console.log(`⏰ 执行第 ${pollCount} 次轮询查询...`);
         const { data } = await axios.get(`/api/payments/order/${orderId}`);
         
         console.log('📊 订单状态:', {
           orderId: data.platformOrderId,
           paymentStatus: data.paymentStatus,
           transferStatus: data.transferStatus,
-          status: data.status
+          status: data.status,
+          paymentNotified: paymentNotified,
+          pollCount: pollCount
         });
         
         // 支付完成（第一个通知）
         if (data.paymentStatus === 'paid' && !paymentNotified) {
           paymentNotified = true;
           console.log('✅ 支付成功，显示通知');
+          console.log('📢 调用 showNotification...');
           showNotification(
             '支付成功', 
             `您的订单支付已确认！\n正在处理 ${data.payType} 代付，请稍候...`, 
             'success'
           );
+          console.log('✅ 通知已触发');
         }
         
         // 代付完成（第二个通知）
         if (data.status === 'completed') {
           clearInterval(interval);
           console.log('✅ 代付完成，显示通知');
+          console.log('📢 调用 showNotification...');
           showNotification(
             `${data.payType} 代付完成`, 
-            `${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash.slice(0, 10)}...${data.txHash.slice(-8)}\n\n点击历史订单可查看详情`, 
+            `${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash ? data.txHash.slice(0, 10) + '...' + data.txHash.slice(-8) : '处理中'}\n\n点击历史订单可查看详情`, 
             'success'
           );
+          console.log('✅ 通知已触发，关闭支付窗口');
           setShowPayment(false);
           setAmount('');
           setAddress('');
@@ -399,29 +409,33 @@ const PayPage = () => {
         } else if (data.status === 'failed') {
           clearInterval(interval);
           console.log('❌ 代付失败，显示通知');
+          console.log('📢 调用 showNotification...');
           showNotification(
             `${data.payType} 代付失败`, 
             '转账失败，请联系客服处理。\n\n可能原因：\n• 钱包余额不足\n• 网络拥堵\n\n请联系客服处理或稍后重试', 
             'error'
           );
+          console.log('✅ 通知已触发，关闭支付窗口');
           setShowPayment(false);
           setPaymentConfirmed(false);
         }
       } catch (error) {
-        console.error('查询订单状态失败:', error);
+        console.error('❌ 查询订单状态失败:', error);
+        console.error('错误详情:', error.response?.data || error.message);
       }
     }, 3000); // 每3秒查询一次
 
     // 5分钟后停止轮询
     setTimeout(() => {
       clearInterval(interval);
-      console.log('⏱️ 轮询超时（5分钟），停止查询');
+      console.log(`⏱️ 轮询超时（5分钟），停止查询。共查询 ${pollCount} 次`);
     }, 300000);
   };
 
   const showNotification = (title, message, type) => {
+    console.log('📢 显示通知:', { title, message, type });
     setNotification({ title, message, type });
-    // 不自动关闭，需要用户手动点击"知道了"
+    console.log('✅ 通知状态已更新，notification =', { title, message, type });
   };
 
   const closePayment = () => {
@@ -439,9 +453,9 @@ const PayPage = () => {
       {/* 渐变背景 */}
       <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-br from-[#F0F9FF] via-[#E0F2FE] to-[#F8FAFC] -z-10"></div>
       
-      {/* 通知组件 - 居中显示，优雅设计 */}
+      {/* 通知组件 - 居中显示，优雅设计，最高层级 */}
       {notification && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-300 px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300 px-4">
           {/* 背景模糊层 - 使用渐变蓝色 */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#E0F2FE]/80 via-[#F0F9FF]/80 to-white/80 backdrop-blur-md"></div>
           
@@ -1057,6 +1071,13 @@ const PayPage = () => {
                 <p className="text-xs text-blue-600 text-center mt-2">
                   支付完成后，系统将自动处理代付订单
                 </p>
+                {/* 轮询状态指示器 */}
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-blue-600">正在监听支付状态...</span>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-center">
