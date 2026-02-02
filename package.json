@@ -1,0 +1,49 @@
+{
+  "name": "usdt-payment-platform",
+  "version": "1.0.0",
+  "description": "USDT/TRX代付平台",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "vite",
+    "build": "vite build",
+    "create-admin": "node server/scripts/createAdmin.js",
+    "add-test-data": "node server/scripts/addTestData.js",
+    "test-payment": "node server/scripts/testPaymentGateway.js",
+    "test-email": "node server/scripts/testEmail.js",
+    "test-payment-types": "node server/scripts/testPaymentTypes.js",
+    "debug-payment": "node server/scripts/debugPayment.js",
+    "test-wallet": "node server/scripts/testWallet.js",
+    "test-transfer": "node server/scripts/testTransfer.js",
+    "migrate-key": "node server/scripts/migratePrivateKey.js",
+    "test-private-key": "node server/scripts/testPrivateKey.js",
+    "check-tronweb": "node server/scripts/checkTronWeb.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "html5-qrcode": "^2.3.8",
+    "jsonwebtoken": "^9.0.2",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^0.294.0",
+    "mongoose": "^8.0.0",
+    "nodemailer": "^7.0.13",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "tronweb": "^6.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.5",
+    "vite": "^5.0.0"
+  }
+}

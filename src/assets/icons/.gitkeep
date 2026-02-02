@@ -1,0 +1,20 @@
+# Icons Directory
+
+This folder contains SVG icons used in the application.
+
+## Icons:
+- alipay.svg - Alipay payment icon
+- wechat.svg - WeChat payment icon
+- usdt.svg - USDT cryptocurrency icon
+- trx.svg - TRX (Tron) cryptocurrency icon
+
+## Usage:
+Import icons in React components:
+```jsx
+import AlipayIcon from '@/assets/icons/alipay.svg?react';
+```
+
+Or use as image source:
+```jsx
+<img src="/src/assets/icons/alipay.svg" alt="Alipay" />
+```
