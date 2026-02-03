@@ -116,6 +116,44 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-bold text-slate-600 block mb-2">网站 Logo</label>
+                  <input
+                    type="url"
+                    value={settings.siteLogo || ''}
+                    onChange={(e) => setSettings({ ...settings, siteLogo: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#00A3FF] outline-none"
+                    placeholder="https://example.com/logo.png"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    导航栏显示的 Logo，支持 .png、.svg、.jpg 格式，推荐尺寸：200x200 或更大
+                  </p>
+                </div>
+
+                {settings.siteLogo && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <h3 className="text-sm font-bold text-slate-700 mb-3">Logo 预览</h3>
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={settings.siteLogo} 
+                        alt="Logo预览" 
+                        className="w-16 h-16 object-contain"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <div className="hidden text-sm text-red-500">
+                        ❌ Logo 加载失败，请检查URL是否正确
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        <p className="font-medium">导航栏效果预览</p>
+                        <p className="text-xs text-slate-500">保存后刷新页面即可看到效果</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
                   <label className="text-sm font-bold text-slate-600 block mb-2">网站图标 (Favicon)</label>
                   <input
                     type="url"

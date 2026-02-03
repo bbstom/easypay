@@ -309,15 +309,32 @@ class TronService {
     // 设置 API Key（格式: api_key:api_secret）
     catfeeService.setApiKey(settings.catfeeApiKey);
 
-    // 根据是否首次转账选择能量数量
-    const energyAmount = isFirstTransfer 
-      ? settings.catfeeEnergyFirst 
-      : settings.catfeeEnergyNormal;
+    // 智能计算需要租赁的能量数量
+    const requiredEnergy = isFirstTransfer ? 131000 : 65000;
+    const currentEnergy = beforeEnergy.energyRemaining || 0;
+    const energyDeficit = requiredEnergy - currentEnergy;
+
+    // 根据能量缺口选择租赁数量
+    let energyAmount;
+    if (energyDeficit <= 0) {
+      // 能量充足，不应该调用此函数
+      console.log('⚠️  能量充足，无需租赁');
+      return { success: false, message: '能量充足' };
+    } else if (energyDeficit <= settings.catfeeEnergyNormal) {
+      // 缺口 <= 65000，租赁 65000
+      energyAmount = settings.catfeeEnergyNormal;
+      console.log(`💡 智能判断：缺口 ${energyDeficit}，租赁 ${energyAmount}`);
+    } else {
+      // 缺口 > 65000，租赁 131000
+      energyAmount = settings.catfeeEnergyFirst;
+      console.log(`💡 智能判断：缺口 ${energyDeficit}，租赁 ${energyAmount}`);
+    }
 
     // 转换时长格式：1 -> "1h", 3 -> "3h"
     const duration = `${settings.catfeePeriod || 1}h`;
 
     console.log(`🔋 ${isFirstTransfer ? '首次转账' : '正常转账'}，通过 CatFee 购买 ${energyAmount} 能量（${duration}）...`);
+    console.log(`   当前能量: ${currentEnergy}, 需要: ${requiredEnergy}, 缺口: ${energyDeficit}`);
 
     // 购买能量
     const result = await catfeeService.buyEnergy(address, energyAmount, duration);
@@ -1064,15 +1081,32 @@ class TronService {
       // 设置 API Key
       catfeeService.setApiKey(settings.catfeeApiKey);
 
-      // 根据是否首次转账选择能量数量
-      const energyAmount = isFirstTransfer 
-        ? settings.catfeeEnergyFirst 
-        : settings.catfeeEnergyNormal;
+      // 智能计算需要租赁的能量数量
+      const requiredEnergy = isFirstTransfer ? 131000 : 65000;
+      const currentEnergy = beforeEnergy.energyRemaining || 0;
+      const energyDeficit = requiredEnergy - currentEnergy;
+
+      // 根据能量缺口选择租赁数量
+      let energyAmount;
+      if (energyDeficit <= 0) {
+        // 能量充足，不应该调用此函数
+        console.log('⚠️  能量充足，无需租赁');
+        return { success: false, message: '能量充足' };
+      } else if (energyDeficit <= settings.catfeeEnergyNormal) {
+        // 缺口 <= 65000，租赁 65000
+        energyAmount = settings.catfeeEnergyNormal;
+        console.log(`💡 智能判断：缺口 ${energyDeficit}，租赁 ${energyAmount}`);
+      } else {
+        // 缺口 > 65000，租赁 131000
+        energyAmount = settings.catfeeEnergyFirst;
+        console.log(`💡 智能判断：缺口 ${energyDeficit}，租赁 ${energyAmount}`);
+      }
 
       // 转换时长格式
       const duration = `${settings.catfeePeriod || 1}h`;
 
       console.log(`🔋 ${isFirstTransfer ? '首次转账' : '正常转账'}，通过 CatFee 购买 ${energyAmount} 能量（${duration}）...`);
+      console.log(`   当前能量: ${currentEnergy}, 需要: ${requiredEnergy}, 缺口: ${energyDeficit}`);
 
       // 购买能量
       const result = await catfeeService.buyEnergy(walletAddress, energyAmount, duration);

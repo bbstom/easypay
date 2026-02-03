@@ -478,4 +478,78 @@ router.post('/admin/delete-wallet', auth, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/swap/admin/wallet-stats/:walletId
+ * 获取闪兑钱包统计信息（管理员）
+ */
+router.get('/admin/wallet-stats/:walletId', auth, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const { walletId } = req.params;
+
+    // 获取钱包信息
+    const Settings = require('../models/Settings');
+    const settings = await Settings.findOne();
+    if (!settings) {
+      return res.status(500).json({ error: '系统设置未找到' });
+    }
+
+    let swapWallets = [];
+    try {
+      swapWallets = JSON.parse(settings.swapWallets || '[]');
+    } catch (e) {
+      return res.status(400).json({ error: '钱包配置解析失败' });
+    }
+
+    const wallet = swapWallets.find(w => w.id === walletId);
+    if (!wallet) {
+      return res.status(404).json({ error: '钱包不存在' });
+    }
+
+    // 统计该钱包的订单数据
+    const totalOrders = await SwapOrder.countDocuments({ systemWalletId: walletId });
+    const completedOrders = await SwapOrder.countDocuments({ systemWalletId: walletId, status: 'completed' });
+    const failedOrders = await SwapOrder.countDocuments({ systemWalletId: walletId, status: 'failed' });
+    const successRate = totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0;
+
+    // 获取最后使用时间
+    const lastOrder = await SwapOrder.findOne({ systemWalletId: walletId })
+      .sort({ createdAt: -1 })
+      .select('createdAt');
+
+    // 获取最近10笔交易
+    const recentTransactions = await SwapOrder.find({ systemWalletId: walletId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('orderNumber fromAmount toAmount status createdAt sendTxHash');
+
+    res.json({
+      success: true,
+      stats: {
+        totalOrders,
+        completedOrders,
+        failedOrders,
+        successRate,
+        lastUsed: lastOrder ? lastOrder.createdAt : null
+      },
+      recentTransactions: recentTransactions.map(tx => ({
+        orderNumber: tx.orderNumber,
+        currency: 'USDT',
+        amount: tx.fromAmount,
+        toAmount: tx.toAmount,
+        status: tx.status,
+        time: tx.createdAt,
+        txHash: tx.sendTxHash
+      }))
+    });
+
+  } catch (error) {
+    console.error('获取钱包统计失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

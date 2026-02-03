@@ -143,7 +143,10 @@ const App = () => {
       try {
         const { data } = await axios.get('/api/settings/public');
         setFooterSettings(data);
-        setSiteSettings({ siteName: data.siteName || 'FASTPAY' }); // 同时设置网站名称
+        setSiteSettings({ 
+          siteName: data.siteName || 'FASTPAY',
+          siteLogo: data.siteLogo || ''
+        }); // 同时设置网站名称和Logo
         
         // 更新页面标题
         if (data.siteName) {
@@ -167,7 +170,19 @@ const App = () => {
           <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between border-b border-slate-200/50">
             <div className="flex items-center gap-10">
               <div onClick={() => navigate('/')} className="flex items-center gap-2 group cursor-pointer">
-                <div className="w-9 h-9 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:rotate-12 transition-transform">
+                {siteSettings.siteLogo ? (
+                  <img 
+                    src={siteSettings.siteLogo} 
+                    alt={siteSettings.siteName}
+                    className="w-9 h-9 object-contain group-hover:scale-110 transition-transform"
+                    onError={(e) => {
+                      // 如果Logo加载失败，显示默认图标
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className={`w-9 h-9 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:rotate-12 transition-transform ${siteSettings.siteLogo ? 'hidden' : ''}`}>
                   <Zap className="text-white" size={20} />
                 </div>
                 <span className="text-xl font-black tracking-tighter text-slate-800">{siteSettings.siteName}</span>
@@ -341,7 +356,18 @@ const App = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
               <div className="space-y-3 md:col-span-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-200">
+                  {footerSettings.siteLogo ? (
+                    <img 
+                      src={footerSettings.siteLogo} 
+                      alt={footerSettings.footerCompanyName || 'FASTPAY'}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-8 h-8 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-200 ${footerSettings.siteLogo ? 'hidden' : ''}`}>
                     <Zap className="text-white" size={16} />
                   </div>
                   <span className="text-lg font-black tracking-tighter text-slate-800">

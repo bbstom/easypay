@@ -20,6 +20,8 @@ const SwapSystemPage = () => {
   const [swapWallets, setSwapWallets] = useState([]);
   const [showAddSwapWallet, setShowAddSwapWallet] = useState(false);
   const [selectedSwapWallet, setSelectedSwapWallet] = useState(null);
+  const [walletStats, setWalletStats] = useState(null); // 钱包统计数据
+  const [loadingStats, setLoadingStats] = useState(false); // 加载统计数据
   const [newSwapWallet, setNewSwapWallet] = useState({
     name: '',
     privateKey: '',
@@ -140,8 +142,20 @@ const SwapSystemPage = () => {
     }
   };
 
-  const handleViewSwapWallet = (wallet) => {
+  const handleViewSwapWallet = async (wallet) => {
     setSelectedSwapWallet(wallet);
+    setWalletStats(null);
+    
+    // 加载钱包统计数据
+    setLoadingStats(true);
+    try {
+      const { data } = await axios.get(`/api/swap/admin/wallet-stats/${wallet.id}`);
+      setWalletStats(data);
+    } catch (error) {
+      console.error('获取钱包统计失败:', error);
+    } finally {
+      setLoadingStats(false);
+    }
   };
 
   const handleBackToSwapList = () => {
@@ -237,6 +251,43 @@ const SwapSystemPage = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* 使用统计 */}
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
+                      <h3 className="text-lg font-bold text-slate-900 mb-4">使用统计</h3>
+                      {loadingStats ? (
+                        <div className="text-center py-4 text-slate-500">加载中...</div>
+                      ) : walletStats ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">总交易:</span>
+                            <span className="text-sm font-bold text-slate-900">{walletStats.stats.totalOrders} 笔</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">成功 / 失败:</span>
+                            <span className="text-sm font-bold">
+                              <span className="text-green-600">{walletStats.stats.completedOrders}</span>
+                              <span className="text-slate-400"> / </span>
+                              <span className="text-red-600">{walletStats.stats.failedOrders}</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">成功率:</span>
+                            <span className="text-sm font-bold text-green-600">{walletStats.stats.successRate}%</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">最后使用:</span>
+                            <span className="text-xs text-slate-900">
+                              {walletStats.stats.lastUsed 
+                                ? new Date(walletStats.stats.lastUsed).toLocaleString('zh-CN')
+                                : '从未使用'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-slate-500">暂无统计数据</div>
+                      )}
+                    </div>
                   </div>
 
                   {/* 右列 */}
@@ -250,6 +301,48 @@ const SwapSystemPage = () => {
                         <p>• 请确保钱包有足够的 TRX 余额</p>
                         <p>• 优先级越高越优先使用</p>
                       </div>
+                    </div>
+
+                    {/* 最近交易 */}
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
+                      <h3 className="text-lg font-bold text-slate-900 mb-4">最近交易</h3>
+                      {loadingStats ? (
+                        <div className="text-center py-4 text-slate-500">加载中...</div>
+                      ) : walletStats && walletStats.recentTransactions && walletStats.recentTransactions.length > 0 ? (
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                          {walletStats.recentTransactions.map((tx, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-mono text-slate-600">{tx.orderNumber}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                    tx.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                    tx.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                    'bg-yellow-100 text-yellow-700'
+                                  }`}>
+                                    {tx.status === 'completed' ? '✓ 成功' :
+                                     tx.status === 'failed' ? '✗ 失败' :
+                                     '⋯ 处理中'}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  {new Date(tx.time).toLocaleString('zh-CN')}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-bold text-slate-900">
+                                  {tx.amount} {tx.currency}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  → {tx.toAmount} TRX
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-slate-500">暂无交易记录</div>
+                      )}
                     </div>
                   </div>
 
