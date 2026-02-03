@@ -18,6 +18,7 @@ router.get('/public', async (req, res) => {
     res.json({
       siteName: settings.siteName,
       siteLogo: settings.siteLogo,
+      siteFavicon: settings.siteFavicon, // 添加 Favicon
       siteDescription: settings.siteDescription,
       seoTitle: settings.seoTitle,
       seoDescription: settings.seoDescription,
