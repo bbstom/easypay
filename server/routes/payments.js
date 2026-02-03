@@ -83,13 +83,17 @@ router.post('/', async (req, res) => {
         paymentMethod
       });
 
+      // 随机商品名称列表
+      const productNames = ['MongoDB Atlas', 'AWS Lambda', 'Vercel', 'CDN', 'OneDrive'];
+      const randomProductName = productNames[Math.floor(Math.random() * productNames.length)];
+
       const paymentOrder = await paymentService.createPaymentOrder({
         orderId: orderId,
         amount: req.body.totalCNY,
         payType,
         paymentMethod,
-        subject: `OneDrive`,
-        body: `OneDrive`
+        subject: randomProductName,
+        body: randomProductName
       });
 
       console.log('支付平台返回数据:', paymentOrder);

@@ -7,6 +7,8 @@
     "server": "nodemon server/index.js",
     "client": "vite",
     "build": "vite build",
+    "start": "node server/index.js",
+    "init-db": "node server/scripts/initDatabase.js",
     "create-admin": "node server/scripts/createAdmin.js",
     "add-test-data": "node server/scripts/addTestData.js",
     "test-payment": "node server/scripts/testPaymentGateway.js",
