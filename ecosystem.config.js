@@ -8,8 +8,8 @@ module.exports = {
     watch: false,
     max_memory_restart: '500M',
     env: {
-      NODE_ENV: 'production',
-      PORT: 3000
+      NODE_ENV: 'production'
+      // PORT 从 .env 文件读取
     },
     error_file: '/root/.pm2/logs/easypay-error.log',
     out_file: '/root/.pm2/logs/easypay-out.log',
