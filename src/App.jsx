@@ -119,6 +119,7 @@ const RuntimeDisplay = () => {
 
 const App = () => {
   const [footerSettings, setFooterSettings] = useState(null);
+  const [siteSettings, setSiteSettings] = useState({ siteName: 'FASTPAY' }); // 网站设置
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, loading } = useAuth();
@@ -142,6 +143,12 @@ const App = () => {
       try {
         const { data } = await axios.get('/api/settings/public');
         setFooterSettings(data);
+        setSiteSettings({ siteName: data.siteName || 'FASTPAY' }); // 同时设置网站名称
+        
+        // 更新页面标题
+        if (data.siteName) {
+          document.title = data.siteName;
+        }
       } catch (error) {
         console.error('获取Footer设置失败:', error);
       }
@@ -163,7 +170,7 @@ const App = () => {
                 <div className="w-9 h-9 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:rotate-12 transition-transform">
                   <Zap className="text-white" size={20} />
                 </div>
-                <span className="text-xl font-black tracking-tighter text-slate-800">FASTPAY</span>
+                <span className="text-xl font-black tracking-tighter text-slate-800">{siteSettings.siteName}</span>
               </div>
               <div className="hidden lg:flex items-center gap-8">
                 <button onClick={() => navigate('/')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">

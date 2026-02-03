@@ -7,13 +7,21 @@ const IndexPage = () => {
   const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [heroImage, setHeroImage] = useState('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop');
+  const [siteName, setSiteName] = useState('FastPay');
+  const [siteDescription, setSiteDescription] = useState('是领先的自动化代付协议。支持通过法币直接为任何波场地址发放 USDT 或 TRX，无需配置私钥，无需购买能量。');
 
   useEffect(() => {
     axios.get('/api/ads').then(res => setAds(res.data)).catch(console.error);
-    // 获取主页展示图片
+    // 获取主页展示图片和网站信息
     axios.get('/api/settings/public').then(res => {
       if (res.data.homeHeroImage) {
         setHeroImage(res.data.homeHeroImage);
+      }
+      if (res.data.siteName) {
+        setSiteName(res.data.siteName);
+      }
+      if (res.data.siteDescription) {
+        setSiteDescription(res.data.siteDescription);
       }
     }).catch(console.error);
   }, []);
@@ -38,7 +46,7 @@ const IndexPage = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">像发红包一样简单</span>
             </h1>
             <p className="text-lg text-slate-500 font-medium max-w-xl leading-relaxed">
-              FastPay 是领先的自动化代付协议。支持通过法币直接为任何波场地址发放 USDT 或 TRX，无需配置私钥，无需购买能量。
+              {siteName} {siteDescription}
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <button onClick={() => navigate('/pay')} className="bg-cyan-500 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 hover:bg-cyan-600 transition-all shadow-xl shadow-cyan-100">
