@@ -178,7 +178,7 @@ const App = () => {
                   首页
                 </button>
                 
-                {/* 代付工作台 - 带下拉菜单 */}
+                {/* 代付服务 - 带下拉菜单 */}
                 <div 
                   className="relative group"
                   onMouseEnter={() => setShowPayMenu(true)}
@@ -186,13 +186,13 @@ const App = () => {
                 >
                   <button className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
                     <Briefcase size={14} />
-                    代付工作台
+                    代付服务
                     <svg className={`w-3 h-3 transition-transform ${showPayMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   
-                  {/* 下拉菜单 - 无间隙 */}
+                  {/* 下拉菜单 */}
                   <div className={`absolute top-full left-0 pt-2 transition-opacity duration-200 ${showPayMenu ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
                     <div className="w-44 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
                       <button 
@@ -213,16 +213,16 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* USDT闪兑TRX */}
-                <button onClick={() => navigate('/swap')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
-                  <ArrowDownUp size={14} />
-                  TRX闪兑
-                </button>
-
                 {/* 能量租赁 */}
                 <button onClick={() => navigate('/energy-rental')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
                   <Zap size={14} />
                   能量租赁
+                </button>
+
+                {/* 闪兑中心 */}
+                <button onClick={() => navigate('/swap')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
+                  <ArrowDownUp size={14} />
+                  闪兑中心
                 </button>
 
                 {/* 常见问题 */}
@@ -232,18 +232,12 @@ const App = () => {
                 </button>
 
                 {/* TG客服 */}
-                {footerSettings && (
+                {footerSettings && footerSettings.telegramCustomerService && (
                   <a 
-                    href={footerSettings.telegramCustomerService || 'https://t.me/'} 
+                    href={footerSettings.telegramCustomerService} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5"
-                    onClick={(e) => {
-                      if (!footerSettings.telegramCustomerService) {
-                        e.preventDefault();
-                        alert('请先在后台管理 > 系统设置 > 社交媒体中配置TG客服地址');
-                      }
-                    }}
                   >
                     <Send size={14} />
                     TG客服
