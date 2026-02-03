@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    emptyOutDir: false, // 不清空输出目录，避免删除宝塔的 .user.ini
+  },
   server: {
     port: 3000,
     host: true, // 允许外部访问
