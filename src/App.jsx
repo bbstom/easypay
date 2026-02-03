@@ -24,6 +24,38 @@ import PaymentSystemPage from './pages/PaymentSystemPage';
 import SwapSystemPage from './pages/SwapSystemPage';
 import EnergySystemPage from './pages/EnergySystemPage';
 
+// 动态加载 Favicon
+const useFavicon = () => {
+  useEffect(() => {
+    const loadFavicon = async () => {
+      try {
+        const { data } = await axios.get('/api/settings/public');
+        if (data.siteFavicon) {
+          // 移除现有的 favicon
+          const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+          existingFavicons.forEach(link => link.remove());
+          
+          // 添加新的 favicon
+          const link = document.createElement('link');
+          link.rel = 'icon';
+          link.href = data.siteFavicon;
+          document.head.appendChild(link);
+          
+          // 同时添加 apple-touch-icon
+          const appleLink = document.createElement('link');
+          appleLink.rel = 'apple-touch-icon';
+          appleLink.href = data.siteFavicon;
+          document.head.appendChild(appleLink);
+        }
+      } catch (error) {
+        console.error('加载 favicon 失败:', error);
+      }
+    };
+    
+    loadFavicon();
+  }, []);
+};
+
 // 运行时间组件
 const RuntimeDisplay = () => {
   const [runningTime, setRunningTime] = useState({ days: 0, hours: 0, min: 0, sec: 0 });
@@ -93,6 +125,9 @@ const App = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showPayMenu, setShowPayMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // 加载动态 favicon
+  useFavicon();
 
   const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system'].includes(location.pathname);
 

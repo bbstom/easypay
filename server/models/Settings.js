@@ -4,6 +4,7 @@ const settingsSchema = new mongoose.Schema({
   // 网站基本信息
   siteName: { type: String, default: 'FastPay' },
   siteLogo: { type: String, default: '' },
+  siteFavicon: { type: String, default: '' }, // 网站图标（favicon）
   siteDescription: { type: String, default: '安全快捷的数字货币代付平台' },
   siteKeywords: { type: String, default: 'USDT,TRX,代付,数字货币' },
   
