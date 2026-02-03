@@ -1,10 +1,13 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const Settings = require('../models/Settings');
 
 async function setFavicon() {
   try {
     // 连接数据库
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/easypay');
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/easypay';
+    console.log('连接数据库:', mongoUri.replace(/\/\/.*@/, '//***:***@')); // 隐藏密码
+    await mongoose.connect(mongoUri);
     console.log('✅ 数据库连接成功\n');
 
     // 获取或创建设置
