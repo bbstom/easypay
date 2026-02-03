@@ -139,7 +139,7 @@ const UserLayout = ({ children }) => {
         </header>
 
         {/* 页面内容 */}
-        <div className="p-6 overflow-x-hidden">
+        <div className="p-6 min-h-[calc(100vh-4rem)]">
           {children}
         </div>
       </main>
