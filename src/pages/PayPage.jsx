@@ -134,11 +134,11 @@ const PayPage = () => {
             console.log('💰 固定费用:', matchedRule.feeValue, 'CNY');
             return matchedRule.feeValue;
           } else {
-            // 百分比费率
-            const base = amt * getExchangeRate(payType);
-            const fee = (base * (matchedRule.feeValue / 100)).toFixed(2);
-            console.log('💰 百分比费率:', matchedRule.feeValue + '%', '=', fee, 'CNY');
-            return fee;
+            // 百分比费率 - 基于 CNY 金额计算
+            const cnyAmount = amt * getExchangeRate(payType);
+            const fee = (cnyAmount * (matchedRule.feeValue / 100)).toFixed(2);
+            console.log('💰 百分比费率:', matchedRule.feeValue + '%', 'CNY金额:', cnyAmount, '服务费:', fee, 'CNY');
+            return parseFloat(fee);
           }
         } else {
           console.log('⚠️ 未匹配到任何规则，使用默认费率');
@@ -154,8 +154,9 @@ const PayPage = () => {
     if (settings.feeType === 'fixed') {
       return payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
     } else {
-      const base = amt * getExchangeRate(payType);
-      return (base * (settings.feePercentage / 100)).toFixed(2);
+      // 百分比费率 - 基于 CNY 金额计算
+      const cnyAmount = amt * getExchangeRate(payType);
+      return parseFloat((cnyAmount * (settings.feePercentage / 100)).toFixed(2));
     }
   };
 

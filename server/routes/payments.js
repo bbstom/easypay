@@ -41,9 +41,9 @@ router.post('/', async (req, res) => {
           // 固定费用
           serviceFee = matchedRule.feeValue;
         } else {
-          // 百分比费率
-          const base = amt * getExchangeRate(payType, settings);
-          serviceFee = (base * (matchedRule.feeValue / 100));
+          // 百分比费率 - 基于 CNY 金额计算
+          const cnyAmount = amt * getExchangeRate(payType, settings);
+          serviceFee = parseFloat((cnyAmount * (matchedRule.feeValue / 100)).toFixed(2));
         }
         
         console.log(`使用 ${payType} 阶梯费率: ${amt} ${payType} 匹配规则 [${matchedRule.minAmount}-${matchedRule.maxAmount}], 费率类型: ${matchedRule.feeType}, 费用: ${serviceFee} CNY`);
@@ -203,8 +203,9 @@ function calculateDefaultFee(amount, payType, settings) {
   if (settings.feeType === 'fixed') {
     return payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
   } else {
-    const base = amt * getExchangeRate(payType, settings);
-    return (base * (settings.feePercentage / 100));
+    // 百分比费率 - 基于 CNY 金额计算
+    const cnyAmount = amt * getExchangeRate(payType, settings);
+    return parseFloat((cnyAmount * (settings.feePercentage / 100)).toFixed(2));
   }
 }
 
