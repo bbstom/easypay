@@ -31,9 +31,23 @@ router.post('/', async (req, res) => {
       const rules = JSON.parse(tieredFeeRules || '[]');
       const amt = parseFloat(amount) || 0;
       
-      // 查找匹配的费率规则
+      // 检查是否超出最大限额
+      const maxAmounts = rules
+        .map(rule => rule.maxAmount)
+        .filter(max => max < 999999);
+      
+      if (maxAmounts.length > 0) {
+        const maxLimit = Math.max(...maxAmounts);
+        if (amt > maxLimit) {
+          return res.status(400).json({ 
+            error: `代付金额超出限额！最大支持 ${maxLimit} ${payType}` 
+          });
+        }
+      }
+      
+      // 查找匹配的费率规则（修改为 <= 包含边界值）
       const matchedRule = rules.find(rule => 
-        amt >= rule.minAmount && amt < rule.maxAmount
+        amt >= rule.minAmount && amt <= rule.maxAmount
       );
       
       if (matchedRule) {

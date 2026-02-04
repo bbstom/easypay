@@ -121,9 +121,9 @@ const PayPage = () => {
         console.log('📊 当前金额:', amt, 'USDT');
         console.log('📋 费率规则:', rules);
         
-        // 查找匹配的费率规则
+        // 查找匹配的费率规则（修改为 <= 包含最大值）
         const matchedRule = rules.find(rule => 
-          amt >= rule.minAmount && amt < rule.maxAmount
+          amt >= rule.minAmount && amt <= rule.maxAmount
         );
         
         if (matchedRule) {
@@ -158,6 +158,42 @@ const PayPage = () => {
       const cnyAmount = amt * getExchangeRate(payType);
       return parseFloat((cnyAmount * (settings.feePercentage / 100)).toFixed(2));
     }
+  };
+
+  // 获取阶梯费率的最大限额
+  const getMaxAmount = () => {
+    if (!settings) return null;
+    
+    try {
+      if (settings.tieredFeeEnabledUSDT) {
+        const rules = JSON.parse(settings.tieredFeeRulesUSDT || '[]');
+        if (rules.length === 0) return null;
+        
+        // 找到最大的 maxAmount（排除 999999 这种无限大的值）
+        const maxAmounts = rules
+          .map(rule => rule.maxAmount)
+          .filter(max => max < 999999);
+        
+        if (maxAmounts.length === 0) return null; // 如果都是无限大，返回 null
+        return Math.max(...maxAmounts);
+      }
+    } catch (error) {
+      console.error('获取最大限额失败:', error);
+    }
+    
+    return null;
+  };
+
+  // 检查金额是否超出限额
+  const checkAmountLimit = () => {
+    const amt = parseFloat(amount) || 0;
+    const maxAmount = getMaxAmount();
+    
+    if (maxAmount && amt > maxAmount) {
+      return `当前代付金额超出限额！最大支持 ${maxAmount} USDT`;
+    }
+    
+    return null;
   };
 
   const calculateCNY = () => {
@@ -645,7 +681,7 @@ const PayPage = () => {
                       <div className="relative">
                         <input 
                           type="number" 
-                          placeholder="请输入数量（限额 1-200）"
+                          placeholder="请输入数量"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 focus:bg-white rounded-lg px-4 py-3 pr-24 text-base font-bold outline-none transition-all tabular-nums placeholder:text-slate-400 placeholder:text-sm placeholder:font-normal"
@@ -668,6 +704,14 @@ const PayPage = () => {
                           </span>
                         )}
                       </div>
+                      {/* 限额提示 */}
+                      {amount && checkAmountLimit() && (
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                          <p className="text-xs text-red-600 font-bold">
+                            ⚠️ {checkAmountLimit()}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* 通知邮箱 */}
@@ -766,7 +810,7 @@ const PayPage = () => {
 
                       <button 
                         onClick={handleSubmit}
-                        disabled={!amount || !address || paymentLoading}
+                        disabled={!amount || !address || paymentLoading || checkAmountLimit()}
                         className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-4 rounded-xl font-black text-base hover:shadow-xl hover:shadow-cyan-200 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed transition-all uppercase tracking-wider flex items-center justify-center gap-2 group"
                       >
                         {paymentLoading ? '创建订单中...' : '立即支付'}
