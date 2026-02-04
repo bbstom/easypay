@@ -160,6 +160,40 @@ const PayPage = () => {
     }
   };
 
+  // 获取费率类型说明
+  const getFeeTypeLabel = () => {
+    if (!settings) return '';
+    const amt = parseFloat(amount) || 0;
+    
+    // 如果启用了 USDT 阶梯费率
+    if (settings.tieredFeeEnabledUSDT) {
+      try {
+        const rules = JSON.parse(settings.tieredFeeRulesUSDT || '[]');
+        const matchedRule = rules.find(rule => 
+          amt >= rule.minAmount && amt <= rule.maxAmount
+        );
+        
+        if (matchedRule) {
+          if (matchedRule.feeType === 'fixed') {
+            return `[固定${matchedRule.feeValue}]`;
+          } else {
+            return `[${matchedRule.feeValue}%]`;
+          }
+        }
+      } catch (error) {
+        console.error('获取费率类型失败:', error);
+      }
+    }
+    
+    // 使用传统费率
+    if (settings.feeType === 'fixed') {
+      const fixedFee = payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
+      return `[固定${fixedFee}]`;
+    } else {
+      return `[${settings.feePercentage}%]`;
+    }
+  };
+
   // 获取阶梯费率的最大限额
   const getMaxAmount = () => {
     if (!settings) return null;
@@ -794,7 +828,12 @@ const PayPage = () => {
                         </div>
 
                         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                          <span className="text-sm text-slate-600 font-medium">服务费</span>
+                          <span className="text-sm text-slate-600 font-medium">
+                            服务费
+                            {amount && getFeeTypeLabel() && (
+                              <span className="text-[#00A3FF] ml-1">{getFeeTypeLabel()}</span>
+                            )}
+                          </span>
                           <span className="text-sm font-bold text-orange-500 tabular-nums">
                             {amount ? `¥ ${calculateServiceFee()}` : '--'}
                           </span>
