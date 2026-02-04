@@ -115,12 +115,14 @@ const EnergySystemPage = () => {
                 <label className="text-sm font-bold text-slate-600 block mb-2">TRX 数量</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={settings.energyPriceTrx || 1}
-                  onChange={(e) => setSettings({ ...settings, energyPriceTrx: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setSettings({ ...settings, energyPriceTrx: parseFloat(e.target.value) || 1 })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 outline-none"
                   placeholder="1"
-                  min="1"
+                  min="0.1"
                 />
+                <p className="text-xs text-slate-500 mt-1">支持小数，如 0.5、1.5、2.8 等</p>
               </div>
               <div>
                 <label className="text-sm font-bold text-slate-600 block mb-2">能量数量</label>
