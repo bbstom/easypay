@@ -19,12 +19,42 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: '系统配置未完成' });
     }
 
-    // 计算服务费
+    // 计算服务费 - 支持阶梯费率
     let serviceFee = 0;
-    if (settings.feeType === 'fixed') {
-      serviceFee = payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
+    
+    // 根据代付类型选择对应的阶梯费率配置
+    const tieredFeeEnabled = payType === 'USDT' ? settings.tieredFeeEnabledUSDT : settings.tieredFeeEnabledTRX;
+    const tieredFeeRules = payType === 'USDT' ? settings.tieredFeeRulesUSDT : settings.tieredFeeRulesTRX;
+    
+    if (tieredFeeEnabled) {
+      // 使用阶梯费率
+      const rules = JSON.parse(tieredFeeRules || '[]');
+      const amt = parseFloat(amount) || 0;
+      
+      // 查找匹配的费率规则
+      const matchedRule = rules.find(rule => 
+        amt >= rule.minAmount && amt < rule.maxAmount
+      );
+      
+      if (matchedRule) {
+        if (matchedRule.feeType === 'fixed') {
+          // 固定费用
+          serviceFee = matchedRule.feeValue;
+        } else {
+          // 百分比费率
+          const base = amt * getExchangeRate(payType, settings);
+          serviceFee = (base * (matchedRule.feeValue / 100));
+        }
+        
+        console.log(`使用 ${payType} 阶梯费率: ${amt} ${payType} 匹配规则 [${matchedRule.minAmount}-${matchedRule.maxAmount}], 费率类型: ${matchedRule.feeType}, 费用: ${serviceFee} CNY`);
+      } else {
+        // 没有匹配的规则，使用默认费率
+        console.log(`未找到匹配的 ${payType} 阶梯费率规则，使用默认费率`);
+        serviceFee = calculateDefaultFee(amount, payType, settings);
+      }
     } else {
-      serviceFee = req.body.totalCNY * (settings.feePercentage / 100);
+      // 使用传统费率
+      serviceFee = calculateDefaultFee(amount, payType, settings);
     }
 
     // 生成订单号
@@ -83,9 +113,8 @@ router.post('/', async (req, res) => {
         paymentMethod
       });
 
-      // 随机商品名称列表
-      const productNames = ['MongoDB Atlas', 'AWS Lambda', 'Vercel', 'CDN', 'OneDrive'];
-      const randomProductName = productNames[Math.floor(Math.random() * productNames.length)];
+      // 生成12位随机数字作为商品名称
+      const randomProductName = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
 
       const paymentOrder = await paymentService.createPaymentOrder({
         orderId: orderId,
@@ -162,6 +191,22 @@ router.post('/', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// 辅助函数：获取汇率
+function getExchangeRate(coinType, settings) {
+  return coinType === 'USDT' ? settings.exchangeRateUSDT : settings.exchangeRateTRX;
+}
+
+// 辅助函数：计算默认费率
+function calculateDefaultFee(amount, payType, settings) {
+  const amt = parseFloat(amount) || 0;
+  if (settings.feeType === 'fixed') {
+    return payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
+  } else {
+    const base = amt * getExchangeRate(payType, settings);
+    return (base * (settings.feePercentage / 100));
+  }
+}
 
 // 支付回调接口（GET - 这个支付平台使用GET请求）
 router.get('/notify', async (req, res) => {

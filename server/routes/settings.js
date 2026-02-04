@@ -47,6 +47,13 @@ router.get('/public', async (req, res) => {
       feeUSDT: settings.feeUSDT,
       feeTRX: settings.feeTRX,
       feePercentage: settings.feePercentage,
+      tieredFeeEnabledUSDT: settings.tieredFeeEnabledUSDT, // USDT 阶梯费率开关
+      tieredFeeRulesUSDT: settings.tieredFeeRulesUSDT, // USDT 阶梯费率规则
+      tieredFeeEnabledTRX: settings.tieredFeeEnabledTRX, // TRX 阶梯费率开关
+      tieredFeeRulesTRX: settings.tieredFeeRulesTRX, // TRX 阶梯费率规则
+      // 保留旧字段以兼容
+      tieredFeeEnabled: settings.tieredFeeEnabled,
+      tieredFeeRules: settings.tieredFeeRules,
       exchangeRateMode: settings.exchangeRateMode,
       exchangeRateUSDT: settings.exchangeRateUSDT,
       exchangeRateTRX: settings.exchangeRateTRX,

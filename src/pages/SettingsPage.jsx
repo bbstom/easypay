@@ -501,6 +501,12 @@ const SettingsPage = () => {
               <div className="space-y-6">
                 <h2 className="text-xl font-black text-slate-800 mb-4">服务费设置</h2>
                 
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    💡 <strong>提示：</strong>代付系统的阶梯费率请在"代付系统 → 费率设置"中配置
+                  </p>
+                </div>
+                
                 <div>
                   <label className="text-sm font-bold text-slate-600 block mb-2">费率类型</label>
                   <select

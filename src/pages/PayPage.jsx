@@ -111,6 +111,46 @@ const PayPage = () => {
   const calculateServiceFee = () => {
     if (!settings) return 0;
     const amt = parseFloat(amount) || 0;
+    
+    // 如果启用了 USDT 阶梯费率
+    if (settings.tieredFeeEnabledUSDT) {
+      try {
+        const rules = JSON.parse(settings.tieredFeeRulesUSDT || '[]');
+        
+        console.log('🔍 USDT 阶梯费率已启用');
+        console.log('📊 当前金额:', amt, 'USDT');
+        console.log('📋 费率规则:', rules);
+        
+        // 查找匹配的费率规则
+        const matchedRule = rules.find(rule => 
+          amt >= rule.minAmount && amt < rule.maxAmount
+        );
+        
+        if (matchedRule) {
+          console.log('✅ 匹配到规则:', matchedRule);
+          
+          if (matchedRule.feeType === 'fixed') {
+            // 固定费用
+            console.log('💰 固定费用:', matchedRule.feeValue, 'CNY');
+            return matchedRule.feeValue;
+          } else {
+            // 百分比费率
+            const base = amt * getExchangeRate(payType);
+            const fee = (base * (matchedRule.feeValue / 100)).toFixed(2);
+            console.log('💰 百分比费率:', matchedRule.feeValue + '%', '=', fee, 'CNY');
+            return fee;
+          }
+        } else {
+          console.log('⚠️ 未匹配到任何规则，使用默认费率');
+        }
+      } catch (error) {
+        console.error('❌ 阶梯费率计算失败:', error);
+      }
+    } else {
+      console.log('ℹ️ USDT 阶梯费率未启用，使用传统费率');
+    }
+    
+    // 使用传统费率
     if (settings.feeType === 'fixed') {
       return payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
     } else {
@@ -1044,22 +1084,26 @@ const PayPage = () => {
                 </div>
               </div>
 
-              <div className="bg-white border-4 border-slate-100 rounded-xl p-4 mb-6 flex items-center justify-center">
+              <div className="flex items-center justify-center mb-6">
                 {paymentUrl ? (
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
-                    alt="支付二维码"
-                    className="w-48 h-48"
-                    onError={(e) => {
-                      console.error('二维码加载失败');
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<div class="text-red-500 text-sm">二维码加载失败</div>';
-                    }}
-                  />
+                  <div className="bg-white border-4 border-slate-100 rounded-xl overflow-hidden inline-block">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
+                      alt="支付二维码"
+                      className="w-48 h-48 block"
+                      onError={(e) => {
+                        console.error('二维码加载失败');
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="text-red-500 text-sm p-4">二维码加载失败</div>';
+                      }}
+                    />
+                  </div>
                 ) : (
-                  <div className="w-48 h-48 flex flex-col items-center justify-center gap-3">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#00A3FF] border-t-transparent"></div>
-                    <p className="text-sm text-slate-500">正在生成支付链接...</p>
+                  <div className="bg-white border-4 border-slate-100 rounded-xl p-4">
+                    <div className="w-48 h-48 flex flex-col items-center justify-center gap-3">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#00A3FF] border-t-transparent"></div>
+                      <p className="text-sm text-slate-500">正在生成支付链接...</p>
+                    </div>
                   </div>
                 )}
               </div>

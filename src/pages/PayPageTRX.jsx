@@ -109,6 +109,46 @@ const PayPageTRX = () => {
   const calculateServiceFee = () => {
     if (!settings) return 0;
     const amt = parseFloat(amount) || 0;
+    
+    // 如果启用了 TRX 阶梯费率
+    if (settings.tieredFeeEnabledTRX) {
+      try {
+        const rules = JSON.parse(settings.tieredFeeRulesTRX || '[]');
+        
+        console.log('🔍 TRX 阶梯费率已启用');
+        console.log('📊 当前金额:', amt, 'TRX');
+        console.log('📋 费率规则:', rules);
+        
+        // 查找匹配的费率规则
+        const matchedRule = rules.find(rule => 
+          amt >= rule.minAmount && amt < rule.maxAmount
+        );
+        
+        if (matchedRule) {
+          console.log('✅ 匹配到规则:', matchedRule);
+          
+          if (matchedRule.feeType === 'fixed') {
+            // 固定费用
+            console.log('💰 固定费用:', matchedRule.feeValue, 'CNY');
+            return matchedRule.feeValue;
+          } else {
+            // 百分比费率
+            const base = amt * getExchangeRate(payType);
+            const fee = (base * (matchedRule.feeValue / 100)).toFixed(2);
+            console.log('💰 百分比费率:', matchedRule.feeValue + '%', '=', fee, 'CNY');
+            return fee;
+          }
+        } else {
+          console.log('⚠️ 未匹配到任何规则，使用默认费率');
+        }
+      } catch (error) {
+        console.error('❌ 阶梯费率计算失败:', error);
+      }
+    } else {
+      console.log('ℹ️ TRX 阶梯费率未启用，使用传统费率');
+    }
+    
+    // 使用传统费率
     if (settings.feeType === 'fixed') {
       return payType === 'USDT' ? settings.feeUSDT : settings.feeTRX;
     } else {

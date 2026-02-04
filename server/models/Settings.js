@@ -55,6 +55,35 @@ const settingsSchema = new mongoose.Schema({
   feeTRX: { type: Number, default: 2 },
   feePercentage: { type: Number, default: 1 }, // 百分比费率
   
+  // USDT 阶梯费率配置（JSON数组格式）
+  tieredFeeEnabledUSDT: { type: Boolean, default: false }, // 是否启用 USDT 阶梯费率
+  tieredFeeRulesUSDT: { 
+    type: String, 
+    default: JSON.stringify([
+      { minAmount: 0, maxAmount: 100, feeType: 'fixed', feeValue: 5, description: '0-100 USDT' },
+      { minAmount: 100, maxAmount: 500, feeType: 'fixed', feeValue: 3, description: '100-500 USDT' },
+      { minAmount: 500, maxAmount: 999999, feeType: 'percentage', feeValue: 0.5, description: '500+ USDT' }
+    ])
+  },
+  
+  // TRX 阶梯费率配置（JSON数组格式）
+  tieredFeeEnabledTRX: { type: Boolean, default: false }, // 是否启用 TRX 阶梯费率
+  tieredFeeRulesTRX: { 
+    type: String, 
+    default: JSON.stringify([
+      { minAmount: 0, maxAmount: 1000, feeType: 'fixed', feeValue: 2, description: '0-1000 TRX' },
+      { minAmount: 1000, maxAmount: 5000, feeType: 'fixed', feeValue: 1, description: '1000-5000 TRX' },
+      { minAmount: 5000, maxAmount: 999999, feeType: 'percentage', feeValue: 0.3, description: '5000+ TRX' }
+    ])
+  },
+  
+  // 保留旧字段以兼容（已废弃，使用上面的 USDT/TRX 独立配置）
+  tieredFeeEnabled: { type: Boolean, default: false },
+  tieredFeeRules: { 
+    type: String, 
+    default: JSON.stringify([])
+  },
+  
   // 汇率设置
   exchangeRateMode: { type: String, enum: ['realtime', 'manual'], default: 'manual' }, // 实时或手动
   exchangeRateUSDT: { type: Number, default: 7.35 }, // USDT汇率（手动模式使用）
