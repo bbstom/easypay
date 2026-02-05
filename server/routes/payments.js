@@ -489,14 +489,30 @@ async function updateWalletBalance(walletId) {
   try {
     const Wallet = require('../models/Wallet');
     const wallet = await Wallet.findById(walletId);
-    if (!wallet) return;
+    if (!wallet) {
+      console.error('❌ 更新余额失败: 钱包不存在');
+      return;
+    }
+
+    console.log(`\n🔄 开始更新钱包余额: ${wallet.name} (${wallet.address})`);
+
+    // 验证地址
+    if (!wallet.address) {
+      console.error('❌ 更新余额失败: 钱包地址为空');
+      return;
+    }
 
     // 初始化 TronWeb
     await tronService.initialize();
 
     // 获取余额
+    console.log('📊 正在查询 TRX 余额...');
     const trxBalance = await tronService.getBalance(wallet.address);
+    console.log(`✅ TRX 余额: ${trxBalance.toFixed(2)}`);
+    
+    console.log('📊 正在查询 USDT 余额...');
     const usdtBalance = await tronService.getUSDTBalance(wallet.address);
+    console.log(`✅ USDT 余额: ${usdtBalance.toFixed(2)}`);
 
     // 更新钱包余额
     wallet.balance.trx = trxBalance;
@@ -508,7 +524,8 @@ async function updateWalletBalance(walletId) {
     console.log(`   TRX: ${trxBalance.toFixed(2)}`);
     console.log(`   USDT: ${usdtBalance.toFixed(2)}\n`);
   } catch (error) {
-    console.error('更新钱包余额失败:', error.message);
+    console.error('❌ 更新钱包余额失败:', error.message);
+    console.error('错误详情:', error);
   }
 }
 

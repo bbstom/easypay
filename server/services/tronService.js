@@ -564,8 +564,14 @@ class TronService {
 
   // 获取账户余额（带重试）
   async getBalance(address) {
+    if (!address) {
+      throw new Error('地址参数不能为空');
+    }
+
     if (!this.tronWeb) await this.initialize();
 
+    console.log(`📊 查询 TRX 余额: ${address}`);
+    
     return this.retryApiCall(async () => {
       const balance = await this.tronWeb.trx.getBalance(address);
       return balance / 1000000; // 转换为TRX
@@ -574,7 +580,13 @@ class TronService {
 
   // 获取USDT余额（带重试）
   async getUSDTBalance(address) {
+    if (!address) {
+      throw new Error('地址参数不能为空');
+    }
+
     if (!this.tronWeb) await this.initialize();
+
+    console.log(`📊 查询 USDT 余额: ${address}`);
 
     return this.retryApiCall(async () => {
       const usdtContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
