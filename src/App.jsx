@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp } from 'lucide-react';
+import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp, Menu, X } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { USDTIcon, TRXIcon } from './components/Icons';
 import axios from 'axios';
@@ -126,6 +126,7 @@ const App = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showPayMenu, setShowPayMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // 移动端菜单状态
 
   // 加载动态 favicon
   useFavicon();
@@ -167,7 +168,96 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 text-[#334155] font-sans selection:bg-cyan-100 flex flex-col">
       {!isAdminPage && (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm h-16' : 'bg-transparent h-20'}`}>
+        <>
+          {/* 移动端汉堡菜单按钮 - 替代登录按钮的位置 */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="fixed top-5 right-5 z-[60] lg:hidden p-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+            {mobileMenuOpen ? <X size={24} className="text-slate-700" /> : <Menu size={24} className="text-slate-700" />}
+          </button>
+
+          {/* 移动端侧边栏菜单 */}
+          {mobileMenuOpen && (
+            <>
+              <div 
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+                onClick={() => setMobileMenuOpen(false)} 
+              />
+              <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 overflow-y-auto lg:hidden transform transition-transform duration-300">
+                <div className="p-6 pt-20 space-y-2">
+                  {user && (
+                    <div className="mb-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl">
+                      <p className="text-sm font-bold text-slate-800">{user.username}</p>
+                      <p className="text-xs text-slate-500">{user.email}</p>
+                    </div>
+                  )}
+                  
+                  <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <Home size={18} />
+                    首页
+                  </button>
+                  <button onClick={() => { navigate('/pay'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <USDTIcon className="w-5 h-5" />
+                    USDT 代付
+                  </button>
+                  <button onClick={() => { navigate('/pay-trx'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <TRXIcon className="w-5 h-5" />
+                    TRX 代付
+                  </button>
+                  <button onClick={() => { navigate('/energy-rental'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <Zap size={18} />
+                    能量租赁
+                  </button>
+                  <button onClick={() => { navigate('/swap'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <ArrowDownUp size={18} />
+                    闪兑中心
+                  </button>
+                  <button onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <HelpCircle size={18} />
+                    常见问题
+                  </button>
+                  
+                  {user && (
+                    <>
+                      <div className="border-t border-slate-200 my-3"></div>
+                      <button onClick={() => { navigate('/user-center'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                        <User size={18} />
+                        个人中心
+                      </button>
+                      <button onClick={() => { navigate('/my-orders'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        我的订单
+                      </button>
+                      {user.role === 'admin' && (
+                        <button onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-cyan-50 font-bold text-cyan-600 flex items-center gap-3">
+                          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          管理后台
+                        </button>
+                      )}
+                      <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 font-bold text-red-600 flex items-center gap-3">
+                        <LogOut size={18} />
+                        退出登录
+                      </button>
+                    </>
+                  )}
+                  
+                  {!user && (
+                    <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all mt-4">
+                      登录 / 注册
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm h-16' : 'bg-transparent h-20'}`}>
           <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between border-b border-slate-200/50">
             <div className="flex items-center gap-10">
               <div onClick={() => navigate('/')} className="flex items-center gap-2 group cursor-pointer">
@@ -263,7 +353,7 @@ const App = () => {
             </div>
             <div className="flex items-center gap-4">
               {user ? (
-                <div className="flex items-center gap-3">
+                <div className="hidden lg:flex items-center gap-3">
                   {/* 用户菜单 - 带下拉 */}
                   <div 
                     className="relative"
@@ -313,11 +403,12 @@ const App = () => {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => navigate('/login')} className="bg-slate-900 text-white px-6 py-2 rounded-full text-[13px] font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">登录 / 注册</button>
+                <button onClick={() => navigate('/login')} className="hidden lg:block bg-slate-900 text-white px-6 py-2 rounded-full text-[13px] font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">登录 / 注册</button>
               )}
             </div>
           </div>
         </nav>
+        </>
       )}
 
       <Routes>

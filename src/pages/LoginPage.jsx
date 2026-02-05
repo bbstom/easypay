@@ -46,16 +46,37 @@ const LoginPage = () => {
             {!isLogin && (
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">用户名</label>
-                <input type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" required={!isLogin} />
+                <input 
+                  type="text" 
+                  value={formData.username} 
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })} 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" 
+                  autoComplete="username"
+                  required={!isLogin} 
+                />
               </div>
             )}
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">邮箱</label>
-              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" required />
+              <input 
+                type="email" 
+                value={formData.email} 
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" 
+                autoComplete="email"
+                required 
+              />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">密码</label>
-              <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" required />
+              <input 
+                type="password" 
+                value={formData.password} 
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 outline-none" 
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                required 
+              />
             </div>
             <button type="submit" className="w-full bg-cyan-500 text-white py-4 rounded-xl font-black hover:bg-cyan-600 transition-all shadow-lg">
               {isLogin ? '登录' : '注册'}

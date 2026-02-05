@@ -1,0 +1,84 @@
+移动端导航修复说明
+==================
+
+需要在 src/App.jsx 中做以下修改：
+
+1. 在导入部分添加 Menu 和 X 图标：
+   import { ..., Menu, X } from 'lucide-react';
+
+2. 在 App 组件的 state 中添加：
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+3. 在 return 语句中，在导航栏之前添加移动端菜单按钮：
+
+在第 172 行 {!isAdminPage && ( 之后，nav 标签之前添加：
+
+{/* 移动端汉堡菜单按钮 - 固定在右上角 */}
+<button
+  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+  className="fixed top-4 right-4 z-50 lg:hidden p-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+>
+  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+</button>
+
+{/* 移动端侧边栏菜单 */}
+{mobileMenuOpen && (
+  <>
+    <div 
+      className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      onClick={() => setMobileMenuOpen(false)}
+    />
+    <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 overflow-y-auto lg:hidden">
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center mb-6">
+          <span className="text-xl font-black text-slate-800">菜单</span>
+          <button onClick={() => setMobileMenuOpen(false)} className="p-2">
+            <X size={24} />
+          </button>
+        </div>
+
+        <nav className="space-y-2">
+          <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            <Home size={18} /> 首页
+          </button>
+          <button onClick={() => { navigate('/pay'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            USDT 代付
+          </button>
+          <button onClick={() => { navigate('/pay-trx'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            TRX 代付
+          </button>
+          <button onClick={() => { navigate('/energy-rental'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            <Zap size={18} /> 能量租赁
+          </button>
+          <button onClick={() => { navigate('/swap'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            <ArrowDownUp size={18} /> 闪兑中心
+          </button>
+          <button onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+            <HelpCircle size={18} /> 常见问题
+          </button>
+          
+          {user ? (
+            <>
+              <div className="border-t my-4"></div>
+              <button onClick={() => { navigate('/user-center'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+                <User size={18} /> 个人中心
+              </button>
+              <button onClick={() => { navigate('/my-orders'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 flex items-center gap-3 text-sm font-bold">
+                我的订单
+              </button>
+              <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-600">
+                <LogOut size={18} /> 退出登录
+              </button>
+            </>
+          ) : (
+            <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-lg bg-slate-900 text-white text-sm font-bold">
+              登录 / 注册
+            </button>
+          )}
+        </nav>
+      </div>
+    </div>
+  </>
+)}
+
+这样就可以在手机端看到右上角的汉堡菜单按钮了。
