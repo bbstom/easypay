@@ -464,12 +464,22 @@ const PayPageTRX = () => {
   };
 
   const startPollingOrderStatus = (orderId) => {
+    let paymentNotified = false;
+    
     const interval = setInterval(async () => {
       try {
         const { data } = await axios.get(`/api/payments/order/${orderId}`);
+        
+        // 支付完成（第一个通知）
+        if (data.paymentStatus === 'paid' && !paymentNotified) {
+          paymentNotified = true;
+          alert(`✅ 支付成功\n\n您的订单支付已确认！\n\n🔄 正在处理 ${data.payType} 代付...\n⏱️ 预计 2-10 分钟完成\n\n⚠️ 请勿关闭此页面\n等待转账完成后会自动通知您`);
+        }
+        
+        // 代付完成（第二个通知）
         if (data.status === 'completed') {
           clearInterval(interval);
-          alert('支付成功！代付正在处理中...');
+          alert(`✅ ${data.payType} 代付完成\n\n${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash ? data.txHash.slice(0, 10) + '...' + data.txHash.slice(-8) : '处理中'}\n\n可在历史订单中查看详情`);
           setShowPayment(false);
           setAmount('');
           setAddress('');
@@ -477,7 +487,7 @@ const PayPageTRX = () => {
           fetchRecentPayments();
         } else if (data.status === 'failed') {
           clearInterval(interval);
-          alert('支付失败，请重试');
+          alert(`❌ ${data.payType} 代付失败\n\n转账失败，请联系客服处理\n\n可能原因：\n• 钱包余额不足\n• 网络拥堵\n\n请联系客服或稍后重试`);
           setShowPayment(false);
         }
       } catch (error) {
@@ -1043,22 +1053,26 @@ const PayPageTRX = () => {
                 </div>
               </div>
 
-              <div className="bg-white border-4 border-slate-100 rounded-xl p-4 mb-6 flex items-center justify-center">
+              <div className="flex items-center justify-center mb-6">
                 {paymentUrl ? (
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
-                    alt="支付二维码"
-                    className="w-48 h-48"
-                    onError={(e) => {
-                      console.error('二维码加载失败');
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<div class="text-red-500 text-sm">二维码加载失败</div>';
-                    }}
-                  />
+                  <div className="bg-white border-4 border-slate-100 rounded-xl overflow-hidden inline-block">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
+                      alt="支付二维码"
+                      className="w-48 h-48 block"
+                      onError={(e) => {
+                        console.error('二维码加载失败');
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="text-red-500 text-sm p-4">二维码加载失败</div>';
+                      }}
+                    />
+                  </div>
                 ) : (
-                  <div className="w-48 h-48 flex flex-col items-center justify-center gap-3">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#00A3FF] border-t-transparent"></div>
-                    <p className="text-sm text-slate-500">正在生成支付链接...</p>
+                  <div className="bg-white border-4 border-slate-100 rounded-xl p-4">
+                    <div className="w-48 h-48 flex flex-col items-center justify-center gap-3">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#00A3FF] border-t-transparent"></div>
+                      <p className="text-sm text-slate-500">正在生成支付链接...</p>
+                    </div>
                   </div>
                 )}
               </div>

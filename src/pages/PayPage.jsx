@@ -493,8 +493,8 @@ const PayPage = () => {
           console.log('✅ 支付成功，显示通知');
           console.log('📢 调用 showNotification...');
           showNotification(
-            '支付成功', 
-            `您的订单支付已确认！\n正在处理 ${data.payType} 代付，请稍候...`, 
+            '✅ 支付成功', 
+            `您的订单支付已确认！\n\n🔄 正在处理 ${data.payType} 代付...\n⏱️ 预计 2-10 分钟完成\n\n⚠️ 请勿关闭此页面\n等待转账完成后会自动通知您`, 
             'success'
           );
           console.log('✅ 通知已触发');
