@@ -15,6 +15,7 @@ const swapRoutes = require('./routes/swap'); // 闪兑路由
 const exchangeRateService = require('./services/exchangeRateService');
 const orderTimeoutService = require('./services/orderTimeoutService');
 const swapService = require('./services/swapService'); // 闪兑服务
+const walletUpdateService = require('./services/walletUpdateService'); // 钱包余额更新服务
 
 const app = express();
 
@@ -36,6 +37,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fastpay')
     orderTimeoutService.start();
     // 启动闪兑监控服务
     swapService.startMonitoring();
+    // 启动钱包余额自动更新服务（每小时更新一次）
+    walletUpdateService.start(60);
   })
   .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
