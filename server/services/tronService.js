@@ -591,7 +591,11 @@ class TronService {
     return this.retryApiCall(async () => {
       const usdtContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
       const contract = await this.tronWeb.contract().at(usdtContract);
-      const balance = await contract.balanceOf(address).call();
+      
+      // 使用 call 方法时传入 from 参数，指定调用者地址（不需要私钥）
+      const balance = await contract.balanceOf(address).call({
+        from: address
+      });
       
       // TronWeb 6.x 返回的可能是 BigNumber 或普通数字
       let balanceValue;
