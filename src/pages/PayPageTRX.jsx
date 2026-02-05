@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Wallet, History, ExternalLink, ArrowRight, ShieldCheck, QrCode, X } from 'lucide-react';
+import { Wallet, History, ExternalLink, ArrowRight, ShieldCheck, QrCode, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { AlipayIcon, WechatIcon, TRXIcon } from '../components/Icons';
@@ -24,6 +24,7 @@ const PayPageTRX = () => {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [currentOrderId, setCurrentOrderId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
   
   // 二维码扫描相关状态
   const [showScanner, setShowScanner] = useState(false);
@@ -473,13 +474,21 @@ const PayPageTRX = () => {
         // 支付完成（第一个通知）
         if (data.paymentStatus === 'paid' && !paymentNotified) {
           paymentNotified = true;
-          alert(`✅ 支付成功\n\n您的订单支付已确认！\n\n🔄 正在处理 ${data.payType} 代付...\n⏱️ 预计 2-10 分钟完成\n\n⚠️ 请勿关闭此页面\n等待转账完成后会自动通知您`);
+          showNotification(
+            '✅ 支付成功', 
+            `您的订单支付已确认！\n\n🔄 正在处理 ${data.payType} 代付...\n⏱️ 预计 2-10 分钟完成\n\n⚠️ 请勿关闭此页面\n等待转账完成后会自动通知您`, 
+            'success'
+          );
         }
         
         // 代付完成（第二个通知）
         if (data.status === 'completed') {
           clearInterval(interval);
-          alert(`✅ ${data.payType} 代付完成\n\n${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash ? data.txHash.slice(0, 10) + '...' + data.txHash.slice(-8) : '处理中'}\n\n可在历史订单中查看详情`);
+          showNotification(
+            `✅ ${data.payType} 代付完成`, 
+            `${data.amount} ${data.payType} 已成功转账到您的地址！\n\n交易哈希：${data.txHash ? data.txHash.slice(0, 10) + '...' + data.txHash.slice(-8) : '处理中'}\n\n可在历史订单中查看详情`, 
+            'success'
+          );
           setShowPayment(false);
           setAmount('');
           setAddress('');
@@ -487,7 +496,11 @@ const PayPageTRX = () => {
           fetchRecentPayments();
         } else if (data.status === 'failed') {
           clearInterval(interval);
-          alert(`❌ ${data.payType} 代付失败\n\n转账失败，请联系客服处理\n\n可能原因：\n• 钱包余额不足\n• 网络拥堵\n\n请联系客服或稍后重试`);
+          showNotification(
+            `❌ ${data.payType} 代付失败`, 
+            '转账失败，请联系客服处理\n\n可能原因：\n• 钱包余额不足\n• 网络拥堵\n\n请联系客服或稍后重试', 
+            'error'
+          );
           setShowPayment(false);
         }
       } catch (error) {
@@ -497,6 +510,10 @@ const PayPageTRX = () => {
 
     // 5分钟后停止轮询
     setTimeout(() => clearInterval(interval), 300000);
+  };
+
+  const showNotification = (title, message, type) => {
+    setNotification({ title, message, type });
   };
 
   const closePayment = () => {
@@ -511,6 +528,69 @@ const PayPageTRX = () => {
 
   return (
     <div className="animate-in fade-in duration-500 pt-28 pb-20 min-h-screen relative overflow-hidden">
+      {/* 通知组件 - 居中显示，优雅设计，最高层级 */}
+      {notification && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300 px-4">
+          {/* 背景模糊层 - 使用渐变蓝色 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#E0F2FE]/80 via-[#F0F9FF]/80 to-white/80 backdrop-blur-md"></div>
+          
+          {/* 通知卡片 */}
+          <div className={`relative max-w-md w-full ${
+            notification.type === 'success' 
+              ? 'bg-white' 
+              : 'bg-white'
+          } rounded-2xl shadow-2xl border-2 ${
+            notification.type === 'success' 
+              ? 'border-[#00A3FF]/20' 
+              : 'border-red-200'
+          } overflow-hidden animate-in zoom-in duration-300`}>
+            {/* 顶部装饰条 */}
+            <div className={`h-2 ${
+              notification.type === 'success' 
+                ? 'bg-gradient-to-r from-[#00A3FF] to-[#0086D1]' 
+                : 'bg-gradient-to-r from-red-500 to-red-600'
+            }`}></div>
+            
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                {notification.type === 'success' ? (
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-[#E0F2FE] to-[#BAE6FD] rounded-2xl flex items-center justify-center shadow-lg">
+                    <CheckCircle className="text-[#00A3FF]" size={32} strokeWidth={2.5} />
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-red-50 to-red-100 rounded-2xl flex items-center justify-center shadow-lg">
+                    <AlertTriangle className="text-red-600" size={32} strokeWidth={2.5} />
+                  </div>
+                )}
+                <div className="flex-1 pt-1">
+                  <h4 className={`font-black mb-2 text-xl ${
+                    notification.type === 'success' ? 'text-slate-900' : 'text-red-900'
+                  }`}>
+                    {notification.title}
+                  </h4>
+                  <p className="text-base text-slate-700 whitespace-pre-line leading-relaxed">
+                    {notification.message}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setNotification(null)}
+                  className={`px-8 py-3 rounded-xl font-bold transition-all shadow-lg ${
+                    notification.type === 'success'
+                      ? 'bg-gradient-to-r from-[#00A3FF] to-[#0086D1] hover:from-[#0086D1] hover:to-[#006BA8] text-white'
+                      : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
+                  }`}
+                >
+                  知道了
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 渐变背景 */}
       <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-br from-[#F0F9FF] via-[#E0F2FE] to-[#F8FAFC] -z-10"></div>
       
