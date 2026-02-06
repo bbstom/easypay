@@ -155,7 +155,7 @@ const UserLayout = ({ children }) => {
       {/* 主内容区域 */}
       <main className="flex-1 md:ml-56 overflow-x-hidden">
         {/* 顶部栏 */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
           {/* 移动端汉堡菜单 */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -173,7 +173,7 @@ const UserLayout = ({ children }) => {
         </header>
 
         {/* 页面内容 */}
-        <div className="p-4 md:p-6 pb-8 min-h-[calc(100vh-4rem)]">
+        <div className="p-4 md:p-6 pb-8">
           {children}
         </div>
       </main>
