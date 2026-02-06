@@ -7,7 +7,7 @@ import axios from 'axios';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, register, telegramLogin } = useAuth();
+  const { login, register, telegramLogin, user } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -15,6 +15,15 @@ const LoginPage = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [loginToken, setLoginToken] = useState('');
   const [qrCodeExpired, setQrCodeExpired] = useState(false);
+
+  // 检查是否已登录，如果已登录则跳转到用户中心
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token || user) {
+      console.log('✅ 已登录，跳转到用户中心');
+      navigate('/user-center');
+    }
+  }, [user, navigate]);
 
   const handleTelegramAppLogin = () => {
     const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
@@ -31,20 +40,14 @@ const LoginPage = () => {
     // 尝试打开应用
     window.location.href = tgUrl;
     
-    // 如果1.5秒后还在页面上，说明可能没有安装应用，打开网页版
-    setTimeout(() => {
-      const webUrl = `https://t.me/${botUsername}?start=${token}`;
-      console.log('🌐 打开 Telegram 网页版:', webUrl);
-      window.open(webUrl, '_blank');
-    }, 1500);
-    
     // 开始轮询检查登录状态
     console.log('🔄 启动轮询...');
     startPolling(token);
     
     // 显示提示
     setError('');
-    alert('请在 Telegram 中点击"确认登录"按钮');
+    // 不使用 alert，改用页面提示
+    setError('请在 Telegram 中点击"确认登录"按钮');
   };
 
   const generateQRCode = async () => {
@@ -122,8 +125,10 @@ const LoginPage = () => {
               axios.defaults.headers.common['Authorization'] = `Bearer ${completeData.token}`;
               
               console.log('🚀 跳转到用户中心...');
-              // 使用 window.location.href 强制跳转
-              window.location.href = '/user-center';
+              // 使用 window.location.replace 强制跳转（不可后退）
+              setTimeout(() => {
+                window.location.replace('/user-center');
+              }, 100);
             } else {
               console.error('❌ Complete API 返回错误:', completeData);
               setError(completeData.error || '登录失败，请重试');
