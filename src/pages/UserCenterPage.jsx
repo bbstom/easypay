@@ -78,7 +78,7 @@ const UserCenterPage = () => {
 
   return (
     <UserLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto pt-4">
         {/* 用户信息卡片 */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
           <div className="flex items-start justify-between mb-6">
