@@ -15,7 +15,33 @@ const LoginPage = () => {
   const [loginToken, setLoginToken] = useState('');
   const [qrCodeExpired, setQrCodeExpired] = useState(false);
 
-  // 生成二维码
+  const handleTelegramAppLogin = () => {
+    const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
+    
+    // 生成唯一的登录令牌
+    const token = `login_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setLoginToken(token);
+    
+    // 使用 tg:// 协议直接打开 Telegram 应用
+    const tgUrl = `tg://resolve?domain=${botUsername}&start=${token}`;
+    
+    // 尝试打开应用
+    window.location.href = tgUrl;
+    
+    // 如果1.5秒后还在页面上，说明可能没有安装应用，打开网页版
+    setTimeout(() => {
+      const webUrl = `https://t.me/${botUsername}?start=${token}`;
+      window.open(webUrl, '_blank');
+    }, 1500);
+    
+    // 开始轮询检查登录状态
+    startPolling(token);
+    
+    // 显示提示
+    setError('');
+    alert('请在 Telegram 中点击"确认登录"按钮');
+  };
+
   const generateQRCode = async () => {
     try {
       // 生成唯一的登录令牌
@@ -109,22 +135,39 @@ const LoginPage = () => {
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
           {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-bold">{error}</div>}
           
-          {/* Telegram 扫码登录 */}
+          {/* Telegram 登录 */}
           <div className="mb-6">
             <div className="text-center mb-3">
-              <span className="text-sm font-bold text-slate-600">使用 Telegram 扫码登录</span>
+              <span className="text-sm font-bold text-slate-600">使用 Telegram 快速登录</span>
             </div>
             
             {!showQRCode ? (
-              <button
-                onClick={generateQRCode}
-                className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-.962 3.767-1.362 5.001-.169.523-.506.697-.831.715-.704.031-1.238-.465-1.92-.911-.106-.07-2.022-1.294-2.726-1.892-.193-.164-.41-.492-.013-.876.917-.886 2.014-1.877 2.68-2.537.297-.295.594-.984-.652-.145-1.784 1.201-3.527 2.368-3.527 2.368s-.414.263-.119.263c.295 0 4.343-1.411 4.343-1.411s.801-.314.801.209z"/>
-                </svg>
-                <span>点击显示二维码</span>
-              </button>
+              <div className="space-y-3">
+                {/* 打开 Telegram 应用按钮 */}
+                <button
+                  onClick={handleTelegramAppLogin}
+                  className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-.962 3.767-1.362 5.001-.169.523-.506.697-.831.715-.704.031-1.238-.465-1.92-.911-.106-.07-2.022-1.294-2.726-1.892-.193-.164-.41-.492-.013-.876.917-.886 2.014-1.877 2.68-2.537.297-.295.594-.984-.652-.145-1.784 1.201-3.527 2.368-3.527 2.368s-.414.263-.119.263c.295 0 4.343-1.411 4.343-1.411s.801-.314.801.209z"/>
+                  </svg>
+                  <span>打开 Telegram 应用登录</span>
+                </button>
+                
+                {/* 扫码登录按钮 */}
+                <button
+                  onClick={generateQRCode}
+                  className="w-full bg-white hover:bg-slate-50 text-[#0088cc] font-bold py-3 px-4 rounded-xl transition-all border-2 border-[#0088cc] flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                  </svg>
+                  <span>或扫描二维码登录</span>
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col items-center">
                 <div className={`bg-white p-4 rounded-2xl border-2 ${qrCodeExpired ? 'border-red-300' : 'border-blue-300'} relative`}>
@@ -235,13 +278,25 @@ const LoginPage = () => {
           <div className="flex items-start gap-3">
             <div className="text-2xl">💡</div>
             <div className="flex-1">
-              <div className="font-bold text-blue-900 mb-1">扫码登录步骤</div>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>1. 点击"显示二维码"按钮</li>
-                <li>2. 打开 Telegram 扫描二维码</li>
-                <li>3. 在 Telegram 中点击"确认登录"</li>
-                <li>4. 自动完成登录</li>
-              </ul>
+              <div className="font-bold text-blue-900 mb-2">Telegram 登录方式</div>
+              <div className="text-sm text-blue-700 space-y-3">
+                <div>
+                  <div className="font-bold mb-1">📱 方式一：打开应用（推荐）</div>
+                  <ul className="space-y-1 ml-4">
+                    <li>• 点击"打开 Telegram 应用登录"</li>
+                    <li>• 在 Telegram 中确认登录</li>
+                    <li>• 自动完成登录</li>
+                  </ul>
+                </div>
+                <div>
+                  <div className="font-bold mb-1">📷 方式二：扫码登录</div>
+                  <ul className="space-y-1 ml-4">
+                    <li>• 点击"扫描二维码登录"</li>
+                    <li>• 用 Telegram 扫描二维码</li>
+                    <li>• 在 Telegram 中确认登录</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

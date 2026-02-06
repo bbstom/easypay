@@ -1,313 +1,447 @@
 # Telegram 登录快速配置指南
 
-## 🚀 5分钟快速配置
+## ✅ 已完成的功能
 
-### 步骤 1：获取 Bot Username
+### 1. 打开 Telegram 应用登录（推荐）
+- ✅ 使用 `tg://` 协议直接调用本地应用
+- ✅ 自动回退到网页版（未安装应用时）
+- ✅ 一键快速登录
+- ✅ 用户确认机制
 
-1. 打开 Telegram
-2. 搜索你的 Bot（例如：@FastPayBot）
-3. 点击 Bot 头像查看信息
-4. 复制 Bot 的 username（不带 @ 符号）
+### 2. 扫描二维码登录
+- ✅ 动态生成二维码
+- ✅ 2分钟自动过期
+- ✅ 支持刷新二维码
+- ✅ 实时状态轮询
 
-**示例**：如果 Bot 是 `@FastPayBot`，则 username 是 `FastPayBot`
+### 3. 安全机制
+- ✅ 唯一登录令牌
+- ✅ 超时保护
+- ✅ 用户确认
+- ✅ 自动清理过期数据
 
-### 步骤 2：设置 Bot Domain
+## 🚀 快速启动
 
-1. 在 Telegram 中打开 @BotFather
-2. 发送命令：`/setdomain`
-3. 选择你的 Bot
-4. 输入域名：
-   - **生产环境**：`kk.vpno.eu.org`
-   - **本地开发**：`localhost`
+### 1. 确保环境变量配置正确
 
-**重要**：不要输入 `http://` 或 `https://`，只输入域名！
-
-### 步骤 3：配置后端环境变量
-
-编辑 `.env` 文件，添加：
-
-```env
-# Telegram Bot 配置
-TELEGRAM_BOT_TOKEN=你的Bot_Token
-TELEGRAM_BOT_USERNAME=FastPayBot
+```bash
+# .env 文件
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_BOT_USERNAME=your_bot_username  # 不带 @
+APP_URL=https://your-domain.com
+API_URL=http://localhost:5000
 ```
 
-**示例**：
-```env
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_BOT_USERNAME=FastPayBot
+### 2. 启动服务
+
+```bash
+# 启动后端
+npm run server
+
+# 或使用 PM2
+pm2 start ecosystem.config.js
+
+# 启动前端
+npm run dev
 ```
 
-### 步骤 4：配置前端环境变量
+### 3. 测试功能
 
-#### 方法 1：创建 .env.local 文件
-
-在项目根目录创建 `.env.local` 文件：
-
-```env
-REACT_APP_TELEGRAM_BOT_USERNAME=FastPayBot
+```bash
+# 运行测试脚本
+node test-telegram-app-login.js
 ```
 
-#### 方法 2：修改 vite.config.js
+## 📋 测试清单
 
-如果使用 Vite，编辑 `vite.config.js`：
+### 基础功能测试
+- [ ] 打开应用登录 - 已安装应用
+- [ ] 打开应用登录 - 未安装应用（回退到网页版）
+- [ ] 扫码登录 - 新用户
+- [ ] 扫码登录 - 已有用户
+- [ ] 二维码过期处理
+- [ ] 刷新二维码
+- [ ] 取消登录
+- [ ] 确认登录
+
+### 浏览器兼容性
+- [ ] Chrome
+- [ ] Firefox
+- [ ] Safari
+- [ ] Edge
+- [ ] 移动端浏览器
+
+### 设备测试
+- [ ] Windows 桌面
+- [ ] macOS 桌面
+- [ ] iOS 移动端
+- [ ] Android 移动端
+
+## 🎯 使用方法
+
+### 用户操作流程
+
+#### 方式一：打开应用登录
+1. 访问登录页面
+2. 点击"打开 Telegram 应用登录"按钮
+3. Telegram 应用自动打开
+4. 在 Telegram 中点击"✅ 确认登录"
+5. 自动完成登录
+
+#### 方式二：扫码登录
+1. 访问登录页面
+2. 点击"或扫描二维码登录"按钮
+3. 用 Telegram 扫描二维码
+4. 在 Telegram 中点击"✅ 确认登录"
+5. 自动完成登录
+
+## 🔧 配置说明
+
+### 前端配置
+
+**文件：** `src/pages/LoginPage.jsx`
 
 ```javascript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// Bot 用户名配置
+const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
 
-export default defineConfig({
-  plugins: [react()],
-  define: {
-    'process.env.REACT_APP_TELEGRAM_BOT_USERNAME': JSON.stringify('FastPayBot')
-  }
-})
+// 轮询间隔（毫秒）
+const pollInterval = 2000; // 每2秒检查一次
+
+// 超时时间（毫秒）
+const timeout = 120000; // 2分钟
 ```
 
-### 步骤 5：重启服务
+### 后端配置
 
+**文件：** `server/routes/auth.js`
+
+```javascript
+// 登录会话存储（生产环境建议使用 Redis）
+global.qrLoginSessions = {};
+
+// 会话过期时间（毫秒）
+const sessionTimeout = 300000; // 5分钟
+```
+
+### Bot 配置
+
+**文件：** `server/bot/handlers/start.js`
+
+```javascript
+// API URL 配置
+const apiUrl = process.env.API_URL || 'http://localhost:5000';
+
+// 处理登录令牌
+if (startPayload && startPayload.startsWith('login_')) {
+  return handleQRLogin(ctx, startPayload, ...);
+}
+```
+
+## 📱 UI 界面
+
+### 登录按钮
+
+```jsx
+{/* 打开应用按钮 - 主要推荐 */}
+<button className="bg-[#0088cc] hover:bg-[#0077b5] ...">
+  📱 打开 Telegram 应用登录
+</button>
+
+{/* 扫码按钮 - 备选方式 */}
+<button className="bg-white border-2 border-[#0088cc] ...">
+  📷 或扫描二维码登录
+</button>
+```
+
+### 二维码显示
+
+```jsx
+{/* 二维码容器 */}
+<div className="bg-white p-4 rounded-2xl border-2 border-blue-300">
+  <img src={qrCodeUrl} alt="登录二维码" className="w-64 h-64" />
+</div>
+
+{/* 等待提示 */}
+<div className="text-blue-600">
+  <div className="animate-spin ..."></div>
+  <span>等待扫码...</span>
+</div>
+```
+
+### 过期提示
+
+```jsx
+{/* 过期遮罩 */}
+<div className="absolute inset-0 bg-black bg-opacity-50 ...">
+  <div className="text-white text-center">
+    <div className="text-2xl mb-2">⏰</div>
+    <div className="font-bold">二维码已过期</div>
+  </div>
+</div>
+```
+
+## 🔐 安全机制
+
+### 1. 令牌生成
+```javascript
+const token = `login_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+```
+- 时间戳 + 随机字符串
+- 确保唯一性
+- 防止重放攻击
+
+### 2. 超时保护
+```javascript
+// 二维码过期
+setTimeout(() => setQrCodeExpired(true), 120000);
+
+// 轮询停止
+setTimeout(() => clearInterval(pollInterval), 120000);
+
+// 会话清理
+setTimeout(() => delete global.qrLoginSessions[token], 300000);
+```
+
+### 3. 用户确认
+```javascript
+// Telegram 中显示确认按钮
+reply_markup: {
+  inline_keyboard: [[
+    { text: '✅ 确认登录', callback_data: `confirm_login_${token}` },
+    { text: '❌ 取消', callback_data: 'cancel_login' }
+  ]]
+}
+```
+
+## 🐛 故障排查
+
+### 问题 1: 点击按钮没有反应
+
+**检查项：**
 ```bash
-# 重启后端
-npm run dev
+# 1. 检查环境变量
+echo $TELEGRAM_BOT_USERNAME
 
-# 重启前端（新终端）
-cd client
-npm run dev
+# 2. 检查浏览器控制台
+# 打开开发者工具 -> Console
+
+# 3. 检查网络请求
+# 打开开发者工具 -> Network
 ```
 
-### 步骤 6：测试登录
+### 问题 2: 二维码无法扫描
 
-1. 访问：`http://localhost:3000/login`
-2. 查看是否显示 Telegram 登录按钮
-3. 点击按钮测试登录
-
-## ✅ 验证清单
-
-- [ ] Bot Username 已复制（不带 @）
-- [ ] BotFather 中已设置 domain
-- [ ] 后端 .env 已配置 TELEGRAM_BOT_TOKEN
-- [ ] 后端 .env 已配置 TELEGRAM_BOT_USERNAME
-- [ ] 前端已配置 REACT_APP_TELEGRAM_BOT_USERNAME
-- [ ] 后端已重启
-- [ ] 前端已重启
-- [ ] 登录页面显示 Telegram 按钮
-- [ ] 点击按钮可以弹出授权窗口
-
-## 🐛 快速排查
-
-### 问题 1：Widget 不显示
-
-**检查**：
+**检查项：**
 ```bash
-# 1. 查看浏览器控制台是否有错误
-# 2. 检查网络是否可以访问 telegram.org
-# 3. 确认 Bot Username 配置正确
+# 1. 检查 Bot 是否启动
+pm2 status
+
+# 2. 检查 Bot 日志
+pm2 logs telegram-bot
+
+# 3. 测试 Bot 命令
+# 在 Telegram 中发送 /start
 ```
 
-**解决**：
+### 问题 3: 确认后没有登录
+
+**检查项：**
 ```bash
-# 清除浏览器缓存
-Ctrl + Shift + Delete
+# 1. 检查后端日志
+pm2 logs server
 
-# 重新加载页面
-Ctrl + F5
-```
+# 2. 测试 API
+curl http://localhost:5000/api/auth/check-qr-login?token=test
 
-### 问题 2：点击按钮无反应
-
-**检查**：
-```bash
-# 1. 确认 BotFather 中已设置 domain
-# 2. 确认域名与当前访问地址匹配
-# 3. 查看浏览器控制台错误
-```
-
-**解决**：
-```bash
-# 重新设置 domain
-1. 打开 @BotFather
-2. /setdomain
-3. 选择 Bot
-4. 输入正确的域名
-```
-
-### 问题 3：授权后登录失败
-
-**检查**：
-```bash
-# 1. 查看后端日志
-# 2. 确认 TELEGRAM_BOT_TOKEN 正确
-# 3. 确认后端服务正常运行
-```
-
-**解决**：
-```bash
-# 查看后端日志
-npm run dev
-
-# 检查是否有错误信息
-# 常见错误：
-# - "Telegram Bot 未配置" -> 检查 TELEGRAM_BOT_TOKEN
-# - "数据验证失败" -> 检查 Bot Token 是否正确
-# - "登录已过期" -> 重新授权
-```
-
-## 📝 配置示例
-
-### 完整的 .env 配置
-
-```env
-# 服务器配置
-PORT=5000
-NODE_ENV=development
-APP_URL=http://localhost:5000
-FRONTEND_URL=http://localhost:3000
-
-# 数据库
-MONGODB_URI=mongodb://localhost:27017/fastpay
-
-# JWT
-JWT_SECRET=your_jwt_secret_key_here
-
-# 加密
-ENCRYPTION_KEY=your_encryption_key_here
-
-# Telegram Bot
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_BOT_USERNAME=FastPayBot
-```
-
-### 完整的 .env.local 配置（前端）
-
-```env
-REACT_APP_TELEGRAM_BOT_USERNAME=FastPayBot
-```
-
-## 🎯 测试步骤
-
-### 1. 本地测试
-
-```bash
-# 1. 启动后端
-npm run dev
-
-# 2. 启动前端（新终端）
-cd client
-npm run dev
-
-# 3. 访问登录页面
-http://localhost:3000/login
-
-# 4. 点击 Telegram 登录按钮
-
-# 5. 在弹出窗口中点击"确认"
-
-# 6. 查看是否成功登录并跳转到用户中心
-```
-
-### 2. 生产环境测试
-
-```bash
-# 1. 确认 BotFather 中设置的是生产域名
-# 例如：kk.vpno.eu.org
-
-# 2. 确认 .env 中的配置正确
-
-# 3. 重启服务
-pm2 restart all
-
-# 4. 访问生产环境登录页面
-https://kk.vpno.eu.org/login
-
-# 5. 测试 Telegram 登录
-```
-
-## 💡 提示
-
-### 开发环境
-
-- 使用 `localhost` 作为 domain
-- 可以使用 HTTP
-- 方便调试
-
-### 生产环境
-
-- 使用实际域名
-- 必须使用 HTTPS
-- 确保 SSL 证书有效
-
-### 多环境配置
-
-如果有多个环境（开发、测试、生产），可以：
-
-1. 在 BotFather 中为每个环境设置不同的 domain
-2. 使用不同的 .env 文件
-3. 或者使用环境变量覆盖
-
-## 🔒 安全建议
-
-1. **不要泄露 Bot Token**
-   - 不要提交到 Git
-   - 不要在前端代码中使用
-   - 使用环境变量
-
-2. **验证数据完整性**
-   - 后端已实现 HMAC 验证
-   - 不要跳过验证步骤
-
-3. **使用 HTTPS**
-   - 生产环境必须使用 HTTPS
-   - 保护用户数据安全
-
-4. **定期更新**
-   - 保持依赖包最新
-   - 关注安全公告
-
-## 📞 需要帮助？
-
-### 查看日志
-
-```bash
-# 后端日志
-npm run dev
-
-# 前端日志
-# 打开浏览器控制台（F12）
-```
-
-### 常用命令
-
-```bash
-# 检查 Bot Token
+# 3. 检查数据库连接
 node server/scripts/checkAdmin.js
-
-# 查看环境变量
-echo $TELEGRAM_BOT_TOKEN
-
-# 重启服务
-pm2 restart all
 ```
 
-### 文档参考
+### 问题 4: 移动端显示异常
 
-- [Telegram Login Widget 官方文档](https://core.telegram.org/widgets/login)
-- [Bot API 文档](https://core.telegram.org/bots/api)
-- [项目完整文档](./Telegram_登录功能实现完成.md)
+**检查项：**
+```bash
+# 1. 清除浏览器缓存
+# 2. 检查 Tailwind CSS 配置
+# 3. 使用开发者工具检查响应式
+```
 
-## 🎉 配置完成
+## 📊 性能优化
 
-如果所有步骤都完成，你应该能看到：
+### 1. 使用 Redis 存储会话
 
-✅ 登录页面显示 Telegram 登录按钮
-✅ 点击按钮弹出授权窗口
-✅ 授权后自动登录
-✅ 跳转到用户中心
-✅ 显示用户信息
+**当前实现：**
+```javascript
+global.qrLoginSessions[token] = data;
+```
 
-恭喜！Telegram 登录功能已成功配置！
+**优化方案：**
+```javascript
+const redis = require('redis');
+const client = redis.createClient();
 
----
+// 存储会话（5分钟过期）
+await client.setex(`qr_login:${token}`, 300, JSON.stringify(data));
 
-**配置时间**：约 5 分钟
-**难度**：⭐⭐☆☆☆（简单）
-**需要重启**：是
+// 获取会话
+const data = await client.get(`qr_login:${token}`);
+```
+
+### 2. 使用 WebSocket 替代轮询
+
+**当前实现：**
+```javascript
+setInterval(async () => {
+  const response = await fetch(`/api/auth/check-qr-login?token=${token}`);
+  // ...
+}, 2000);
+```
+
+**优化方案：**
+```javascript
+const socket = io();
+
+socket.on('login_success', (data) => {
+  // 立即处理登录
+  telegramLogin(data.userData);
+});
+```
+
+### 3. 二维码缓存
+
+**当前实现：**
+```javascript
+const qrDataUrl = await QRCode.toDataURL(deepLink);
+```
+
+**优化方案：**
+```javascript
+// 缓存二维码
+const cacheKey = `qr_${token}`;
+let qrDataUrl = cache.get(cacheKey);
+
+if (!qrDataUrl) {
+  qrDataUrl = await QRCode.toDataURL(deepLink);
+  cache.set(cacheKey, qrDataUrl, 120); // 缓存2分钟
+}
+```
+
+## 📝 API 文档
+
+### 1. 检查登录状态
+
+**请求：**
+```http
+GET /api/auth/check-qr-login?token=login_1234567890_abc123xyz
+```
+
+**响应（未登录）：**
+```json
+{
+  "success": false
+}
+```
+
+**响应（已登录）：**
+```json
+{
+  "success": true,
+  "userData": {
+    "id": "123456789",
+    "first_name": "Test",
+    "last_name": "User",
+    "username": "test_user",
+    "photo_url": "",
+    "auth_date": 1234567890,
+    "hash": "abc123..."
+  }
+}
+```
+
+### 2. 确认登录（Bot 调用）
+
+**请求：**
+```http
+POST /api/auth/confirm-qr-login
+Content-Type: application/json
+
+{
+  "token": "login_1234567890_abc123xyz",
+  "telegramId": "123456789",
+  "username": "test_user",
+  "firstName": "Test",
+  "lastName": "User",
+  "photoUrl": ""
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "登录确认成功"
+}
+```
+
+### 3. Telegram 登录
+
+**请求：**
+```http
+POST /api/auth/telegram-login
+Content-Type: application/json
+
+{
+  "id": "123456789",
+  "first_name": "Test",
+  "last_name": "User",
+  "username": "test_user",
+  "photo_url": "",
+  "auth_date": 1234567890,
+  "hash": "abc123..."
+}
+```
+
+**响应：**
+```json
+{
+  "token": "jwt_token_here",
+  "user": {
+    "id": "user_id",
+    "username": "test_user",
+    "email": "123456789@telegram.user",
+    "role": "user",
+    "telegramId": "123456789",
+    "telegramUsername": "test_user",
+    "telegramFirstName": "Test",
+    "telegramLastName": "User",
+    "telegramPhotoUrl": ""
+  }
+}
+```
+
+## 🎉 完成！
+
+现在您的网站已经支持两种 Telegram 登录方式：
+
+✅ **打开应用登录** - 快速便捷，一键完成
+✅ **扫码登录** - 安全可靠，跨设备使用
+
+用户可以根据自己的需求选择最合适的登录方式！
+
+## 📚 相关文档
+
+- `Telegram_登录方案优化.md` - 详细的技术实现说明
+- `Telegram_登录流程说明.md` - 完整的流程图和说明
+- `test-telegram-app-login.js` - 测试脚本
+
+## 💡 下一步
+
+1. 运行测试脚本验证功能
+2. 在浏览器中测试两种登录方式
+3. 在移动端测试用户体验
+4. 根据需要调整 UI 样式
+5. 考虑使用 Redis 优化性能
+6. 考虑使用 WebSocket 替代轮询
+
+祝您使用愉快！🚀
