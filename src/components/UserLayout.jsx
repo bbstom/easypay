@@ -153,9 +153,9 @@ const UserLayout = ({ children }) => {
       </aside>
 
       {/* 主内容区域 */}
-      <main className="flex-1 md:ml-56 overflow-x-hidden">
-        {/* 顶部栏 */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+      <main className="flex-1 md:ml-56 overflow-x-hidden pt-16">
+        {/* 顶部栏 - 固定在顶部 */}
+        <header className="fixed top-0 right-0 left-0 md:left-56 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-30">
           {/* 移动端汉堡菜单 */}
           <button
             onClick={() => setSidebarOpen(true)}
