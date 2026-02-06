@@ -64,6 +64,8 @@ const AdminLayout = ({ children }) => {
       ]
     },
     { path: '/finance', icon: <DollarSign size={20} />, label: '财务管理' },
+    { path: '/user-manage', icon: <TrendingUp size={20} />, label: '用户管理' },
+    { path: '/telegram-manage', icon: <MessageSquare size={20} />, label: 'Telegram Bot' },
     { path: '/faq-manage', icon: <HelpCircle size={20} />, label: '常见问题' },
     { path: '/admin-tickets', icon: <MessageSquare size={20} />, label: '工单管理' },
     { 

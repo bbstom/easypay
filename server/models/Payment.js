@@ -6,6 +6,7 @@ const paymentSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   address: { type: String, required: true },
   email: { type: String },
+  telegramId: { type: String }, // Telegram 用户 ID
   paymentMethod: { type: String, enum: ['alipay', 'wechat'], required: true },
   totalCNY: { type: Number, required: true },
   serviceFee: { type: Number, default: 0 },

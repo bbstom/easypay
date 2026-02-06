@@ -14,6 +14,7 @@ import SettingsPage from './pages/SettingsPage';
 import WalletConfigPage from './pages/WalletConfigPage';
 import UserCenterPage from './pages/UserCenterPage';
 import MyOrdersPage from './pages/MyOrdersPage';
+import UserManagePage from './pages/UserManagePage';
 import FAQManagePage from './pages/FAQManagePage';
 import FAQPage from './pages/FAQPage';
 import TicketsPage from './pages/TicketsPage';
@@ -23,6 +24,7 @@ import EnergyRentalPage from './pages/EnergyRentalPage';
 import PaymentSystemPage from './pages/PaymentSystemPage';
 import SwapSystemPage from './pages/SwapSystemPage';
 import EnergySystemPage from './pages/EnergySystemPage';
+import TelegramManagePage from './pages/TelegramManagePage';
 
 // 动态加载 Favicon
 const useFavicon = () => {
@@ -420,6 +422,7 @@ const App = () => {
         <Route path="/my-tickets" element={<TicketsPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/finance" element={<FinancePage />} />
+        <Route path="/user-manage" element={<UserManagePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/wallet" element={<WalletConfigPage />} />
         <Route path="/faq-manage" element={<FAQManagePage />} />
@@ -430,6 +433,7 @@ const App = () => {
         <Route path="/payment-system" element={<PaymentSystemPage />} />
         <Route path="/swap-system" element={<SwapSystemPage />} />
         <Route path="/energy-system" element={<EnergySystemPage />} />
+        <Route path="/telegram-manage" element={<TelegramManagePage />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>
 

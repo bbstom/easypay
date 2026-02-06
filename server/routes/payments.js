@@ -5,6 +5,7 @@ const { auth } = require('../middleware/auth');
 const paymentService = require('../services/paymentService');
 const tronService = require('../services/tronService');
 const emailService = require('../services/emailService');
+const telegramNotifications = require('../bot/notifications'); // TG 通知
 
 const router = express.Router();
 
@@ -276,6 +277,15 @@ router.get('/notify', async (req, res) => {
         }
       }
 
+      // 🔔 发送 Telegram 支付成功通知
+      if (payment.telegramId) {
+        try {
+          await telegramNotifications.notifyPaymentSuccess(payment.telegramId, payment);
+        } catch (tgError) {
+          console.error('❌ 发送 TG 支付成功通知失败:', tgError);
+        }
+      }
+
       console.log('🔄 开始执行 ' + payment.payType + ' 代付:', payment._id);
 
       // 异步执行代付
@@ -353,6 +363,15 @@ router.post('/notify', async (req, res) => {
           console.log(`📧 支付成功邮件已发送: ${payment.email}`);
         } catch (emailError) {
           console.error('❌ 发送支付成功邮件失败:', emailError);
+        }
+      }
+
+      // 🔔 发送 Telegram 支付成功通知
+      if (payment.telegramId) {
+        try {
+          await telegramNotifications.notifyPaymentSuccess(payment.telegramId, payment);
+        } catch (tgError) {
+          console.error('❌ 发送 TG 支付成功通知失败:', tgError);
         }
       }
 
@@ -455,6 +474,15 @@ async function processTransfer(paymentId, retryCount = 0) {
         console.error('❌ 发送代付完成邮件失败:', emailError);
       }
     }
+
+    // 6. 发送 Telegram 代付完成通知
+    if (payment.telegramId) {
+      try {
+        await telegramNotifications.notifyTransferComplete(payment.telegramId, payment);
+      } catch (tgError) {
+        console.error('❌ 发送 TG 代付完成通知失败:', tgError);
+      }
+    }
   } catch (error) {
     console.error(`\n❌ 代付失败 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, error.message);
     
@@ -479,6 +507,15 @@ async function processTransfer(paymentId, retryCount = 0) {
         payment.status = 'failed';
         await payment.save();
         console.error(`❌ 转账最终失败: ${payment.platformOrderId}\n`);
+        
+        // 发送 Telegram 代付失败通知
+        if (payment.telegramId) {
+          try {
+            await telegramNotifications.notifyTransferFailed(payment.telegramId, payment, error.message);
+          } catch (tgError) {
+            console.error('❌ 发送 TG 代付失败通知失败:', tgError);
+          }
+        }
       }
     }
   }

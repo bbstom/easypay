@@ -47,6 +47,14 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const telegramLogin = async (telegramData) => {
+    const { data } = await axios.post('/api/auth/telegram-login', telegramData);
+    localStorage.setItem('token', data.token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
@@ -58,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, login, register, telegramLogin, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
