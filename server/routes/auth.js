@@ -265,11 +265,24 @@ router.post('/qr-login-complete', async (req, res) => {
     // 清除已使用的 token
     delete global.qrLoginSessions[token];
     
-    // 查找用户
-    const user = await User.findOne({ telegramId: userData.id.toString() });
+    // 查找或创建用户
+    let user = await User.findOne({ telegramId: userData.id.toString() });
     
     if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
+      // 如果用户不存在，自动创建（理论上不应该发生，但作为备用）
+      const crypto = require('crypto');
+      user = new User({
+        username: userData.username || `tg_${userData.id}`,
+        email: `${userData.id}@telegram.user`,
+        telegramId: userData.id.toString(),
+        telegramUsername: userData.username,
+        telegramFirstName: userData.first_name,
+        telegramLastName: userData.last_name,
+        telegramPhotoUrl: userData.photo_url,
+        password: crypto.randomBytes(32).toString('hex')
+      });
+      await user.save();
+      console.log('✅ 自动创建新用户:', user.username);
     }
 
     // 生成 JWT token
