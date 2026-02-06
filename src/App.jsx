@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp, Menu, X } from 'lucide-react';
+import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp, Menu, X, FileText } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { USDTIcon, TRXIcon } from './components/Icons';
 import axios from 'axios';
@@ -134,7 +134,8 @@ const App = () => {
   useFavicon();
   useFavicon();
 
-  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system'].includes(location.pathname);
+  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system', '/user-manage', '/telegram-manage'].includes(location.pathname);
+  const isUserCenterPage = ['/user-center', '/my-orders', '/my-tickets'].includes(location.pathname);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -169,7 +170,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 text-[#334155] font-sans selection:bg-cyan-100 flex flex-col">
-      {!isAdminPage && (
+      {!isAdminPage && !isUserCenterPage && (
         <>
           {/* 移动端汉堡菜单按钮 - 替代登录按钮的位置 */}
           <button
@@ -196,55 +197,53 @@ const App = () => {
                   )}
                   
                   <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <Home size={18} />
-                    首页
+                    <Home size={20} />
+                    <span>首页</span>
                   </button>
                   <button onClick={() => { navigate('/pay'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <USDTIcon className="w-5 h-5" />
-                    USDT 代付
+                    <USDTIcon className="w-5 h-5 flex-shrink-0" />
+                    <span>USDT 代付</span>
                   </button>
                   <button onClick={() => { navigate('/pay-trx'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <TRXIcon className="w-5 h-5" />
-                    TRX 代付
+                    <TRXIcon className="w-5 h-5 flex-shrink-0" />
+                    <span>TRX 代付</span>
                   </button>
                   <button onClick={() => { navigate('/energy-rental'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <Zap size={18} />
-                    能量租赁
+                    <Zap size={20} />
+                    <span>能量租赁</span>
                   </button>
                   <button onClick={() => { navigate('/swap'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <ArrowDownUp size={18} />
-                    闪兑中心
+                    <ArrowDownUp size={20} />
+                    <span>闪兑中心</span>
                   </button>
                   <button onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <HelpCircle size={18} />
-                    常见问题
+                    <HelpCircle size={20} />
+                    <span>常见问题</span>
                   </button>
                   
                   {user && (
                     <>
                       <div className="border-t border-slate-200 my-3"></div>
                       <button onClick={() => { navigate('/user-center'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                        <User size={18} />
-                        个人中心
+                        <User size={20} />
+                        <span>个人中心</span>
                       </button>
                       <button onClick={() => { navigate('/my-orders'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        我的订单
+                        <FileText size={20} />
+                        <span>我的订单</span>
                       </button>
                       {user.role === 'admin' && (
                         <button onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-cyan-50 font-bold text-cyan-600 flex items-center gap-3">
-                          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          管理后台
+                          <span>管理后台</span>
                         </button>
                       )}
                       <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 font-bold text-red-600 flex items-center gap-3">
-                        <LogOut size={18} />
-                        退出登录
+                        <LogOut size={20} />
+                        <span>退出登录</span>
                       </button>
                     </>
                   )}
@@ -438,7 +437,7 @@ const App = () => {
       </Routes>
 
       {/* 运行时间 - 独立区域，在footer上面，自动填充剩余空间 */}
-      {!isAdminPage && (
+      {!isAdminPage && !isUserCenterPage && (
         <div className="flex-grow flex items-end">
           <div className="w-full">
             <RuntimeDisplay />
@@ -446,7 +445,7 @@ const App = () => {
         </div>
       )}
 
-      {!isAdminPage && footerSettings && (
+      {!isAdminPage && !isUserCenterPage && footerSettings && (
         <footer className="bg-gradient-to-b from-white to-slate-50 py-8 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">

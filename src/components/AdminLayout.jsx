@@ -258,9 +258,11 @@ const AdminLayout = ({ children }) => {
       {/* 主内容区域 */}
       <main className={`flex-1 transition-all duration-300 ${
         sidebarOpen ? 'ml-56' : 'ml-16'
-      } overflow-x-hidden`}>
-        {/* 顶部栏 */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+      } overflow-x-hidden pt-16`}>
+        {/* 顶部栏 - 固定在顶部 */}
+        <header className={`fixed top-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 transition-all duration-300 ${
+          sidebarOpen ? 'left-56 right-0' : 'left-16 right-0'
+        }`}>
           <div>
             <h1 className="text-xl font-black text-slate-800">
               {menuItems.find(item => isActive(item.path))?.label || '管理后台'}
