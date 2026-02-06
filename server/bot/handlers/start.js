@@ -116,6 +116,35 @@ async function start(ctx) {
 // 处理扫码登录
 async function handleQRLogin(ctx, token, telegramId, username, firstName, lastName, photoUrl) {
   try {
+    // 🔥 关键修复：自动初始化 session 和创建/获取用户
+    if (!ctx.session) {
+      ctx.session = {};
+    }
+
+    // 查找或创建用户
+    let user = await User.findOne({ telegramId });
+    
+    if (!user) {
+      // 自动创建用户，无需先 /start
+      user = await User.create({
+        username: username,
+        email: `${telegramId}@telegram.user`,
+        telegramId: telegramId,
+        telegramUsername: username,
+        telegramFirstName: firstName,
+        telegramLastName: lastName,
+        telegramBound: true,
+        source: 'telegram',
+        role: 'user'
+      });
+      console.log('✅ 自动创建用户（扫码登录）:', user.username);
+    } else {
+      console.log('✅ 用户已存在（扫码登录）:', user.username);
+    }
+
+    // 设置 session
+    ctx.session.user = user;
+
     const axios = require('axios');
     const apiUrl = process.env.API_URL || 'http://localhost:5000';
 
@@ -167,6 +196,40 @@ async function handleLoginConfirm(ctx) {
     const lastName = ctx.from.last_name || '';
     
     try {
+      // 🔥 关键修复：自动初始化 session 和创建/获取用户
+      if (!ctx.session) {
+        ctx.session = {};
+      }
+
+      // 查找或创建用户
+      let user = await User.findOne({ telegramId });
+      
+      if (!user) {
+        // 自动创建用户，无需先 /start
+        user = await User.create({
+          username: username,
+          email: `${telegramId}@telegram.user`,
+          telegramId: telegramId,
+          telegramUsername: username,
+          telegramFirstName: firstName,
+          telegramLastName: lastName,
+          telegramBound: true,
+          source: 'telegram',
+          role: 'user'
+        });
+        console.log('✅ 自动创建用户（登录确认）:', user.username);
+      } else {
+        // 更新用户信息
+        user.telegramUsername = username;
+        user.telegramFirstName = firstName;
+        user.telegramLastName = lastName;
+        await user.save();
+        console.log('✅ 更新用户信息（登录确认）:', user.username);
+      }
+
+      // 设置 session
+      ctx.session.user = user;
+
       const axios = require('axios');
       // 使用 localhost 而不是外部域名，确保内部调用
       const apiUrl = 'http://localhost:5000';
