@@ -18,7 +18,7 @@ export default function UserManagePage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users`, {
+      const response = await axios.get('/api/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data);
@@ -35,7 +35,7 @@ export default function UserManagePage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/stats/overview`, {
+      const response = await axios.get('/api/users/stats/overview', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);
@@ -52,7 +52,7 @@ export default function UserManagePage() {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/${userId}/status`,
+        `/api/users/${userId}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -72,7 +72,7 @@ export default function UserManagePage() {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/${userId}/role`,
+        `/api/users/${userId}/role`,
         { role: newRole },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -92,7 +92,7 @@ export default function UserManagePage() {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/${userId}`,
+        `/api/users/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchUsers();
