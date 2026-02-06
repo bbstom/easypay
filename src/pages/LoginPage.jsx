@@ -21,10 +21,12 @@ const LoginPage = () => {
     
     // 生成唯一的登录令牌
     const token = `login_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('🔐 生成登录令牌:', token);
     setLoginToken(token);
     
     // 使用 tg:// 协议直接打开 Telegram 应用
     const tgUrl = `tg://resolve?domain=${botUsername}&start=${token}`;
+    console.log('📱 打开 Telegram 应用:', tgUrl);
     
     // 尝试打开应用
     window.location.href = tgUrl;
@@ -32,10 +34,12 @@ const LoginPage = () => {
     // 如果1.5秒后还在页面上，说明可能没有安装应用，打开网页版
     setTimeout(() => {
       const webUrl = `https://t.me/${botUsername}?start=${token}`;
+      console.log('🌐 打开 Telegram 网页版:', webUrl);
       window.open(webUrl, '_blank');
     }, 1500);
     
     // 开始轮询检查登录状态
+    console.log('🔄 启动轮询...');
     startPolling(token);
     
     // 显示提示
@@ -83,16 +87,22 @@ const LoginPage = () => {
 
   // 轮询检查登录状态
   const startPolling = (token) => {
+    console.log('🔄 开始轮询登录状态:', token);
+    
     const pollInterval = setInterval(async () => {
       try {
+        console.log('⏳ 检查登录状态...');
         const response = await fetch(`/api/auth/check-qr-login?token=${token}`);
         const data = await response.json();
+        console.log('📊 轮询响应:', data);
         
         if (data.success && data.token) {
+          console.log('✅ 检测到登录成功，准备调用 complete API');
           clearInterval(pollInterval);
           
           // 调用新的 complete 端点获取 JWT token
           try {
+            console.log('📡 调用 qr-login-complete API...');
             const completeResponse = await fetch('/api/auth/qr-login-complete', {
               method: 'POST',
               headers: {
@@ -101,30 +111,37 @@ const LoginPage = () => {
               body: JSON.stringify({ token: data.token })
             });
             
+            console.log('📊 Complete API 响应状态:', completeResponse.status);
             const completeData = await completeResponse.json();
+            console.log('📊 Complete API 响应数据:', completeData);
             
             if (completeResponse.ok && completeData.token) {
+              console.log('✅ 获取到 JWT token，设置并跳转...');
               // 直接设置 token 和用户信息
               localStorage.setItem('token', completeData.token);
               axios.defaults.headers.common['Authorization'] = `Bearer ${completeData.token}`;
               
+              console.log('🚀 跳转到用户中心...');
               // 跳转到用户中心
               navigate('/user-center');
             } else {
+              console.error('❌ Complete API 返回错误:', completeData);
               setError(completeData.error || '登录失败，请重试');
             }
           } catch (err) {
-            console.error('完成登录失败:', err);
+            console.error('❌ 完成登录失败:', err);
             setError('登录失败，请重试');
           }
         }
       } catch (err) {
+        console.error('❌ 轮询错误:', err);
         // 继续轮询
       }
     }, 2000); // 每2秒检查一次
 
     // 2分钟后停止轮询
     setTimeout(() => {
+      console.log('⏰ 轮询超时，停止轮询');
       clearInterval(pollInterval);
     }, 120000);
   };
