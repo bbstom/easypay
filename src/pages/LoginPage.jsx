@@ -122,8 +122,8 @@ const LoginPage = () => {
               axios.defaults.headers.common['Authorization'] = `Bearer ${completeData.token}`;
               
               console.log('🚀 跳转到用户中心...');
-              // 跳转到用户中心
-              navigate('/user-center');
+              // 使用 window.location.href 强制跳转
+              window.location.href = '/user-center';
             } else {
               console.error('❌ Complete API 返回错误:', completeData);
               setError(completeData.error || '登录失败，请重试');
