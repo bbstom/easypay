@@ -101,6 +101,8 @@ class TelegramBot {
       const data = ctx.callbackQuery.data.replace('copy_', '');
       await contentService.handleCopyButton(ctx, data);
     });
+    this.bot.action(/^confirm_login_/, startHandler.handleLoginConfirm);
+    this.bot.action('cancel_login', startHandler.handleLoginConfirm);
     this.bot.action(/^back_/, startHandler.handleBack);
     this.bot.action('cancel', startHandler.cancel);
     this.bot.action('help_center', startHandler.help);

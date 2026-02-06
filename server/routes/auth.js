@@ -207,4 +207,110 @@ router.post('/telegram-login', async (req, res) => {
   }
 });
 
+// 检查二维码登录状态
+router.get('/check-qr-login', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token) {
+      return res.status(400).json({ error: '缺少 token 参数' });
+    }
+
+    // 从 Redis 或内存中查找登录状态
+    // 这里使用简单的内存存储（生产环境应该使用 Redis）
+    const loginData = global.qrLoginSessions?.[token];
+    
+    if (loginData && loginData.userData) {
+      // 清除已使用的 token
+      delete global.qrLoginSessions[token];
+      
+      return res.json({
+        success: true,
+        userData: loginData.userData
+      });
+    }
+    
+    res.json({ success: false });
+  } catch (error) {
+    console.error('检查登录状态错误:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 确认二维码登录（由 Bot 调用）
+router.post('/confirm-qr-login', async (req, res) => {
+  try {
+    const { token, telegramId, username, firstName, lastName, photoUrl } = req.body;
+    
+    if (!token || !telegramId) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+
+    // 查找或创建用户
+    let user = await User.findOne({ telegramId: telegramId.toString() });
+    
+    if (!user) {
+      const crypto = require('crypto');
+      user = new User({
+        username: username || `tg_${telegramId}`,
+        email: `${telegramId}@telegram.user`,
+        telegramId: telegramId.toString(),
+        telegramUsername: username,
+        telegramFirstName: firstName,
+        telegramLastName: lastName,
+        telegramPhotoUrl: photoUrl,
+        password: crypto.randomBytes(32).toString('hex')
+      });
+      await user.save();
+    } else {
+      user.telegramUsername = username;
+      user.telegramFirstName = firstName;
+      user.telegramLastName = lastName;
+      user.telegramPhotoUrl = photoUrl;
+      await user.save();
+    }
+
+    // 生成用户数据（包含验证信息）
+    const userData = {
+      id: telegramId,
+      first_name: firstName,
+      last_name: lastName,
+      username: username,
+      photo_url: photoUrl,
+      auth_date: Math.floor(Date.now() / 1000)
+    };
+
+    // 生成 hash
+    const crypto = require('crypto');
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const checkString = Object.keys(userData)
+      .sort()
+      .map(key => `${key}=${userData[key]}`)
+      .join('\n');
+    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    userData.hash = crypto.createHmac('sha256', secretKey).update(checkString).digest('hex');
+
+    // 存储登录数据（使用全局变量，生产环境应该使用 Redis）
+    if (!global.qrLoginSessions) {
+      global.qrLoginSessions = {};
+    }
+    global.qrLoginSessions[token] = {
+      userData,
+      timestamp: Date.now()
+    };
+
+    // 5分钟后自动清除
+    setTimeout(() => {
+      if (global.qrLoginSessions?.[token]) {
+        delete global.qrLoginSessions[token];
+      }
+    }, 300000);
+
+    res.json({ success: true, message: '登录确认成功' });
+  } catch (error) {
+    console.error('确认登录错误:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = router;

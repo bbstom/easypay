@@ -9,6 +9,13 @@ async function start(ctx) {
   const username = ctx.from.username || `tg_${telegramId}`;
   const firstName = ctx.from.first_name || 'User';
   const lastName = ctx.from.last_name || '';
+  const photoUrl = ctx.from.photo_url || '';
+
+  // 检查是否是扫码登录
+  const startPayload = ctx.message?.text?.split(' ')[1];
+  if (startPayload && startPayload.startsWith('login_')) {
+    return handleQRLogin(ctx, startPayload, telegramId, username, firstName, lastName, photoUrl);
+  }
 
   try {
     // 确保 session 已初始化
@@ -103,6 +110,91 @@ async function start(ctx) {
   } catch (error) {
     console.error('Start 命令错误:', error);
     await ctx.reply('❌ 发生错误，请稍后重试');
+  }
+}
+
+// 处理扫码登录
+async function handleQRLogin(ctx, token, telegramId, username, firstName, lastName, photoUrl) {
+  try {
+    const axios = require('axios');
+    const apiUrl = process.env.API_URL || 'http://localhost:5000';
+
+    await ctx.reply(
+      `🔐 <b>网站登录确认</b>\n\n` +
+      `📱 检测到您正在扫码登录网站\n\n` +
+      `👤 <b>账户信息</b>\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `<code>用户名：</code>${firstName}\n` +
+      `<code>TG ID：</code>${telegramId}\n` +
+      `━━━━━━━━━━━━━━━\n\n` +
+      `⚠️ <b>请确认是否为您本人操作</b>\n` +
+      `点击下方按钮确认登录`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '✅ 确认登录', callback_data: `confirm_login_${token}` },
+            { text: '❌ 取消', callback_data: 'cancel_login' }
+          ]]
+        }
+      }
+    );
+  } catch (error) {
+    console.error('处理扫码登录错误:', error);
+    await ctx.reply('❌ 登录确认失败，请重试');
+  }
+}
+
+// 处理登录确认回调
+async function handleLoginConfirm(ctx) {
+  const callbackData = ctx.callbackQuery.data;
+  
+  if (callbackData === 'cancel_login') {
+    await ctx.editMessageText(
+      `❌ <b>登录已取消</b>\n\n` +
+      `如果不是您本人操作，请注意账户安全。`,
+      { parse_mode: 'HTML' }
+    );
+    await ctx.answerCbQuery('已取消登录');
+    return;
+  }
+
+  if (callbackData.startsWith('confirm_login_')) {
+    const token = callbackData.replace('confirm_login_', '');
+    const telegramId = ctx.from.id.toString();
+    const username = ctx.from.username || `tg_${telegramId}`;
+    const firstName = ctx.from.first_name || 'User';
+    const lastName = ctx.from.last_name || '';
+    
+    try {
+      const axios = require('axios');
+      const apiUrl = process.env.API_URL || 'http://localhost:5000';
+      
+      // 调用后端 API 确认登录
+      await axios.post(`${apiUrl}/api/auth/confirm-qr-login`, {
+        token,
+        telegramId,
+        username,
+        firstName,
+        lastName
+      });
+
+      await ctx.editMessageText(
+        `✅ <b>登录成功！</b>\n\n` +
+        `🎉 您已成功登录网站\n` +
+        `请返回浏览器查看`,
+        { parse_mode: 'HTML' }
+      );
+      await ctx.answerCbQuery('登录成功！');
+    } catch (error) {
+      console.error('确认登录错误:', error);
+      await ctx.editMessageText(
+        `❌ <b>登录失败</b>\n\n` +
+        `请重新扫码或稍后重试`,
+        { parse_mode: 'HTML' }
+      );
+      await ctx.answerCbQuery('登录失败，请重试');
+    }
   }
 }
 
@@ -263,6 +355,7 @@ module.exports = {
   help,
   cancel,
   handleBack,
+  handleLoginConfirm,
   accountInfo,
   getMainKeyboard
 };
