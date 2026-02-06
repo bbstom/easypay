@@ -19,11 +19,11 @@ const LoginPage = () => {
   // 检查是否已登录，如果已登录则跳转到用户中心
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token || user) {
-      console.log('✅ 已登录，跳转到用户中心');
-      navigate('/user-center');
+    if (token) {
+      console.log('✅ 检测到 token，跳转到用户中心');
+      window.location.replace('/user-center');
     }
-  }, [user, navigate]);
+  }, []);
 
   const handleTelegramAppLogin = () => {
     const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
@@ -124,11 +124,9 @@ const LoginPage = () => {
               localStorage.setItem('token', completeData.token);
               axios.defaults.headers.common['Authorization'] = `Bearer ${completeData.token}`;
               
-              console.log('🚀 跳转到用户中心...');
-              // 使用 window.location.replace 强制跳转（不可后退）
-              setTimeout(() => {
-                window.location.replace('/user-center');
-              }, 100);
+              console.log('🚀 立即跳转到用户中心...');
+              // 立即跳转，不使用延迟
+              window.location.href = '/user-center';
             } else {
               console.error('❌ Complete API 返回错误:', completeData);
               setError(completeData.error || '登录失败，请重试');
@@ -160,7 +158,8 @@ const LoginPage = () => {
       } else {
         await register(formData.username, formData.email, formData.password);
       }
-      navigate('/user-center');
+      // 使用 window.location.href 确保跳转
+      window.location.href = '/user-center';
     } catch (err) {
       setError(err.response?.data?.error || '操作失败');
     }
