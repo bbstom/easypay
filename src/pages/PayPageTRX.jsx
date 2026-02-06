@@ -685,7 +685,7 @@ const PayPageTRX = () => {
                           placeholder="请输入数量"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 focus:bg-white rounded-lg px-4 py-3 pr-24 text-base font-bold outline-none transition-all tabular-nums placeholder:text-slate-400 placeholder:text-sm placeholder:font-normal"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 focus:bg-white rounded-lg px-4 py-3 pr-24 text-base font-bold outline-none transition-all tabular-nums placeholder:text-slate-400 placeholder:text-sm placeholder:font-normal overflow-hidden text-ellipsis"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           <span className="text-sm font-black uppercase px-3 py-1.5 rounded-lg text-[#EF0027] bg-red-50">
@@ -777,17 +777,17 @@ const PayPageTRX = () => {
                       <div className="space-y-3 mb-6">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                           <span className="text-sm text-slate-600 font-medium">预计代支付</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold text-cyan-600 tabular-nums">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-sm font-bold text-cyan-600 tabular-nums truncate">
                               {amount ? calculateReceiveAmount() : '--'}
                             </span>
-                            <span className="text-sm font-bold text-slate-500">TRX</span>
+                            <span className="text-sm font-bold text-slate-500 flex-shrink-0">TRX</span>
                           </div>
                         </div>
 
                         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                           <span className="text-sm text-slate-600 font-medium">汇率结算</span>
-                          <span className="text-sm font-bold text-slate-700 tabular-nums">
+                          <span className="text-sm font-bold text-slate-700 tabular-nums truncate">
                             ¥ {amount ? calculateCNY() : '--'}
                           </span>
                         </div>
@@ -799,14 +799,14 @@ const PayPageTRX = () => {
                               <span className="text-[#00A3FF] ml-1">{getFeeTypeLabel()}</span>
                             )}
                           </span>
-                          <span className="text-sm font-bold text-orange-500 tabular-nums">
+                          <span className="text-sm font-bold text-orange-500 tabular-nums truncate">
                             {amount ? `¥ ${calculateServiceFee()}` : '--'}
                           </span>
                         </div>
 
                         <div className="flex justify-between items-center pt-2">
                           <span className="text-base font-bold text-slate-700">订单总额</span>
-                          <p className="text-3xl font-black text-slate-900 tabular-nums">
+                          <p className="text-3xl font-black text-slate-900 tabular-nums truncate">
                             {amount ? `¥ ${calculateTotal()}` : '¥ --'}
                           </p>
                         </div>

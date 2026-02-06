@@ -169,12 +169,6 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center px-6 pt-20">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Zap className="text-white" size={24} />
-            </div>
-            <span className="text-2xl font-black tracking-tighter text-slate-800">FASTPAY</span>
-          </div>
           <h2 className="text-3xl font-black text-slate-800">{isLogin ? '登录账户' : '注册账户'}</h2>
         </div>
 
@@ -188,30 +182,30 @@ const LoginPage = () => {
             </div>
             
             {!showQRCode ? (
-              <div className="space-y-3">
-                {/* 打开 Telegram 应用按钮 */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Telegram 登录按钮 */}
                 <button
                   onClick={handleTelegramAppLogin}
-                  className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+                  className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold py-2.5 px-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-.962 3.767-1.362 5.001-.169.523-.506.697-.831.715-.704.031-1.238-.465-1.92-.911-.106-.07-2.022-1.294-2.726-1.892-.193-.164-.41-.492-.013-.876.917-.886 2.014-1.877 2.68-2.537.297-.295.594-.984-.652-.145-1.784 1.201-3.527 2.368-3.527 2.368s-.414.263-.119.263c.295 0 4.343-1.411 4.343-1.411s.801-.314.801.209z"/>
                   </svg>
-                  <span>打开 Telegram 应用登录</span>
+                  <span>Telegram 登录</span>
                 </button>
                 
-                {/* 扫码登录按钮 */}
+                {/* Telegram 扫码按钮 */}
                 <button
                   onClick={generateQRCode}
-                  className="w-full bg-white hover:bg-slate-50 text-[#0088cc] font-bold py-3 px-4 rounded-xl transition-all border-2 border-[#0088cc] flex items-center justify-center gap-2"
+                  className="bg-white hover:bg-slate-50 text-[#0088cc] font-bold py-2.5 px-3 rounded-xl transition-all border-2 border-[#0088cc] flex items-center justify-center gap-2 text-sm"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="7" height="7"/>
                     <rect x="14" y="3" width="7" height="7"/>
                     <rect x="3" y="14" width="7" height="7"/>
                     <rect x="14" y="14" width="7" height="7"/>
                   </svg>
-                  <span>或扫描二维码登录</span>
+                  <span>Telegram 扫码</span>
                 </button>
               </div>
             ) : (
@@ -316,34 +310,6 @@ const LoginPage = () => {
             <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-slate-500 hover:text-cyan-600 font-bold">
               {isLogin ? '还没有账户？立即注册' : '已有账户？立即登录'}
             </button>
-          </div>
-        </div>
-
-        {/* 提示信息 */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-200">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">💡</div>
-            <div className="flex-1">
-              <div className="font-bold text-blue-900 mb-2">Telegram 登录方式</div>
-              <div className="text-sm text-blue-700 space-y-3">
-                <div>
-                  <div className="font-bold mb-1">📱 方式一：打开应用（推荐）</div>
-                  <ul className="space-y-1 ml-4">
-                    <li>• 点击"打开 Telegram 应用登录"</li>
-                    <li>• 在 Telegram 中确认登录</li>
-                    <li>• 自动完成登录</li>
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-bold mb-1">📷 方式二：扫码登录</div>
-                  <ul className="space-y-1 ml-4">
-                    <li>• 点击"扫描二维码登录"</li>
-                    <li>• 用 Telegram 扫描二维码</li>
-                    <li>• 在 Telegram 中确认登录</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
