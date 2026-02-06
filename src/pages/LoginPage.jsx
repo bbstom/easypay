@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Zap } from 'lucide-react';
 import QRCode from 'qrcode';
+import axios from 'axios';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -87,11 +88,35 @@ const LoginPage = () => {
         const response = await fetch(`/api/auth/check-qr-login?token=${token}`);
         const data = await response.json();
         
-        if (data.success && data.userData) {
+        if (data.success && data.token) {
           clearInterval(pollInterval);
-          // 登录成功
-          await telegramLogin(data.userData);
-          navigate('/user-center');
+          
+          // 调用新的 complete 端点获取 JWT token
+          try {
+            const completeResponse = await fetch('/api/auth/qr-login-complete', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ token: data.token })
+            });
+            
+            const completeData = await completeResponse.json();
+            
+            if (completeResponse.ok && completeData.token) {
+              // 直接设置 token 和用户信息
+              localStorage.setItem('token', completeData.token);
+              axios.defaults.headers.common['Authorization'] = `Bearer ${completeData.token}`;
+              
+              // 跳转到用户中心
+              navigate('/user-center');
+            } else {
+              setError(completeData.error || '登录失败，请重试');
+            }
+          } catch (err) {
+            console.error('完成登录失败:', err);
+            setError('登录失败，请重试');
+          }
         }
       } catch (err) {
         // 继续轮询

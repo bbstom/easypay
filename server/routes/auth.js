@@ -221,18 +221,86 @@ router.get('/check-qr-login', async (req, res) => {
     const loginData = global.qrLoginSessions?.[token];
     
     if (loginData && loginData.userData) {
-      // 清除已使用的 token
-      delete global.qrLoginSessions[token];
+      console.log('✅ 检测到登录成功:', {
+        token: token.substring(0, 20) + '...',
+        telegramId: loginData.userData.id
+      });
+      
+      // 不要清除 token，让 complete 端点来清除
+      // delete global.qrLoginSessions[token];
       
       return res.json({
         success: true,
-        userData: loginData.userData
+        token: token  // 返回 token 供前端调用 complete 端点
       });
     }
     
+    // 不打印太多日志，避免刷屏
+    // console.log('⏳ 等待登录确认:', token.substring(0, 20) + '...');
     res.json({ success: false });
   } catch (error) {
     console.error('检查登录状态错误:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 完成二维码登录（前端调用，直接返回 JWT token）
+router.post('/qr-login-complete', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ error: '缺少 token 参数' });
+    }
+
+    // 从内存中获取登录数据
+    const loginData = global.qrLoginSessions?.[token];
+    
+    if (!loginData || !loginData.userData) {
+      return res.status(401).json({ error: '登录会话已过期或无效' });
+    }
+
+    const userData = loginData.userData;
+    
+    // 清除已使用的 token
+    delete global.qrLoginSessions[token];
+    
+    // 查找用户
+    const user = await User.findOne({ telegramId: userData.id.toString() });
+    
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // 生成 JWT token
+    const jwtToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '7d' }
+    );
+
+    console.log('✅ 扫码登录完成:', {
+      userId: user._id,
+      username: user.username,
+      telegramId: user.telegramId
+    });
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        telegramId: user.telegramId,
+        telegramUsername: user.telegramUsername,
+        telegramFirstName: user.telegramFirstName,
+        telegramLastName: user.telegramLastName,
+        telegramPhotoUrl: user.telegramPhotoUrl
+      }
+    });
+  } catch (error) {
+    console.error('❌ 完成登录错误:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -242,7 +310,15 @@ router.post('/confirm-qr-login', async (req, res) => {
   try {
     const { token, telegramId, username, firstName, lastName, photoUrl } = req.body;
     
+    console.log('🔐 收到登录确认请求:', {
+      token,
+      telegramId,
+      username,
+      firstName
+    });
+    
     if (!token || !telegramId) {
+      console.error('❌ 缺少必要参数');
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
@@ -262,12 +338,14 @@ router.post('/confirm-qr-login', async (req, res) => {
         password: crypto.randomBytes(32).toString('hex')
       });
       await user.save();
+      console.log('✅ 创建新用户:', user.username);
     } else {
       user.telegramUsername = username;
       user.telegramFirstName = firstName;
       user.telegramLastName = lastName;
       user.telegramPhotoUrl = photoUrl;
       await user.save();
+      console.log('✅ 更新用户信息:', user.username);
     }
 
     // 生成用户数据（包含验证信息）
@@ -299,16 +377,22 @@ router.post('/confirm-qr-login', async (req, res) => {
       timestamp: Date.now()
     };
 
+    console.log('✅ 登录数据已存储:', {
+      token,
+      sessionCount: Object.keys(global.qrLoginSessions).length
+    });
+
     // 5分钟后自动清除
     setTimeout(() => {
       if (global.qrLoginSessions?.[token]) {
         delete global.qrLoginSessions[token];
+        console.log('🗑️  清除过期登录会话:', token);
       }
     }, 300000);
 
     res.json({ success: true, message: '登录确认成功' });
   } catch (error) {
-    console.error('确认登录错误:', error);
+    console.error('❌ 确认登录错误:', error);
     res.status(400).json({ error: error.message });
   }
 });

@@ -168,16 +168,26 @@ async function handleLoginConfirm(ctx) {
     
     try {
       const axios = require('axios');
-      const apiUrl = process.env.API_URL || 'http://localhost:5000';
+      // 使用 localhost 而不是外部域名，确保内部调用
+      const apiUrl = 'http://localhost:5000';
+      
+      console.log('🔐 确认登录请求:', {
+        token,
+        telegramId,
+        username,
+        apiUrl
+      });
       
       // 调用后端 API 确认登录
-      await axios.post(`${apiUrl}/api/auth/confirm-qr-login`, {
+      const response = await axios.post(`${apiUrl}/api/auth/confirm-qr-login`, {
         token,
         telegramId,
         username,
         firstName,
         lastName
       });
+
+      console.log('✅ 登录确认成功:', response.data);
 
       await ctx.editMessageText(
         `✅ <b>登录成功！</b>\n\n` +
@@ -187,10 +197,12 @@ async function handleLoginConfirm(ctx) {
       );
       await ctx.answerCbQuery('登录成功！');
     } catch (error) {
-      console.error('确认登录错误:', error);
+      console.error('❌ 确认登录错误:', error.message);
+      console.error('错误详情:', error.response?.data || error);
       await ctx.editMessageText(
         `❌ <b>登录失败</b>\n\n` +
-        `请重新扫码或稍后重试`,
+        `请重新扫码或稍后重试\n` +
+        `错误: ${error.message}`,
         { parse_mode: 'HTML' }
       );
       await ctx.answerCbQuery('登录失败，请重试');
