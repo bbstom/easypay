@@ -18,7 +18,7 @@ async function handleCallback(ctx) {
     await handleUSDTPayment(ctx);
   } else if (action === 'payment_trx') {
     await handleTRXPayment(ctx);
-  } else if (action.startsWith('confirm_')) {
+  } else if (action === 'confirm_payment') {
     await confirmPayment(ctx);
   } else if (action === 'pay_wechat') {
     await generatePaymentQR(ctx, 'wechat');

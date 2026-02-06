@@ -85,10 +85,17 @@ class TelegramBot {
     this.bot.on('message', this.handleGroupMessage.bind(this));
 
     // 回调查询处理（按钮点击）
+    // 注意：登录相关的回调必须在 confirm_ 之前注册，避免被 payment 处理器捕获
+    this.bot.action(/^confirm_login_/, startHandler.handleLoginConfirm);
+    this.bot.action('cancel_login', startHandler.handleLoginConfirm);
+    
+    // 支付相关回调
     this.bot.action(/^payment_/, paymentHandler.handleCallback);
-    this.bot.action(/^confirm_/, paymentHandler.handleCallback);
+    this.bot.action(/^confirm_payment/, paymentHandler.handleCallback);  // 更精确的匹配
     this.bot.action(/^pay_/, paymentHandler.handleCallback);
     this.bot.action(/^check_order_/, paymentHandler.handleCallback);
+    
+    // 其他功能回调
     this.bot.action(/^orders_/, ordersHandler.handleCallback);
     this.bot.action(/^order_/, ordersHandler.handleCallback);
     this.bot.action(/^tickets_/, ticketsHandler.handleCallback);
@@ -101,8 +108,8 @@ class TelegramBot {
       const data = ctx.callbackQuery.data.replace('copy_', '');
       await contentService.handleCopyButton(ctx, data);
     });
-    this.bot.action(/^confirm_login_/, startHandler.handleLoginConfirm);
-    this.bot.action('cancel_login', startHandler.handleLoginConfirm);
+    
+    // 通用回调
     this.bot.action(/^back_/, startHandler.handleBack);
     this.bot.action('cancel', startHandler.cancel);
     this.bot.action('help_center', startHandler.help);
