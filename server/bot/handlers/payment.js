@@ -453,7 +453,26 @@ async function generatePaymentQR(ctx, paymentMethod) {
 
     const paymentName = paymentMethod === 'wechat' ? '微信' : '支付宝';
 
-    // 生成支付二维码
+    // 1. 先发送自定义横幅图片（如果配置了）
+    try {
+      const TelegramContent = require('../../models/TelegramContent');
+      const bannerContent = await TelegramContent.findOne({ 
+        key: 'payment_qrcode', 
+        enabled: true 
+      });
+      
+      if (bannerContent && bannerContent.content && bannerContent.content.mediaUrl) {
+        const bannerUrl = bannerContent.content.mediaUrl;
+        console.log('✅ 发送自定义横幅:', bannerUrl);
+        
+        // 发送横幅图片（不带按钮，不带说明文字）
+        await ctx.replyWithPhoto(bannerUrl);
+      }
+    } catch (error) {
+      console.log('⚠️  发送横幅失败:', error.message);
+    }
+
+    // 2. 然后发送支付二维码
     const qrBuffer = await generatePaymentQRCode(paymentUrl);
 
     await ctx.replyWithPhoto(
