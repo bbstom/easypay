@@ -1,5 +1,6 @@
 const axios = require('axios');
 const QRCode = require('qrcode');
+const { Markup } = require('telegraf');
 const { generatePaymentQRCode } = require('../utils/qrCodeGenerator');
 const Settings = require('../../models/Settings');
 const Payment = require('../../models/Payment');
@@ -450,10 +451,27 @@ async function generatePaymentQR(ctx, paymentMethod) {
 
     console.log('支付链接:', paymentUrl);
 
-    // 生成美化二维码
-    const qrBuffer = await generatePaymentQRCode(paymentUrl);
-
     const paymentName = paymentMethod === 'wechat' ? '微信' : '支付宝';
+
+    // 获取自定义 logo URL（如果配置了）
+    let logoUrl = null;
+    try {
+      const TelegramContent = require('../../models/TelegramContent');
+      const logoContent = await TelegramContent.findOne({ 
+        key: 'payment_qrcode', 
+        enabled: true 
+      });
+      
+      if (logoContent && logoContent.content && logoContent.content.mediaUrl) {
+        logoUrl = logoContent.content.mediaUrl;
+        console.log('✅ 找到自定义 logo:', logoUrl);
+      }
+    } catch (error) {
+      console.log('⚠️  获取 logo 失败:', error.message);
+    }
+
+    // 生成带 logo 的二维码
+    const qrBuffer = await generatePaymentQRCode(paymentUrl, logoUrl);
 
     await ctx.replyWithPhoto(
       { source: qrBuffer },
@@ -471,6 +489,7 @@ async function generatePaymentQR(ctx, paymentMethod) {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
+            [{ text: '💳 打开支付链接', url: paymentUrl }],
             [{ text: '🔄 刷新状态', callback_data: `check_order_${order._id}` }],
             [{ text: '« 返回主菜单', callback_data: 'back_to_main' }]
           ]

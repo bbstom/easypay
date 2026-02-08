@@ -1,5 +1,6 @@
 const QRCode = require('qrcode');
 const { createCanvas, loadImage } = require('canvas');
+const axios = require('axios');
 
 /**
  * 生成美化的二维码
@@ -18,7 +19,8 @@ async function generateStyledQRCode(data, options = {}) {
     gradientEnd = '#FFFFFF',   // 渐变结束色
     qrColor = '#000000',  // 二维码颜色
     logoText = null,      // 底部文字（可选）
-    logoTextColor = '#64748B' // 文字颜色
+    logoTextColor = '#64748B', // 文字颜色
+    logoUrl = null        // Logo 图片 URL（可选）
   } = options;
 
   try {
@@ -37,43 +39,69 @@ async function generateStyledQRCode(data, options = {}) {
     const borderPadding = borderWidth * 2;
     const canvasSize = size + totalPadding + borderPadding;
     const textHeight = logoText ? 24 : 0; // 文字区域也缩小
-    const canvasHeight = canvasSize + textHeight;
+    
+    // 如果有 logo，添加 logo 区域
+    const logoHeight = logoUrl ? 80 : 0; // logo 区域高度
+    const canvasHeight = logoHeight + canvasSize + textHeight;
 
     // 3. 创建画布
     const canvas = createCanvas(canvasSize, canvasHeight);
     const ctx = canvas.getContext('2d');
 
-    // 4. 绘制圆角矩形背景（带渐变）
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvasSize);
+    // 4. 绘制背景
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvasSize, canvasHeight);
+
+    let currentY = 0;
+
+    // 5. 绘制 Logo（如果有）
+    if (logoUrl) {
+      try {
+        const logoImage = await loadImage(logoUrl);
+        const logoSize = 60; // logo 尺寸
+        const logoX = (canvasSize - logoSize) / 2;
+        const logoY = 10;
+        
+        ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+        currentY = logoHeight;
+      } catch (error) {
+        console.error('加载 logo 失败:', error);
+        currentY = 0; // logo 加载失败，从顶部开始
+      }
+    }
+
+    // 6. 绘制圆角矩形背景（带渐变）
+    const gradient = ctx.createLinearGradient(0, currentY, 0, currentY + canvasSize);
     gradient.addColorStop(0, gradientStart);
     gradient.addColorStop(1, gradientEnd);
     
     ctx.fillStyle = gradient;
-    roundRect(ctx, 0, 0, canvasSize, canvasSize, borderRadius);
+    roundRect(ctx, 0, currentY, canvasSize, canvasSize, borderRadius);
     ctx.fill();
 
-    // 5. 绘制边框
+    // 7. 绘制边框
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = borderWidth;
-    roundRect(ctx, borderWidth / 2, borderWidth / 2, canvasSize - borderWidth, canvasSize - borderWidth, borderRadius);
+    roundRect(ctx, borderWidth / 2, currentY + borderWidth / 2, canvasSize - borderWidth, canvasSize - borderWidth, borderRadius);
     ctx.stroke();
 
-    // 6. 绘制二维码
+    // 8. 绘制二维码
     const qrImage = await loadImage(qrDataUrl);
     const qrX = padding + borderWidth;
-    const qrY = padding + borderWidth;
+    const qrY = currentY + padding + borderWidth;
     ctx.drawImage(qrImage, qrX, qrY, size, size);
 
-    // 7. 绘制底部文字（可选）
+    // 9. 绘制底部文字（可选）
     if (logoText) {
+      currentY += canvasSize;
       ctx.fillStyle = logoTextColor;
       ctx.font = 'bold 12px Arial'; // 字体缩小到12px
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(logoText, canvasSize / 2, canvasSize + textHeight / 2);
+      ctx.fillText(logoText, canvasSize / 2, currentY + textHeight / 2);
     }
 
-    // 8. 转换为 Buffer
+    // 10. 转换为 Buffer
     return canvas.toBuffer('image/png');
   } catch (error) {
     console.error('生成美化二维码失败:', error);
@@ -132,13 +160,15 @@ async function generateSwapQRCode(address) {
 
 /**
  * 支付二维码样式
+ * @param {string} paymentUrl - 支付链接
+ * @param {string} logoUrl - Logo 图片 URL（可选）
  */
-async function generatePaymentQRCode(paymentUrl) {
+async function generatePaymentQRCode(paymentUrl, logoUrl = null) {
   return generateStyledQRCode(paymentUrl, {
     borderColor: '#F59E0B', // 橙色边框
     gradientStart: '#FEF3C7', // 浅橙色
-    gradientEnd: '#FFFFFF'
-    // 不显示底部文字
+    gradientEnd: '#FFFFFF',
+    logoUrl: logoUrl // 传入 logo URL
   });
 }
 
