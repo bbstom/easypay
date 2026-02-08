@@ -36,7 +36,8 @@ class NotificationService {
       if (template && template.content && template.content.text) {
         // 使用自定义模板
         const variables = {
-          orderId: order.platformOrderId,
+          _id: order._id.toString(),  // MongoDB _id，用于按钮回调
+          orderId: order.platformOrderId,  // 平台订单号，用于显示
           totalCNY: Number(order.totalCNY).toFixed(2),
           payType: order.payType
         };
@@ -99,7 +100,8 @@ class NotificationService {
       if (template && template.content && template.content.text) {
         // 使用自定义模板
         const variables = {
-          orderId: order.platformOrderId,
+          _id: order._id.toString(),  // MongoDB _id，用于按钮回调
+          orderId: order.platformOrderId,  // 平台订单号，用于显示
           amount: order.amount,
           payType: order.payType,
           address: this.formatAddress(order.address),
@@ -169,7 +171,8 @@ class NotificationService {
       if (template && template.content && template.content.text) {
         // 使用自定义模板
         const variables = {
-          orderId: order._id.toString(),  // 使用 MongoDB _id
+          _id: order._id.toString(),  // MongoDB _id，用于按钮回调
+          orderId: order.platformOrderId,  // 平台订单号，用于显示
           platformOrderId: order.platformOrderId,
           amount: order.amount,
           payType: order.payType,
@@ -177,7 +180,7 @@ class NotificationService {
         };
         
         message = template.content.text
-          .replace(/{{orderId}}/g, variables.platformOrderId)
+          .replace(/{{orderId}}/g, variables.orderId)
           .replace(/{{platformOrderId}}/g, variables.platformOrderId)
           .replace(/{{amount}}/g, variables.amount)
           .replace(/{{payType}}/g, variables.payType)

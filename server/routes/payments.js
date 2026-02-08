@@ -399,6 +399,7 @@ async function processTransfer(paymentId, retryCount = 0) {
   const maxRetries = 3;
   const walletSelector = require('../services/walletSelector');
   const Wallet = require('../models/Wallet');
+  let selectedWallet = null; // 记录选中的钱包
   
   try {
     const payment = await Payment.findById(paymentId);
@@ -445,7 +446,7 @@ async function processTransfer(paymentId, retryCount = 0) {
     // USDT 转账（无能量）：约 13-30 TRX
     const estimatedFee = payment.payType === 'TRX' ? 2 : 5; // TRX 转账 2 TRX，USDT 转账预留 5 TRX
     
-    const selectedWallet = await walletSelector.selectBestWallet({
+    selectedWallet = await walletSelector.selectBestWallet({
       amount: payment.amount,
       type: payment.payType,
       estimatedFee: estimatedFee
@@ -476,10 +477,21 @@ async function processTransfer(paymentId, retryCount = 0) {
     console.log(`   交易哈希: ${payment.txHash}`);
     console.log(`   查看交易: https://tronscan.org/#/transaction/${payment.txHash}\n`);
 
-    // 4. 更新钱包余额（异步，不阻塞）
-    updateWalletBalance(selectedWallet._id).catch(err => {
-      console.error('更新钱包余额失败:', err.message);
-    });
+    // 4. 立即更新钱包余额（同步等待，确保余额最新）
+    try {
+      console.log('🔄 正在更新钱包余额...');
+      await updateWalletBalance(selectedWallet._id);
+      console.log('✅ 钱包余额更新完成\n');
+    } catch (updateError) {
+      console.error('⚠️  钱包余额更新失败:', updateError.message);
+      console.log('⚠️  将在后台继续尝试更新\n');
+      // 后台异步重试
+      setTimeout(() => {
+        updateWalletBalance(selectedWallet._id).catch(err => {
+          console.error('后台更新钱包余额失败:', err.message);
+        });
+      }, 5000);
+    }
 
     // 5. 发送代付完成邮件（第二封）
     if (payment.email) {
@@ -504,6 +516,16 @@ async function processTransfer(paymentId, retryCount = 0) {
     }
   } catch (error) {
     console.error(`\n❌ 代付失败 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, error.message);
+    
+    // 如果已经选择了钱包，尝试更新其余额（可能已经消耗了能量租赁费用）
+    if (selectedWallet) {
+      try {
+        console.log('🔄 更新失败钱包的余额...');
+        await updateWalletBalance(selectedWallet._id);
+      } catch (updateError) {
+        console.error('⚠️  更新钱包余额失败:', updateError.message);
+      }
+    }
     
     const payment = await Payment.findById(paymentId);
     if (payment) {
@@ -540,48 +562,54 @@ async function processTransfer(paymentId, retryCount = 0) {
   }
 }
 
-// 异步更新钱包余额
-async function updateWalletBalance(walletId) {
+// 更新单个钱包余额（带超时保护）
+async function updateWalletBalance(walletId, timeout = 30000) {
   try {
     const Wallet = require('../models/Wallet');
     const wallet = await Wallet.findById(walletId);
     if (!wallet) {
-      console.error('❌ 更新余额失败: 钱包不存在');
-      return;
+      throw new Error('钱包不存在');
     }
 
-    console.log(`\n🔄 开始更新钱包余额: ${wallet.name} (${wallet.address})`);
+    console.log(`🔄 更新钱包余额: ${wallet.name} (${wallet.address})`);
 
     // 验证地址
     if (!wallet.address) {
-      console.error('❌ 更新余额失败: 钱包地址为空');
-      return;
+      throw new Error('钱包地址为空');
     }
 
     // 初始化 TronWeb
     await tronService.initialize();
 
-    // 获取余额
-    console.log('📊 正在查询 TRX 余额...');
-    const trxBalance = await tronService.getBalance(wallet.address);
-    console.log(`✅ TRX 余额: ${trxBalance.toFixed(2)}`);
-    
-    console.log('📊 正在查询 USDT 余额...');
-    const usdtBalance = await tronService.getUSDTBalance(wallet.address);
-    console.log(`✅ USDT 余额: ${usdtBalance.toFixed(2)}`);
+    // 使用 Promise.race 实现超时控制
+    const updatePromise = (async () => {
+      // 并行查询余额
+      const [trxBalance, usdtBalance] = await Promise.all([
+        tronService.getBalance(wallet.address),
+        tronService.getUSDTBalance(wallet.address)
+      ]);
 
-    // 更新钱包余额
-    wallet.balance.trx = trxBalance;
-    wallet.balance.usdt = usdtBalance;
-    wallet.balance.lastUpdated = new Date();
-    await wallet.save();
+      console.log(`   TRX: ${trxBalance.toFixed(2)} | USDT: ${usdtBalance.toFixed(2)}`);
 
-    console.log(`✅ 钱包余额已更新: ${wallet.name}`);
-    console.log(`   TRX: ${trxBalance.toFixed(2)}`);
-    console.log(`   USDT: ${usdtBalance.toFixed(2)}\n`);
+      // 更新钱包余额
+      wallet.balance.trx = trxBalance;
+      wallet.balance.usdt = usdtBalance;
+      wallet.balance.lastUpdated = new Date();
+      await wallet.save();
+
+      return { trxBalance, usdtBalance };
+    })();
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('更新超时')), timeout)
+    );
+
+    await Promise.race([updatePromise, timeoutPromise]);
+
+    console.log(`✅ 钱包余额已更新: ${wallet.name}\n`);
   } catch (error) {
-    console.error('❌ 更新钱包余额失败:', error.message);
-    console.error('错误详情:', error);
+    console.error(`❌ 更新钱包余额失败: ${error.message}`);
+    throw error;
   }
 }
 

@@ -162,7 +162,18 @@ async function showOrderDetail(ctx) {
   const orderId = ctx.callbackQuery.data.replace('order_detail_', '');
 
   try {
-    const order = await Payment.findById(orderId);
+    // 先尝试用 MongoDB _id 查找，如果失败则用 platformOrderId 查找
+    let order;
+    
+    // 判断是否是 MongoDB ObjectId 格式（24位十六进制字符串）
+    if (/^[0-9a-fA-F]{24}$/.test(orderId)) {
+      order = await Payment.findById(orderId);
+    }
+    
+    // 如果没找到，尝试用 platformOrderId 查找
+    if (!order) {
+      order = await Payment.findOne({ platformOrderId: orderId });
+    }
 
     if (!order) {
       await ctx.answerCbQuery('❌ 订单不存在');

@@ -66,7 +66,8 @@ const DEFAULT_TEMPLATES = {
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: '_id', description: 'MongoDB ID（用于按钮回调）', example: '507f1f77bcf86cd799439011' },
+      { key: 'orderId', description: '订单号（用于显示）', example: 'ORD177053402578855GZ9G5' },
       { key: 'totalCNY', description: '支付金额', example: '75.60' },
       { key: 'payType', description: '支付类型', example: 'USDT' }
     ]
@@ -88,7 +89,8 @@ const DEFAULT_TEMPLATES = {
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: '_id', description: 'MongoDB ID（用于按钮回调）', example: '507f1f77bcf86cd799439011' },
+      { key: 'orderId', description: '订单号（用于显示）', example: 'ORD177053402578855GZ9G5' },
       { key: 'amount', description: '数量', example: '10' },
       { key: 'payType', description: '类型', example: 'USDT' },
       { key: 'address', description: '收款地址（缩写）', example: 'TXXXxx...xxXXXx' },
@@ -96,7 +98,7 @@ const DEFAULT_TEMPLATES = {
     ],
     buttons: [
       { text: '🔍 查看交易', type: 'url', data: 'https://tronscan.org/#/transaction/{{txHash}}', row: 0, col: 0 },
-      { text: '📋 查看订单详情', type: 'callback', data: 'order_detail_{{orderId}}', row: 1, col: 0 }
+      { text: '📋 查看订单详情', type: 'callback', data: 'order_detail_{{_id}}', row: 1, col: 0 }
     ]
   },
   transfer_failed: {
@@ -114,13 +116,15 @@ const DEFAULT_TEMPLATES = {
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: '_id', description: 'MongoDB ID（用于按钮回调）', example: '507f1f77bcf86cd799439011' },
+      { key: 'orderId', description: '订单号（用于显示）', example: 'ORD177053402578855GZ9G5' },
       { key: 'amount', description: '数量', example: '10' },
       { key: 'payType', description: '类型', example: 'USDT' },
       { key: 'reason', description: '失败原因', example: '余额不足' }
     ],
     buttons: [
-      { text: '📋 查看订单', type: 'callback', data: 'order_detail_{{orderId}}', row: 0, col: 0 }
+      { text: '📋 查看订单', type: 'callback', data: 'order_detail_{{_id}}', row: 0, col: 0 },
+      { text: '💬 联系客服', type: 'callback', data: 'create_ticket_order_{{_id}}', row: 1, col: 0 }
     ]
   },
   order_completed: {
