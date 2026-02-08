@@ -312,14 +312,15 @@ async function generatePaymentQRCodeWithBanner(paymentUrl, bannerUrl) {
 }
 
 /**
- * 支付二维码样式（蓝紫渐变，宽度1280）
+ * 支付二维码样式（蓝紫渐变，宽度1280，高度缩小）
  */
 async function generatePaymentQRCode(paymentUrl) {
   try {
     // 配置
     const canvasWidth = 1280;
-    const qrSize = 800;
-    const padding = (canvasWidth - qrSize) / 2;
+    const qrSize = 400;  // 二维码尺寸缩小到400
+    const paddingX = (canvasWidth - qrSize) / 2;  // 左右内边距
+    const paddingY = 40;  // 上下内边距
     const borderRadius = 30;
     const borderWidth = 6;
 
@@ -333,8 +334,8 @@ async function generatePaymentQRCode(paymentUrl) {
       }
     });
 
-    // 2. 创建画布
-    const canvasHeight = qrSize + padding * 2;
+    // 2. 创建画布（高度缩小）
+    const canvasHeight = qrSize + paddingY * 2;  // 高度约480
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
 
@@ -353,10 +354,10 @@ async function generatePaymentQRCode(paymentUrl) {
     roundRect(ctx, borderWidth / 2, borderWidth / 2, canvasWidth - borderWidth, canvasHeight - borderWidth, borderRadius);
     ctx.stroke();
 
-    // 5. 绘制二维码
+    // 5. 绘制二维码（居中）
     const qrImage = await loadImage(qrDataUrl);
-    const qrX = padding;
-    const qrY = padding;
+    const qrX = paddingX;
+    const qrY = paddingY;
     ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
 
     // 6. 转换为 Buffer
@@ -365,7 +366,7 @@ async function generatePaymentQRCode(paymentUrl) {
     console.error('生成支付二维码失败:', error);
     // 降级：返回普通二维码
     return QRCode.toBuffer(paymentUrl, {
-      width: 800,
+      width: 400,
       margin: 2
     });
   }
