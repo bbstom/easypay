@@ -35,14 +35,20 @@ class NotificationService {
 
       if (template && template.content && template.content.text) {
         // 使用自定义模板
-        message = template.content.text
-          .replace(/{{orderId}}/g, order.platformOrderId)
-          .replace(/{{totalCNY}}/g, Number(order.totalCNY).toFixed(2))
-          .replace(/{{payType}}/g, order.payType);
+        const variables = {
+          orderId: order.platformOrderId,
+          totalCNY: Number(order.totalCNY).toFixed(2),
+          payType: order.payType
+        };
         
-        // 如果有自定义按钮，使用自定义按钮
+        message = template.content.text
+          .replace(/{{orderId}}/g, variables.orderId)
+          .replace(/{{totalCNY}}/g, variables.totalCNY)
+          .replace(/{{payType}}/g, variables.payType);
+        
+        // 如果有自定义按钮，使用自定义按钮（传入变量）
         if (template.buttons && template.buttons.length > 0) {
-          buttons = contentService.buildButtons(template);
+          buttons = contentService.buildButtons(template, variables);
         }
       } else {
         // 使用默认消息
@@ -92,15 +98,23 @@ class NotificationService {
 
       if (template && template.content && template.content.text) {
         // 使用自定义模板
+        const variables = {
+          orderId: order.platformOrderId,
+          amount: order.amount,
+          payType: order.payType,
+          address: this.formatAddress(order.address),
+          txHash: order.txHash
+        };
+        
         message = template.content.text
-          .replace(/{{orderId}}/g, order.platformOrderId)
-          .replace(/{{amount}}/g, order.amount)
-          .replace(/{{payType}}/g, order.payType)
-          .replace(/{{address}}/g, this.formatAddress(order.address))
-          .replace(/{{txHash}}/g, order.txHash);
+          .replace(/{{orderId}}/g, variables.orderId)
+          .replace(/{{amount}}/g, variables.amount)
+          .replace(/{{payType}}/g, variables.payType)
+          .replace(/{{address}}/g, variables.address)
+          .replace(/{{txHash}}/g, variables.txHash);
         
         if (template.buttons && template.buttons.length > 0) {
-          buttons = contentService.buildButtons(template);
+          buttons = contentService.buildButtons(template, variables);
         }
       } else {
         // 使用默认消息
@@ -154,14 +168,23 @@ class NotificationService {
 
       if (template && template.content && template.content.text) {
         // 使用自定义模板
+        const variables = {
+          orderId: order._id.toString(),  // 使用 MongoDB _id
+          platformOrderId: order.platformOrderId,
+          amount: order.amount,
+          payType: order.payType,
+          reason: reason
+        };
+        
         message = template.content.text
-          .replace(/{{orderId}}/g, order.platformOrderId)
-          .replace(/{{amount}}/g, order.amount)
-          .replace(/{{payType}}/g, order.payType)
-          .replace(/{{reason}}/g, reason);
+          .replace(/{{orderId}}/g, variables.platformOrderId)
+          .replace(/{{platformOrderId}}/g, variables.platformOrderId)
+          .replace(/{{amount}}/g, variables.amount)
+          .replace(/{{payType}}/g, variables.payType)
+          .replace(/{{reason}}/g, variables.reason);
         
         if (template.buttons && template.buttons.length > 0) {
-          buttons = contentService.buildButtons(template);
+          buttons = contentService.buildButtons(template, variables);
         }
       } else {
         // 使用默认消息

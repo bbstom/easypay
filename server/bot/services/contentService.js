@@ -44,12 +44,12 @@ class ContentService {
       caption: content.content.caption,
       parseMode: content.content.parseMode,
       features: content.features,
-      buttons: this.buildButtons(content)
+      buttons: this.buildButtons(content, variables)
     };
   }
 
   // 构建按钮
-  buildButtons(content) {
+  buildButtons(content, variables = {}) {
     if (!content.buttons || content.buttons.length === 0) {
       console.log(`🔍 [contentService] 没有自定义按钮`);
       return null;
@@ -74,13 +74,23 @@ class ContentService {
         return rows[row]
           .sort((a, b) => a.col - b.col)
           .map(btn => {
+            // 替换按钮文本和数据中的变量
+            let text = btn.text;
+            let data = btn.data;
+            
+            Object.keys(variables).forEach(key => {
+              const regex = new RegExp(`{{${key}}}`, 'g');
+              text = text.replace(regex, variables[key]);
+              data = data.replace(regex, variables[key]);
+            });
+
             if (btn.type === 'url') {
-              return Markup.button.url(btn.text, btn.data);
+              return Markup.button.url(text, data);
             } else if (btn.type === 'copy') {
               // Telegram不直接支持复制，使用callback模拟
-              return Markup.button.callback(btn.text, `copy_${btn.data}`);
+              return Markup.button.callback(text, `copy_${data}`);
             } else {
-              return Markup.button.callback(btn.text, btn.data);
+              return Markup.button.callback(text, data);
             }
           });
       });
