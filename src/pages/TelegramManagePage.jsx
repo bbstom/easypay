@@ -201,6 +201,7 @@ const TelegramManagePage = () => {
       if (res.ok) {
         alert('群发已创建');
         setShowBroadcastModal(false);
+        setEditingBroadcast(null); // 清除编辑状态
         resetBroadcastForm();
         fetchData();
       } else {
@@ -1198,6 +1199,7 @@ const TelegramManagePage = () => {
               <h2 className="text-xl font-bold">群发消息</h2>
               <button
                 onClick={() => {
+                  setEditingBroadcast(null); // 清除编辑状态
                   resetBroadcastForm();
                   setShowBroadcastModal(true);
                 }}
