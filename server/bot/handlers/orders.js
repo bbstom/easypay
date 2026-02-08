@@ -211,17 +211,22 @@ async function showOrderDetail(ctx) {
 
     // 如果没有自定义内容，使用默认消息
     if (!sent) {
+      // 获取支付状态和代付状态
+      const paymentStatus = getPaymentStatusText(order.paymentStatus);
+      const transferStatus = getTransferStatusText(order.transferStatus);
+      
       let detailText = `📋 <b>订单详情</b>\n\n` +
         `━━━━━━━━━━━━━━━\n` +
         `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
         `<code>类  型：</code>${order.payType} 代付\n` +
         `<code>数  量：</code><b>${order.amount} ${order.payType}</b>\n` +
-        `<code>地  址：</code>\n<code>${order.address}</code>\n` +  // ✅ 使用完整地址并换行
+        `<code>地  址：</code>\n<code>${order.address}</code>\n` +
         `━━━━━━━━━━━━━━━\n` +
         `<code>支付金额：</code>${Number(order.totalCNY).toFixed(2)} CNY\n` +
         `<code>服务费：</code>${Number(order.serviceFee).toFixed(2)} CNY\n` +
         `━━━━━━━━━━━━━━━\n` +
-        `<code>状  态：</code>${status}\n` +
+        `<code>💳 支付状态：</code>${paymentStatus}\n` +
+        `<code>🔄 代付状态：</code>${transferStatus}\n` +
         `<code>创建时间：</code>${date}\n`;
 
       if (order.paymentTime) {
@@ -301,6 +306,26 @@ function getStatusText(status) {
   const statusMap = {
     'pending': '⏳ 待支付',
     'paid': '💳 已支付',
+    'processing': '🔄 处理中',
+    'completed': '✅ 已完成',
+    'failed': '❌ 失败'
+  };
+  return statusMap[status] || '❓ 未知';
+}
+
+function getPaymentStatusText(status) {
+  const statusMap = {
+    'pending': '⏳ 待支付',
+    'paid': '✅ 已支付',
+    'failed': '❌ 失败',
+    'expired': '⏰ 已过期'
+  };
+  return statusMap[status] || '❓ 未知';
+}
+
+function getTransferStatusText(status) {
+  const statusMap = {
+    'pending': '⏳ 待处理',
     'processing': '🔄 处理中',
     'completed': '✅ 已完成',
     'failed': '❌ 失败'
