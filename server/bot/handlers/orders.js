@@ -194,6 +194,10 @@ async function showOrderDetail(ctx) {
     buttons.push([Markup.button.callback('« 返回订单列表', 'orders_list')]);
     buttons.push([Markup.button.callback('« 返回主菜单', 'back_to_main')]);
 
+    // 获取支付状态和代付状态
+    const paymentStatus = getPaymentStatusText(order.paymentStatus);
+    const transferStatus = getTransferStatusText(order.transferStatus);
+
     // 尝试使用自定义内容
     const sent = await contentService.sendContent(ctx, 'order_detail', {
       orderId: order.platformOrderId,
@@ -202,7 +206,9 @@ async function showOrderDetail(ctx) {
       address: order.address,  // ✅ 使用完整地址
       totalCNY: Number(order.totalCNY).toFixed(2),
       serviceFee: Number(order.serviceFee).toFixed(2),
-      status: status,
+      status: status,  // 保留旧的总状态（向后兼容）
+      paymentStatus: paymentStatus,  // 新增：支付状态
+      transferStatus: transferStatus,  // 新增：代付状态
       createdAt: date,
       paymentTime: paymentTime,
       transferTime: transferTime,
