@@ -19,7 +19,7 @@ const exchangeRateService = require('./services/exchangeRateService');
 const orderTimeoutService = require('./services/orderTimeoutService');
 const swapService = require('./services/swapService'); // 闪兑服务
 const walletUpdateService = require('./services/walletUpdateService'); // 钱包余额更新服务
-const { getBotInstance } = require('./bot'); // Telegram Bot
+const { MultiBotManager } = require('./bot/MultiBotManager'); // Telegram Bot 多实例管理器
 
 const app = express();
 
@@ -59,11 +59,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fastpay')
     swapService.startMonitoring();
     // 启动钱包余额自动更新服务（每小时更新一次）
     walletUpdateService.start(60);
-    // 启动 Telegram Bot
-    const telegramBot = getBotInstance();
-    if (telegramBot) {
-      telegramBot.start();
-    }
+    
+    // 启动 Telegram Bot（支持多个 Bot）
+    const botManager = new MultiBotManager();
+    await botManager.start();
   })
   .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
