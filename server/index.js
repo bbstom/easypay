@@ -62,7 +62,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fastpay')
     
     // 启动 Telegram Bot（支持多个 Bot）
     const botManager = new MultiBotManager();
-    await botManager.start();
+    botManager.start().catch(err => console.error('❌ Bot 启动失败:', err));
   })
   .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
