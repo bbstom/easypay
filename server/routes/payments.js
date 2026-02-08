@@ -428,8 +428,13 @@ async function processTransfer(paymentId, retryCount = 0) {
     // 0. 更新所有钱包余额（确保获取最新余额）
     console.log('🔄 正在更新钱包余额...');
     const walletUpdateService = require('../services/walletUpdateService');
-    await walletUpdateService.updateAllWallets();
-    console.log('✅ 钱包余额已更新\n');
+    try {
+      await walletUpdateService.updateAllWallets();
+      console.log('✅ 钱包余额已更新\n');
+    } catch (updateError) {
+      console.error('⚠️  钱包余额更新失败:', updateError.message);
+      console.log('⚠️  将使用缓存的余额信息继续处理\n');
+    }
 
     // 1. 选择最优钱包
     console.log('📊 正在选择最优钱包...');

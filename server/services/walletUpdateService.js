@@ -72,8 +72,8 @@ class WalletUpdateService {
       let successCount = 0;
       let failCount = 0;
 
-      // 逐个更新钱包
-      for (const wallet of wallets) {
+      // 使用 Promise.all 并行更新所有钱包，但等待全部完成
+      const updatePromises = wallets.map(async (wallet) => {
         try {
           await this.updateSingleWallet(wallet);
           successCount++;
@@ -81,7 +81,10 @@ class WalletUpdateService {
           console.error(`❌ 更新钱包 ${wallet.name} 失败:`, error.message);
           failCount++;
         }
-      }
+      });
+
+      // 等待所有更新完成
+      await Promise.all(updatePromises);
 
       console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('✅ 钱包余额更新完成');
@@ -100,14 +103,17 @@ class WalletUpdateService {
    */
   async updateSingleWallet(wallet) {
     console.log(`🔄 更新钱包: ${wallet.name} (${wallet.type})`);
+    console.log(`   地址: ${wallet.address}`);
 
     if (!wallet.address) {
-      console.log(`   ⚠️  跳过: 地址为空`);
+      console.log(`   ⚠️  跳过: 地址为空\n`);
       return;
     }
 
     // 查询余额
+    console.log(`   📊 查询 TRX 余额...`);
     const trxBalance = await tronService.getBalance(wallet.address);
+    console.log(`   📊 查询 USDT 余额...`);
     const usdtBalance = await tronService.getUSDTBalance(wallet.address);
 
     // 更新数据库
@@ -116,7 +122,7 @@ class WalletUpdateService {
     wallet.balance.lastUpdated = new Date();
     await wallet.save();
 
-    console.log(`   ✅ TRX: ${trxBalance.toFixed(2)} | USDT: ${usdtBalance.toFixed(2)}`);
+    console.log(`   ✅ 更新完成 - TRX: ${trxBalance.toFixed(2)} | USDT: ${usdtBalance.toFixed(2)}\n`);
   }
 
   /**

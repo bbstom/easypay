@@ -16,41 +16,64 @@ class WalletSelector {
   async selectBestWallet(options = {}) {
     const { amount = 0, type = 'USDT', estimatedFee = 15 } = options;
 
-    // 1. 获取所有启用的钱包
-    const wallets = await Wallet.find({ enabled: true }).sort({ priority: -1 });
+    console.log(`\n🔍 开始选择钱包:`);
+    console.log(`   转账类型: ${type}`);
+    console.log(`   转账金额: ${amount}`);
+    console.log(`   预估手续费: ${estimatedFee} TRX\n`);
+
+    // 1. 获取所有启用的钱包（强制从数据库读取最新数据）
+    const wallets = await Wallet.find({ enabled: true }).sort({ priority: -1 }).lean();
 
     if (wallets.length === 0) {
       throw new Error('没有可用的钱包');
     }
 
+    console.log(`📊 找到 ${wallets.length} 个启用的钱包\n`);
+
     // 2. 过滤符合条件的钱包
-    const eligibleWallets = wallets.filter(wallet => {
+    const eligibleWallets = [];
+    
+    for (const wallet of wallets) {
+      console.log(`🔍 检查钱包: ${wallet.name}`);
+      console.log(`   地址: ${wallet.address}`);
+      console.log(`   TRX 余额: ${wallet.balance.trx.toFixed(2)}`);
+      console.log(`   USDT 余额: ${wallet.balance.usdt.toFixed(2)}`);
+      console.log(`   健康状态: ${wallet.health.status}`);
+      console.log(`   优先级: ${wallet.priority}`);
+
       // 健康状态检查
       if (wallet.health.status === 'error') {
-        return false;
+        console.log(`   ❌ 跳过: 健康状态异常\n`);
+        continue;
       }
 
       // TRX 余额检查（至少要能支付手续费）
       if (wallet.balance.trx < estimatedFee) {
-        return false;
+        console.log(`   ❌ 跳过: TRX 余额不足（需要 ${estimatedFee} TRX 手续费）\n`);
+        continue;
       }
 
       // USDT 余额检查
       if (type === 'USDT' && wallet.balance.usdt < amount) {
-        return false;
+        console.log(`   ❌ 跳过: USDT 余额不足（需要 ${amount} USDT）\n`);
+        continue;
       }
 
       // TRX 转账余额检查
       if (type === 'TRX' && wallet.balance.trx < (amount + estimatedFee)) {
-        return false;
+        console.log(`   ❌ 跳过: TRX 余额不足（需要 ${amount + estimatedFee} TRX）\n`);
+        continue;
       }
 
-      return true;
-    });
+      console.log(`   ✅ 符合条件\n`);
+      eligibleWallets.push(wallet);
+    }
 
     if (eligibleWallets.length === 0) {
       throw new Error('没有符合条件的钱包（余额不足或状态异常）');
     }
+
+    console.log(`✅ 找到 ${eligibleWallets.length} 个符合条件的钱包\n`);
 
     // 3. 计算每个钱包的得分
     const scoredWallets = eligibleWallets.map(wallet => ({
@@ -71,7 +94,8 @@ class WalletSelector {
     console.log(`   USDT 余额: ${selected.wallet.balance.usdt.toFixed(2)}`);
     console.log(`   健康状态: ${selected.wallet.health.status}\n`);
 
-    return selected.wallet;
+    // 返回完整的 Mongoose 文档（不是 lean 对象）
+    return await Wallet.findById(selected.wallet._id);
   }
 
   /**
