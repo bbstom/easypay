@@ -3,7 +3,6 @@ const User = require('../../models/User');
 const Settings = require('../../models/Settings');
 const { getMainKeyboard } = require('../keyboards/main');
 const { generateSwapQRCode } = require('../utils/qrCodeGenerator');
-const axios = require('axios');
 
 // 闪兑服务处理器
 const swapHandler = {
@@ -14,20 +13,45 @@ const swapHandler = {
       return ctx.reply('请先使用 /start 命令');
     }
 
-    try {
-      // 获取实时汇率
-      const apiUrl = process.env.API_URL || 'https://kk.vpno.eu.org';
-      let rate = null;
-      try {
-        const { data } = await axios.get(`${apiUrl}/api/swap/rate`);
-        rate = data.rate;
-      } catch (error) {
-        console.error('获取汇率失败:', error);
-        rate = 6.5; // 默认汇率
-      }
+    // 先回答回调查询，避免超时
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery('正在刷新汇率...').catch(() => {});
+    }
 
+    try {
       // 获取闪兑配置
       const settings = await Settings.findOne();
+      
+      // 从数据库获取缓存的汇率（优先使用缓存）
+      let rate = null;
+      let lastUpdate = null;
+      
+      if (settings?.swapRate) {
+        // 使用后台配置的固定汇率
+        rate = settings.swapRate;
+        lastUpdate = '手动设置';
+      } else {
+        // 使用实时汇率服务（从数据库缓存获取）
+        const usdtRate = settings?.exchangeRateUSDT || 7.25;
+        const trxRate = settings?.exchangeRateTRX || 1.08;
+        
+        // 计算 1 USDT = ? TRX
+        rate = parseFloat((usdtRate / trxRate).toFixed(4));
+        
+        // 获取最后更新时间
+        if (settings?.updatedAt) {
+          const updateTime = new Date(settings.updatedAt);
+          lastUpdate = updateTime.toLocaleString('zh-CN', { 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+        } else {
+          lastUpdate = '未知';
+        }
+      }
+      
       const swapNotice = settings?.swapNotice || '';
       
       // 获取闪兑钱包地址
@@ -54,7 +78,7 @@ const swapHandler = {
       const message = `🔄 <b>USDT 闪兑 TRX</b>\n\n` +
         `━━━━━━━━━━━━━━━\n` +
         `<code>当前汇率：</code><b>1 USDT = ${rate} TRX</b>\n` +
-        `<code>更新时间：</code>${new Date().toLocaleTimeString('zh-CN')}\n` +
+        `<code>更新时间：</code>${lastUpdate}\n` +
         `━━━━━━━━━━━━━━━\n\n` +
         `📍 <b>收款地址（USDT-TRC20）：</b>\n<code>${walletAddress}</code>\n\n` +
         (swapNotice ? `💡 <b>重要提示：</b>\n${swapNotice}\n\n` : '') +
@@ -82,17 +106,9 @@ const swapHandler = {
           }
         }
       );
-
-      // 只在 callback 上下文中回答
-      if (ctx.callbackQuery) {
-        await ctx.answerCbQuery('汇率已更新');
-      }
     } catch (error) {
       console.error('闪兑服务显示失败:', error);
       await ctx.reply('❌ 系统错误，请稍后重试');
-      if (ctx.callbackQuery) {
-        await ctx.answerCbQuery('系统错误');
-      }
     }
   },
 

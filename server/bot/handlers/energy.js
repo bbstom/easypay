@@ -14,6 +14,11 @@ const energyHandler = {
       return ctx.reply('请先使用 /start 命令');
     }
 
+    // 先回答回调查询，避免超时
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery().catch(() => {});
+    }
+
     try {
       // 获取能量租赁配置
       const settings = await Settings.findOne();
@@ -60,14 +65,11 @@ const energyHandler = {
           }
         }
       );
-
-      // 只在 callback 上下文中回答
-      if (ctx.callbackQuery) {
-        await ctx.answerCbQuery();
-      }
     } catch (error) {
       console.error('能量租赁显示失败:', error);
       await ctx.reply('❌ 系统错误，请稍后重试');
+    }
+  },
       if (ctx.callbackQuery) {
         await ctx.answerCbQuery('系统错误');
       }
