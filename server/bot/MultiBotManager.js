@@ -264,6 +264,10 @@ class MultiBotManager {
           }
         }
         
+        if (data === 'help_center') {
+          return startHandler.help(ctx);
+        }
+        
         if (data.startsWith('login_confirm_')) {
           return startHandler.handleLoginConfirm(ctx);
         }
