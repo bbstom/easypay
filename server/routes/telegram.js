@@ -169,44 +169,138 @@ router.post('/broadcasts/:id/send', auth, async (req, res) => {
       return res.status(400).json({ error: '该群发已发送或正在发送' });
     }
 
-    // 获取目标用户或群组
-    let targets = [];
-    if (broadcast.targetType === 'group') {
-      // 群组模式：使用 targetGroups
-      targets = broadcast.targetGroups || [];
-    } else {
-      // 用户模式
-      if (broadcast.targetType === 'all') {
-        const users = await User.find({ telegramId: { $exists: true, $ne: null } });
-        targets = users.map(u => u.telegramId);
-      } else if (broadcast.targetType === 'active') {
-        // 最近30天有活动的用户
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const users = await User.find({ 
-          telegramId: { $exists: true, $ne: null },
-          updatedAt: { $gte: thirtyDaysAgo }
-        });
-        targets = users.map(u => u.telegramId);
-      } else if (broadcast.targetType === 'custom') {
-        targets = broadcast.targetUsers || [];
-      }
+    // 如果设置了定时发送，只更新状态，由定时任务执行
+    if (broadcast.scheduledAt && new Date(broadcast.scheduledAt) > new Date()) {
+      broadcast.status = 'draft'; // 保持草稿状态，等待定时任务
+      await broadcast.save();
+      
+      return res.json({ 
+        message: '已设置定时发送',
+        scheduledAt: broadcast.scheduledAt
+      });
     }
 
-    // 更新状态
-    broadcast.status = 'sending';
-    broadcast.totalUsers = targets.length;
-    broadcast.sentAt = new Date();
-    await broadcast.save();
-
-    // 异步发送
-    sendBroadcast(broadcast._id, targets, broadcast.targetType).catch(err => {
+    // 立即发送：使用 broadcastScheduler
+    const broadcastScheduler = require('../services/broadcastScheduler');
+    
+    // 异步执行
+    broadcastScheduler.triggerBroadcast(broadcast._id).catch(err => {
       console.error('群发失败:', err);
     });
 
     res.json({ 
-      message: '开始发送群发',
-      totalUsers: targets.length
+      message: '开始发送群发'
     });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 停止重复发送
+router.post('/broadcasts/:id/stop-repeat', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const broadcast = await TelegramBroadcast.findById(req.params.id);
+    if (!broadcast) {
+      return res.status(404).json({ error: '群发不存在' });
+    }
+
+    broadcast.repeatEnabled = false;
+    broadcast.nextSendAt = null;
+    await broadcast.save();
+
+    res.json({ message: '已停止重复发送', broadcast });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 手动触发重复发送（立即发送一次）
+router.post('/broadcasts/:id/trigger', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const broadcast = await TelegramBroadcast.findById(req.params.id);
+    if (!broadcast) {
+      return res.status(404).json({ error: '群发不存在' });
+    }
+
+    const broadcastScheduler = require('../services/broadcastScheduler');
+    
+    // 异步执行
+    broadcastScheduler.triggerBroadcast(broadcast._id).catch(err => {
+      console.error('手动触发失败:', err);
+    });
+
+    res.json({ message: '已触发发送' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 获取群发定时器配置
+router.get('/broadcast-scheduler/config', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const broadcastScheduler = require('../services/broadcastScheduler');
+    const config = broadcastScheduler.getConfig();
+
+    res.json(config);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 更新群发定时器配置
+router.put('/broadcast-scheduler/config', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const { intervalMinutes } = req.body;
+
+    if (!intervalMinutes || intervalMinutes < 1 || intervalMinutes > 1440) {
+      return res.status(400).json({ 
+        error: '检查间隔必须在 1-1440 分钟之间（1 分钟到 24 小时）' 
+      });
+    }
+
+    const broadcastScheduler = require('../services/broadcastScheduler');
+    broadcastScheduler.restart(intervalMinutes);
+
+    res.json({ 
+      message: '定时器配置已更新',
+      config: broadcastScheduler.getConfig()
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 手动触发定时检查（立即检查一次）
+router.post('/broadcast-scheduler/check', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '无权限' });
+    }
+
+    const broadcastScheduler = require('../services/broadcastScheduler');
+    
+    // 异步执行
+    broadcastScheduler.checkScheduledBroadcasts().catch(err => {
+      console.error('手动检查失败:', err);
+    });
+
+    res.json({ message: '已触发检查' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -249,8 +343,9 @@ router.put('/broadcasts/:id', auth, async (req, res) => {
       return res.status(404).json({ error: '群发不存在' });
     }
 
-    if (broadcast.status !== 'draft') {
-      return res.status(400).json({ error: '只能编辑草稿状态的群发' });
+    // 如果正在发送中，不允许编辑
+    if (broadcast.status === 'sending') {
+      return res.status(400).json({ error: '正在发送的群发无法编辑' });
     }
 
     // 更新字段
@@ -766,7 +861,19 @@ function buildButtons(buttons) {
   return Object.keys(rows).sort().map(row => {
     return rows[row].map(btn => {
       if (btn.type === 'url') {
-        return { text: btn.text, url: btn.data };
+        // 验证 URL 格式
+        let url = btn.data;
+        
+        // 如果是 Telegram 用户名格式（@username），转换为 t.me 链接
+        if (url.startsWith('@')) {
+          url = `https://t.me/${url.substring(1)}`;
+        }
+        // 如果不是以 http:// 或 https:// 开头，添加 https://
+        else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = `https://${url}`;
+        }
+        
+        return { text: btn.text, url: url };
       } else {
         return { text: btn.text, callback_data: btn.data };
       }

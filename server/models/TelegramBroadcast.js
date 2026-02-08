@@ -48,6 +48,25 @@ const telegramBroadcastSchema = new mongoose.Schema({
   scheduledAt: Date, // 定时发送
   sentAt: Date, // 实际发送时间
   
+  // 重复发送配置
+  repeatEnabled: { type: Boolean, default: false }, // 是否启用重复发送
+  repeatInterval: { type: Number, default: 24 }, // 重复间隔（小时）
+  repeatCount: { type: Number, default: 0 }, // 已重复次数
+  maxRepeatCount: { type: Number, default: 0 }, // 最大重复次数（0 表示无限）
+  nextSendAt: Date, // 下次发送时间
+  lastSentAt: Date, // 最后一次发送时间
+  repeatHistory: [{ // 发送历史记录
+    sentAt: Date,
+    sentCount: Number,
+    failedCount: Number,
+    failedDetails: [{ // 失败详情（最多保留 10 条）
+      telegramId: String,
+      username: String,
+      error: String,
+      errorCode: Number
+    }]
+  }],
+  
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });

@@ -85,7 +85,19 @@ class ContentService {
             });
 
             if (btn.type === 'url') {
-              return Markup.button.url(text, data);
+              // 验证和修复 URL 格式
+              let url = data;
+              
+              // 如果是 Telegram 用户名格式（@username），转换为 t.me 链接
+              if (url.startsWith('@')) {
+                url = `https://t.me/${url.substring(1)}`;
+              }
+              // 如果不是以 http:// 或 https:// 开头，添加 https://
+              else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = `https://${url}`;
+              }
+              
+              return Markup.button.url(text, url);
             } else if (btn.type === 'copy') {
               // Telegram不直接支持复制，使用callback模拟
               return Markup.button.callback(text, `copy_${data}`);

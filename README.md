@@ -1,300 +1,285 @@
-# FastPay - USDT/TRX 代付平台
+# EasyPay - USDT/TRX 代付系统
 
-一个现代化的加密货币代付平台，支持 USDT 和 TRX 代付服务，集成支付宝/微信支付网关，自动执行区块链转账。
+> 基于 TRON 区块链的自动化加密货币代付系统，集成 Telegram Bot 和完整的管理后台
 
-## 功能特性
+[![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4.4+-green.svg)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-### 核心功能
-- 🔐 用户认证系统（注册/登录）
-- 👤 用户角色管理（普通用户/管理员）
-- 💰 USDT/TRX 代付功能
-- 💳 支付宝/微信支付集成
-- 🤖 **自动区块链转账**（支付完成后自动执行）
-- 🔄 **智能重试机制**（失败自动重试3次）
-- 📊 实时汇率系统（支持手动/自动模式）
-- 💼 钱包余额监控和预警
-- 📧 邮件通知系统
-- 📊 代付历史记录
-- 📢 广告位管理系统
-- 🎨 现代化 UI 设计（基于 Tailwind CSS）
+---
 
-### 管理功能
-- 📈 财务统计（总收入、今日收入、订单数、成功率）
-- 💼 钱包状态监控（TRX/USDT余额实时显示）
-- 🔄 失败订单手动重试
-- ⚙️ 系统设置（支付网关、TRON配置、邮件配置等）
-- 📝 订单管理（支付状态、转账状态分离显示）
+## ✨ 核心功能
 
-## 技术栈
+### 💰 代付服务
+- **USDT 代付**：自动化 USDT (TRC20) 转账
+- **TRX 代付**：自动化 TRX 转账
+- **多钱包管理**：支持多个钱包自动轮换和负载均衡
+- **能量租赁**：自动租赁 TRON 能量降低手续费
 
-### 前端
-- React 18
-- React Router
-- Tailwind CSS
-- Lucide React (图标)
-- Axios
-- HTML5-QRCode (二维码扫描)
+### 🤖 Telegram Bot
+- **完整交互界面**：用户通过 Telegram 完成所有操作
+- **自定义菜单**：可视化配置 Bot 菜单和按钮
+- **消息模板**：支持变量替换和 HTML 格式化
+- **群发系统**：支持定时、重复发送的消息群发
+- **工单系统**：用户支持和客服管理
 
-### 后端
-- Node.js
-- Express
-- MongoDB + Mongoose
-- JWT 认证
-- bcryptjs 密码加密
-- TronWeb (TRON 区块链交互)
-- Nodemailer (邮件发送)
-- Axios (HTTP 请求)
+### 💳 支付集成
+- **多支付方式**：支持支付宝、微信支付等
+- **自动回调**：支付成功自动处理订单
+- **订单管理**：完整的订单查询和管理
 
-## 快速开始
+### 🔧 管理后台
+- **用户管理**：用户列表、权限管理
+- **钱包管理**：多钱包配置、余额监控
+- **订单管理**：订单查询、状态管理
+- **系统设置**：全局配置、支付配置
+- **数据统计**：用户统计、交易统计
 
-### 1. 安装依赖
+### 🚀 高级功能
+- **闪兑服务**：USDT ↔ TRX 兑换（可选）
+- **多 Bot 支持**：支持配置多个 Telegram Bot
+- **群发统计**：详细的群发数据分析
+- **安全审计**：定期安全检查和审计
 
+---
+
+## 📦 快速开始
+
+### 环境要求
+
+```bash
+Node.js >= 16.x
+MongoDB >= 4.4
+PM2 (生产环境)
+```
+
+### 安装步骤
+
+1. **克隆项目**
+```bash
+git clone <your-repo-url>
+cd easypay
+```
+
+2. **安装依赖**
 ```bash
 npm install
 ```
 
-### 2. 配置环境变量
-
-复制 `.env.example` 为 `.env` 并配置：
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/fastpay
-JWT_SECRET=your_jwt_secret_key_here
-NODE_ENV=development
-
-# TRON 配置（重要！）
-TRON_PRIVATE_KEY=你的TRON钱包私钥
-TRON_API_URL=https://api.trongrid.io
-
-# 支付网关配置
-PAYMENT_API_URL=https://pay.example.com
-PAYMENT_MERCHANT_ID=your_merchant_id
-PAYMENT_API_KEY=your_api_key
+3. **配置环境变量**
+```bash
+copy .env.example .env
+# 编辑 .env 文件，填入必要配置
 ```
 
-### 3. 启动 MongoDB
+4. **初始化数据库**
+```bash
+node server/scripts/initDatabase.js
+```
 
-确保 MongoDB 服务正在运行。
+5. **创建管理员**
+```bash
+node server/scripts/createAdmin.js
+```
 
-### 4. 创建管理员账户
+6. **启动服务**
+
+开发环境：
+```bash
+npm run dev        # 启动后端
+npm run client     # 启动前端（新终端）
+```
+
+生产环境：
+```bash
+npm run build      # 构建前端
+pm2 start ecosystem.config.js
+```
+
+7. **访问系统**
+- 前端：http://localhost:5173 (开发) 或 http://localhost:3000 (生产)
+- 管理后台：登录后访问 /admin
+
+---
+
+## 📚 完整文档
+
+### 🎯 新手必读
+
+- **[系统安装使用教程](./系统安装使用教程.md)** ⭐ 完整的安装、配置和使用指南
+- [快速故障排查卡](./快速故障排查卡.md) - 常见问题快速解决
+- [部署检查清单](./DEPLOYMENT_CHECKLIST.md) - 生产环境部署检查
+
+### 🔧 配置指南
+
+- [环境变量配置说明](./环境变量配置说明.md)
+- [密钥配置快速参考](./密钥配置_快速参考.md)
+- [私钥格式说明](./私钥格式说明.md)
+- [支付方法配置](./PAYMENT_METHODS.md)
+
+### 💼 部署指南
+
+- [宝塔部署完整指南](./宝塔部署完整指南.md) - 推荐新手使用
+- [生产环境部署指南](./生产环境部署指南.md)
+- [Nginx 配置示例](./nginx配置示例.conf)
+
+### 🤖 Telegram Bot
+
+- [Telegram Bot 快速启动指南](./Telegram_Bot_快速启动指南.md)
+- [Telegram Bot 部署清单](./Telegram_Bot_部署清单.md)
+- [Telegram Bot CMS 使用指南](./Telegram_Bot_CMS使用指南.md)
+- [Telegram 群发系统使用指南](./Telegram_Bot_群发系统使用指南.md)
+- [Telegram 群发定时重复功能](./Telegram群发定时重复功能使用指南.md)
+- [多 Bot 配置说明](./多Bot配置说明.md)
+
+### 💰 钱包和支付
+
+- [多钱包系统快速参考](./多钱包系统_快速参考.md)
+- [TRON 资源管理指南](./TRON资源管理指南.md)
+- [加密货币转账指南](./CRYPTO_TRANSFER_GUIDE.md)
+- [闪兑系统快速配置指南](./闪兑系统_快速配置指南.md)
+
+### 🔔 通知系统
+
+- [通知模板配置说明](./通知模板配置说明.md)
+- [支付通知系统使用指南](./支付通知系统_使用指南.md)
+
+### 🛠️ 开发参考
+
+- [API 版本指南](./API_VERSION_GUIDE.md)
+- [Telegram Bot 设计方案](./Telegram_Bot_设计方案.md)
+
+---
+
+## 🎮 常用命令
+
+### 开发
 
 ```bash
-npm run create-admin
+npm run dev          # 启动后端开发服务器
+npm run client       # 启动前端开发服务器
+npm run build        # 构建生产版本
 ```
 
-默认管理员账户：
-- 邮箱: admin@fastpay.com
-- 密码: admin123456
-
-### 5. 测试钱包连接
+### 生产环境
 
 ```bash
-npm run test-wallet
+pm2 start ecosystem.config.js    # 启动所有服务
+pm2 list                          # 查看服务状态
+pm2 logs                          # 查看日志
+pm2 restart all                   # 重启所有服务
+pm2 stop all                      # 停止所有服务
 ```
 
-这将显示您的钱包地址和余额。
-
-### 6. 启动项目
+### 管理脚本
 
 ```bash
-npm run dev
+# 用户管理
+node server/scripts/createAdmin.js          # 创建管理员
+node server/scripts/createNewAdmin.js       # 创建新管理员
+node server/scripts/listAllUsers.js         # 查看所有用户
+node server/scripts/resetPassword.js        # 重置密码
+
+# 钱包管理
+node server/scripts/listWallets.js          # 查看钱包列表
+node server/scripts/refreshWallets.js       # 刷新钱包余额
+node server/scripts/checkWalletStatus.js    # 检查钱包状态
+
+# 系统维护
+node server/scripts/securityAudit.js        # 安全审计
+node server/scripts/generateStrongKey.js    # 生成强密钥
+node server/scripts/initDatabase.js         # 初始化数据库
 ```
 
-这将同时启动：
-- 前端开发服务器（端口 3000）
-- 后端 API 服务器（端口 5000）
+---
 
-## 🚀 加密货币自动转账
+## 🏗️ 技术架构
 
-### 快速配置（5分钟）
+### 前端
+- **框架**：React 18
+- **构建工具**：Vite
+- **样式**：TailwindCSS
+- **路由**：React Router
+- **状态管理**：Context API
 
-1. **准备 TRON 钱包**
-   - 创建或使用现有钱包
-   - 充值 TRX（建议100+）和 USDT
+### 后端
+- **运行时**：Node.js
+- **框架**：Express
+- **数据库**：MongoDB + Mongoose
+- **认证**：JWT
+- **进程管理**：PM2
 
-2. **配置私钥**
-   ```bash
-   # 编辑 .env 文件
-   TRON_PRIVATE_KEY=你的64位私钥
-   ```
+### 区块链
+- **网络**：TRON
+- **库**：TronWeb
+- **API**：TronGrid
 
-3. **测试连接**
-   ```bash
-   npm run test-wallet
-   ```
+### Telegram
+- **框架**：Telegraf
+- **功能**：Bot API、Inline Keyboard、Callback Query
 
-4. **测试转账（可选）**
-   ```bash
-   npm run test-transfer
-   ```
+---
 
-详细配置请查看 [快速开始指南](./QUICK_START_CRYPTO.md)
-
-### 工作流程
-
-```
-用户支付 → 支付网关回调 → 验证签名 → 自动执行区块链转账 → 发送邮件通知
-```
-
-### 核心特性
-
-- ✅ **全自动**: 支付完成后自动转账，无需人工干预
-- ✅ **可靠性**: 失败自动重试3次，可手动重试
-- ✅ **监控**: 实时显示钱包余额，余额不足自动预警
-- ✅ **安全**: 私钥加密存储，管理员权限控制
-
-详细文档：
-- [完整实施指南](./CRYPTO_TRANSFER_GUIDE.md)
-- [技术实现文档](./CRYPTO_TRANSFER_IMPLEMENTATION.md)
-- [功能总结](./CRYPTO_TRANSFER_SUMMARY.md)
-
-## 项目结构
+## 📊 系统架构
 
 ```
-├── src/                    # 前端源码
-│   ├── components/         # React 组件
-│   ├── context/           # Context API
-│   ├── pages/             # 页面组件
-│   │   ├── PayPage.jsx    # USDT 代付页面
-│   │   ├── PayPageTRX.jsx # TRX 代付页面
-│   │   ├── FinancePage.jsx # 财务管理（含钱包监控）
-│   │   └── SettingsPage.jsx # 系统设置
-│   ├── App.jsx            # 主应用组件
-│   └── main.jsx           # 入口文件
-├── server/                # 后端源码
-│   ├── models/            # 数据模型
-│   ├── routes/            # API 路由
-│   ├── middleware/        # 中间件
-│   ├── services/          # 业务服务
-│   │   ├── tronService.js # TRON 区块链服务
-│   │   ├── paymentService.js # 支付网关服务
-│   │   ├── exchangeRateService.js # 汇率服务
-│   │   └── emailService.js # 邮件服务
-│   ├── scripts/           # 工具脚本
-│   │   ├── testWallet.js  # 测试钱包
-│   │   └── testTransfer.js # 测试转账
-│   └── index.js           # 服务器入口
-└── package.json
+┌─────────────────────────────────────────────────────────┐
+│                      用户端                              │
+├─────────────────────────────────────────────────────────┤
+│  Web 前端 (React)  │  Telegram Bot (Telegraf)          │
+└──────────┬──────────┴────────────┬─────────────────────┘
+           │                       │
+           ▼                       ▼
+┌─────────────────────────────────────────────────────────┐
+│                   后端 API (Express)                     │
+├─────────────────────────────────────────────────────────┤
+│  认证  │  订单  │  支付  │  钱包  │  通知  │  群发      │
+└──────┬──────────┬────────┬───────┬────────┬────────────┘
+       │          │        │       │        │
+       ▼          ▼        ▼       ▼        ▼
+┌──────────┐ ┌────────┐ ┌──────┐ ┌──────┐ ┌──────────┐
+│ MongoDB  │ │ 支付网关│ │ TRON │ │能量租赁│ │ Telegram │
+└──────────┘ └────────┘ └──────┘ └──────┘ └──────────┘
 ```
 
-## API 接口
+---
 
-### 认证
-- `POST /api/auth/register` - 用户注册
-- `POST /api/auth/login` - 用户登录
-- `GET /api/auth/me` - 获取当前用户信息
+## 🔒 安全特性
 
-### 代付
-- `POST /api/payments` - 创建代付订单
-- `POST /api/payments/notify` - 支付回调（支付网关调用）
-- `GET /api/payments/history` - 获取代付历史
-- `GET /api/payments/all` - 获取所有订单（管理员）
-- `GET /api/payments/stats` - 获取统计数据（管理员）
-- `POST /api/payments/retry/:paymentId` - 手动重试转账（管理员）
-- `GET /api/payments/wallet/status` - 获取钱包状态（管理员）
+- ✅ JWT 认证和授权
+- ✅ 密码加密存储（bcrypt）
+- ✅ 私钥加密存储
+- ✅ API 请求限流
+- ✅ CORS 跨域保护
+- ✅ XSS 防护
+- ✅ SQL 注入防护
+- ✅ 审计日志记录
 
-### 广告管理
-- `GET /api/ads` - 获取所有启用的广告
-- `GET /api/ads/all` - 获取所有广告（管理员）
-- `POST /api/ads` - 创建广告（管理员）
-- `PUT /api/ads/:id` - 更新广告（管理员）
-- `DELETE /api/ads/:id` - 删除广告（管理员）
+---
 
-### 系统设置
-- `GET /api/settings` - 获取系统设置
-- `GET /api/settings/public` - 获取公开设置
-- `PUT /api/settings` - 更新系统设置（管理员）
+## 🤝 贡献
 
-## 可用脚本
+欢迎提交 Issue 和 Pull Request！
 
-```bash
-# 开发
-npm run dev              # 启动开发服务器（前端+后端）
-npm run server           # 仅启动后端
-npm run client           # 仅启动前端
+---
 
-# 构建
-npm run build            # 构建生产版本
+## 📄 许可证
 
-# 管理
-npm run create-admin     # 创建管理员账户
+本项目仅供学习和研究使用。
 
-# 测试
-npm run test-wallet      # 测试钱包连接
-npm run test-transfer    # 测试转账功能
-npm run test-payment     # 测试支付网关
-npm run test-email       # 测试邮件发送
-```
+---
 
-## 管理员功能
+## 📞 技术支持
 
-登录后，如果用户角色为管理员，导航栏右上角会显示"管理"按钮，点击可进入管理后台。
+遇到问题？
 
-### 管理后台功能
+1. 查看 [系统安装使用教程](./系统安装使用教程.md)
+2. 查看 [快速故障排查卡](./快速故障排查卡.md)
+3. 检查日志文件：`pm2 logs`
+4. 运行诊断脚本：`node server/scripts/checkWalletStatus.js`
 
-**财务管理**:
-- 📊 收入统计（总收入、今日收入）
-- 📈 订单统计（总订单、今日订单、成功率）
-- 💼 钱包状态监控（实时余额、余额预警）
-- 📝 订单列表（支持筛选、搜索、导出）
-- 🔄 失败订单重试
+---
 
-**系统设置**:
-- 基本配置（网站信息、SEO、社交媒体）
-- Footer 配置（公司信息、链接、版权）
-- 服务费设置（固定费用/百分比）
-- 汇率设置（手动/实时模式、加成比例）
-- 支付网关配置（API版本、商户ID、密钥）
-- TRON 配置（API地址、私钥）
-- 邮件配置（SMTP设置）
-
-**广告管理**:
-- 创建/编辑/删除广告
-- 设置广告尺寸
-- 启用/禁用广告
-- 管理广告内容和链接
-
-## 安全建议
-
-### 私钥管理
-- ⚠️ 不要将 `.env` 文件提交到 Git
-- ⚠️ 不要分享私钥给任何人
-- ⚠️ 定期备份私钥
-- ⚠️ 使用专用钱包，不要与个人资产混用
-
-### 钱包管理
-- 定期检查钱包余额
-- TRX 低于 50 时及时充值
-- USDT 根据业务量提前准备
-- 关注财务管理页面的余额预警
-
-## 开发说明
-
-- 前端使用 Vite 作为构建工具
-- 后端使用 Nodemon 实现热重载
-- 使用 Concurrently 同时运行前后端服务
-- 使用 TronWeb 与 TRON 区块链交互
-- 支持易支付 V1 和 V2 接口
-
-## 故障排查
-
-### 转账失败
-
-1. 检查钱包余额: `npm run test-wallet`
-2. 查看服务器日志
-3. 使用管理后台的重试功能
-
-### 支付回调失败
-
-1. 检查支付网关配置
-2. 验证回调 URL 是否可访问
-3. 查看服务器日志中的签名验证信息
-
-详细故障排查请查看 [实施指南](./CRYPTO_TRANSFER_GUIDE.md)
-
-## 许可证
-
-MIT
-#   e a s y p a y  
- 
+**最后更新：** 2026-02-08  
+**版本：** v1.0.0  
+**维护者：** EasyPay Team

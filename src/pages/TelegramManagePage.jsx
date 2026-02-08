@@ -39,7 +39,13 @@ const TelegramManagePage = () => {
     parseMode: 'HTML',
     buttons: [],
     targetType: 'all',
-    targetGroups: []
+    targetGroups: [],
+    // 定时发送
+    scheduledAt: '',
+    // 重复发送
+    repeatEnabled: false,
+    repeatInterval: 24,
+    maxRepeatCount: 0
   });
 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -173,13 +179,23 @@ const TelegramManagePage = () => {
     setLoading(true);
 
     try {
+      // 准备数据，转换 scheduledAt 为 UTC
+      const data = { ...broadcastForm };
+      if (data.scheduledAt) {
+        // datetime-local 返回的是本地时间，需要转换为 UTC
+        data.scheduledAt = new Date(data.scheduledAt).toISOString();
+      } else {
+        // 如果没有设置，删除该字段
+        delete data.scheduledAt;
+      }
+
       const res = await fetch('/api/telegram/broadcasts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(broadcastForm)
+        body: JSON.stringify(data)
       });
 
       if (res.ok) {
@@ -227,6 +243,19 @@ const TelegramManagePage = () => {
 
   // 编辑群发
   const editBroadcast = (broadcast) => {
+    // 转换 scheduledAt 为 datetime-local 格式
+    let scheduledAtValue = '';
+    if (broadcast.scheduledAt) {
+      const date = new Date(broadcast.scheduledAt);
+      // 转换为本地时间的 datetime-local 格式
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      scheduledAtValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
     setBroadcastForm({
       title: broadcast.title,
       content: broadcast.content,
@@ -236,7 +265,11 @@ const TelegramManagePage = () => {
       targetType: broadcast.targetType,
       targetUsers: broadcast.targetUsers || [],
       targetGroups: broadcast.targetGroups || [],
-      buttons: broadcast.buttons || []
+      buttons: broadcast.buttons || [],
+      scheduledAt: scheduledAtValue,
+      repeatEnabled: broadcast.repeatEnabled || false,
+      repeatInterval: broadcast.repeatInterval || 24,
+      maxRepeatCount: broadcast.maxRepeatCount || 0
     });
     setEditingBroadcast(broadcast);
     setShowBroadcastModal(true);
@@ -248,13 +281,29 @@ const TelegramManagePage = () => {
     setLoading(true);
 
     try {
+      // 准备数据，转换 scheduledAt 为 UTC
+      const data = { ...broadcastForm };
+      if (data.scheduledAt) {
+        data.scheduledAt = new Date(data.scheduledAt).toISOString();
+      } else {
+        delete data.scheduledAt;
+      }
+
+      // 如果是已完成的群发，重置状态为草稿
+      if (editingBroadcast.status === 'completed' || editingBroadcast.status === 'failed') {
+        data.status = 'draft';
+        data.sentCount = 0;
+        data.failedCount = 0;
+        data.totalUsers = 0;
+      }
+
       const res = await fetch(`/api/telegram/broadcasts/${editingBroadcast._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(broadcastForm)
+        body: JSON.stringify(data)
       });
 
       if (res.ok) {
@@ -299,6 +348,196 @@ const TelegramManagePage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 停止重复发送
+  const stopRepeat = async (id) => {
+    if (!confirm('确定要停止重复发送吗？')) return;
+
+    const token = localStorage.getItem('token');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/telegram/broadcasts/${id}/stop-repeat`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        alert('已停止重复发送');
+        fetchData();
+      } else {
+        const data = await res.json();
+        alert(`操作失败: ${data.error}`);
+      }
+    } catch (error) {
+      alert('操作失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 手动触发发送
+  const triggerBroadcast = async (id) => {
+    if (!confirm('确定要立即发送这条群发消息吗？')) return;
+
+    const token = localStorage.getItem('token');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/telegram/broadcasts/${id}/trigger`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        alert('已触发发送');
+        fetchData();
+      } else {
+        const data = await res.json();
+        alert(`操作失败: ${data.error}`);
+      }
+    } catch (error) {
+      alert('操作失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 查看详情
+  const viewDetails = async (broadcast) => {
+    const token = localStorage.getItem('token');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/telegram/broadcasts/${broadcast._id}/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const stats = await res.json();
+        
+        // 构建详细信息
+        let message = `📊 群发详情\n\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `📝 标题: ${broadcast.title}\n`;
+        message += `📄 类型: ${
+          broadcast.contentType === 'photo' ? '图片' :
+          broadcast.contentType === 'video' ? '视频' :
+          broadcast.contentType === 'document' ? '文档' :
+          '文本'
+        }\n`;
+        message += `🎯 目标: ${
+          broadcast.targetType === 'all' ? '所有用户' : 
+          broadcast.targetType === 'active' ? '活跃用户' :
+          broadcast.targetType === 'group' ? '群组' :
+          broadcast.targetType
+        }\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        
+        message += `📈 发送统计\n`;
+        message += `总用户数: ${stats.totalUsers}\n`;
+        message += `成功发送: ${stats.sentCount}\n`;
+        message += `发送失败: ${stats.failedCount}\n`;
+        message += `成功率: ${stats.successRate}%\n\n`;
+        
+        if (broadcast.repeatEnabled) {
+          message += `🔄 重复发送\n`;
+          message += `状态: 已启用\n`;
+          message += `间隔: ${broadcast.repeatInterval} 小时\n`;
+          message += `已发送: ${broadcast.sentTimes || 0} 次\n`;
+          message += `最大次数: ${broadcast.maxRepeatCount || '无限制'}\n`;
+          if (broadcast.nextSendAt) {
+            message += `下次发送: ${new Date(broadcast.nextSendAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
+          }
+          message += `\n`;
+        }
+        
+        if (broadcast.scheduledAt) {
+          message += `⏰ 定时发送\n`;
+          message += `设定时间: ${new Date(broadcast.scheduledAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n\n`;
+        }
+        
+        if (broadcast.lastSentAt) {
+          message += `📅 最后发送: ${new Date(broadcast.lastSentAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
+        }
+        
+        if (broadcast.createdAt) {
+          message += `📅 创建时间: ${new Date(broadcast.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
+        }
+        
+        // 如果有失败，显示失败详情
+        if (stats.failedCount > 0 && broadcast.repeatHistory && broadcast.repeatHistory.length > 0) {
+          const lastHistory = broadcast.repeatHistory[broadcast.repeatHistory.length - 1];
+          
+          if (lastHistory.failedDetails && lastHistory.failedDetails.length > 0) {
+            message += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            message += `❌ 最近失败详情 (最多显示 10 条)\n\n`;
+            
+            lastHistory.failedDetails.forEach((detail, index) => {
+              message += `${index + 1}. TG ${detail.telegramId}\n`;
+              if (detail.username) {
+                message += `   用户: @${detail.username}\n`;
+              }
+              message += `   错误: ${detail.error}\n`;
+              if (detail.errorCode) {
+                message += `   代码: ${detail.errorCode}\n`;
+              }
+              message += `\n`;
+            });
+          } else {
+            message += `\n⚠️ 有 ${stats.failedCount} 条消息发送失败\n`;
+            message += `常见原因:\n`;
+            message += `• 用户屏蔽了 Bot\n`;
+            message += `• 用户删除了账号\n`;
+            message += `• 按钮 URL 格式错误\n`;
+            message += `• 媒体文件无法访问\n`;
+          }
+        }
+        
+        alert(message);
+      } else {
+        const data = await res.json();
+        alert(`获取详情失败: ${data.error}`);
+      }
+    } catch (error) {
+      alert('获取详情失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 复制为新草稿
+  const duplicateBroadcast = (broadcast) => {
+    // 转换 scheduledAt 为 datetime-local 格式（如果有）
+    let scheduledAtValue = '';
+    if (broadcast.scheduledAt) {
+      const date = new Date(broadcast.scheduledAt);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      scheduledAtValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    setBroadcastForm({
+      title: `${broadcast.title} (副本)`,
+      content: broadcast.content,
+      contentType: broadcast.contentType || 'text',
+      mediaUrl: broadcast.mediaUrl || '',
+      parseMode: broadcast.parseMode || 'HTML',
+      targetType: broadcast.targetType,
+      targetUsers: broadcast.targetUsers || [],
+      targetGroups: broadcast.targetGroups || [],
+      buttons: broadcast.buttons || [],
+      scheduledAt: scheduledAtValue,
+      repeatEnabled: broadcast.repeatEnabled || false,
+      repeatInterval: broadcast.repeatInterval || 24,
+      maxRepeatCount: broadcast.maxRepeatCount || 0
+    });
+    setEditingBroadcast(null); // 不设置编辑状态，作为新建
+    setShowBroadcastModal(true);
   };
 
   // 保存群发（创建或更新）
@@ -375,7 +614,11 @@ const TelegramManagePage = () => {
       parseMode: 'HTML',
       buttons: [],
       targetType: 'all',
-      targetGroups: []
+      targetGroups: [],
+      scheduledAt: '',
+      repeatEnabled: false,
+      repeatInterval: 24,
+      maxRepeatCount: 0
     });
   };
 
@@ -547,6 +790,16 @@ const TelegramManagePage = () => {
             📢 群发消息
           </button>
           <button
+            onClick={() => setActiveTab('broadcast-stats')}
+            className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'broadcast-stats'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            📊 群发统计
+          </button>
+          <button
             onClick={() => setActiveTab('stats')}
             className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'stats'
@@ -554,7 +807,7 @@ const TelegramManagePage = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            📊 统计数据
+            📈 用户统计
           </button>
         </div>
 
@@ -999,6 +1252,52 @@ const TelegramManagePage = () => {
                           </button>
                         </>
                       )}
+                      {(broadcast.status === 'completed' || broadcast.status === 'failed') && (
+                        <>
+                          <button
+                            onClick={() => editBroadcast(broadcast)}
+                            className="px-3 py-1.5 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
+                            disabled={loading}
+                            title="编辑内容"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={() => triggerBroadcast(broadcast._id)}
+                            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                            disabled={loading}
+                            title="立即发送一次"
+                          >
+                            立即发送
+                          </button>
+                          {broadcast.repeatEnabled && (
+                            <button
+                              onClick={() => stopRepeat(broadcast._id)}
+                              className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded hover:bg-orange-700"
+                              disabled={loading}
+                              title="停止重复发送"
+                            >
+                              停止重复
+                            </button>
+                          )}
+                          <button
+                            onClick={() => viewDetails(broadcast)}
+                            className="px-3 py-1.5 text-sm text-purple-600 border border-purple-600 rounded hover:bg-purple-50"
+                            disabled={loading}
+                            title="查看详细信息"
+                          >
+                            详情
+                          </button>
+                          <button
+                            onClick={() => duplicateBroadcast(broadcast)}
+                            className="px-3 py-1.5 text-sm text-slate-600 border border-slate-600 rounded hover:bg-slate-50"
+                            disabled={loading}
+                            title="复制为新草稿"
+                          >
+                            复制
+                          </button>
+                        </>
+                      )}
                       {(broadcast.status === 'draft' || broadcast.status === 'failed' || broadcast.status === 'completed') && (
                         <button
                           onClick={() => deleteBroadcast(broadcast._id)}
@@ -1032,6 +1331,28 @@ const TelegramManagePage = () => {
                       </>
                     )}
                   </div>
+                  {/* 重复发送状态 */}
+                  {broadcast.repeatEnabled && (
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex gap-6 text-sm">
+                      <span className="text-orange-600 font-medium">🔄 重复发送已启用</span>
+                      <span className="text-slate-600">间隔: {broadcast.repeatInterval}小时</span>
+                      <span className="text-slate-600">已发送: {broadcast.sentTimes || 0}次</span>
+                      {broadcast.maxRepeatCount > 0 && (
+                        <span className="text-slate-600">最大: {broadcast.maxRepeatCount}次</span>
+                      )}
+                      {broadcast.nextSendAt && (
+                        <span className="text-blue-600">
+                          下次: {new Date(broadcast.nextSendAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {/* 定时发送状态 */}
+                  {broadcast.scheduledAt && broadcast.status === 'draft' && (
+                    <div className="mt-3 pt-3 border-t border-slate-200 text-sm text-blue-600">
+                      ⏰ 定时发送: {new Date(broadcast.scheduledAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1052,6 +1373,152 @@ const TelegramManagePage = () => {
             <div className="bg-white rounded-lg border border-slate-200 p-6">
               <div className="text-slate-600 mb-2">活跃用户（7天）</div>
               <div className="text-3xl font-bold text-green-600">{stats.activeUsers || 0}</div>
+            </div>
+          </div>
+        )}
+
+        {/* 群发统计 */}
+        {activeTab === 'broadcast-stats' && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold mb-2">群发统计</h2>
+              <p className="text-slate-600">查看所有群发消息的详细统计信息</p>
+            </div>
+
+            {/* 总体统计 */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="text-slate-600 mb-2">总群发数</div>
+                <div className="text-3xl font-bold text-slate-900">{broadcasts.length}</div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="text-slate-600 mb-2">草稿</div>
+                <div className="text-3xl font-bold text-slate-600">
+                  {broadcasts.filter(b => b.status === 'draft').length}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="text-slate-600 mb-2">已完成</div>
+                <div className="text-3xl font-bold text-green-600">
+                  {broadcasts.filter(b => b.status === 'completed').length}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="text-slate-600 mb-2">重复发送中</div>
+                <div className="text-3xl font-bold text-orange-600">
+                  {broadcasts.filter(b => b.repeatEnabled && b.status === 'completed').length}
+                </div>
+              </div>
+            </div>
+
+            {/* 详细列表 */}
+            <div className="bg-white rounded-lg border border-slate-200">
+              <div className="p-4 border-b border-slate-200">
+                <h3 className="font-bold">群发详情</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">标题</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">状态</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">目标</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">总数</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">成功</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">失败</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">成功率</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">重复</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">下次发送</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {broadcasts.map(broadcast => {
+                      const successRate = broadcast.totalUsers > 0 
+                        ? ((broadcast.sentCount / broadcast.totalUsers) * 100).toFixed(1)
+                        : '0.0';
+                      
+                      return (
+                        <tr key={broadcast._id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 text-sm">
+                            <div className="font-medium">{broadcast.title}</div>
+                            <div className="text-xs text-slate-500">
+                              {broadcast.contentType === 'photo' && '🖼️ 图片'}
+                              {broadcast.contentType === 'video' && '🎬 视频'}
+                              {broadcast.contentType === 'document' && '📄 文档'}
+                              {(!broadcast.contentType || broadcast.contentType === 'text') && '📝 文本'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              broadcast.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              broadcast.status === 'sending' ? 'bg-blue-100 text-blue-700' :
+                              broadcast.status === 'failed' ? 'bg-red-100 text-red-700' :
+                              'bg-slate-100 text-slate-700'
+                            }`}>
+                              {broadcast.status === 'draft' && '草稿'}
+                              {broadcast.status === 'sending' && '发送中'}
+                              {broadcast.status === 'completed' && '已完成'}
+                              {broadcast.status === 'failed' && '失败'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
+                            {broadcast.targetType === 'all' ? '所有用户' : 
+                             broadcast.targetType === 'active' ? '活跃用户' :
+                             broadcast.targetType === 'group' ? '群组' :
+                             broadcast.targetType}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-medium">
+                            {broadcast.totalUsers || 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-green-600">
+                            {broadcast.sentCount || 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-red-600">
+                            {broadcast.failedCount || 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <span className={`font-medium ${
+                              parseFloat(successRate) >= 90 ? 'text-green-600' :
+                              parseFloat(successRate) >= 70 ? 'text-orange-600' :
+                              'text-red-600'
+                            }`}>
+                              {successRate}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {broadcast.repeatEnabled ? (
+                              <div className="text-orange-600">
+                                <div className="font-medium">✓ 已启用</div>
+                                <div className="text-xs">
+                                  {broadcast.sentTimes || 0}
+                                  {broadcast.maxRepeatCount > 0 ? `/${broadcast.maxRepeatCount}` : '/∞'}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
+                            {broadcast.nextSendAt ? (
+                              <div className="text-xs">
+                                {new Date(broadcast.nextSendAt).toLocaleString('zh-CN', { 
+                                  timeZone: 'Asia/Shanghai',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1437,6 +1904,82 @@ const TelegramManagePage = () => {
                     <code className="px-2 py-1 bg-slate-100 rounded">&lt;i&gt;斜体&lt;/i&gt;</code>
                     <code className="px-2 py-1 bg-slate-100 rounded">&lt;code&gt;代码&lt;/code&gt;</code>
                     <code className="px-2 py-1 bg-slate-100 rounded">&lt;a href=""&gt;链接&lt;/a&gt;</code>
+                  </div>
+                )}
+              </div>
+
+              {/* 定时发送配置 */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">⏰ 定时发送（可选）</h4>
+                <div>
+                  <label className="block text-sm font-medium mb-2">发送时间</label>
+                  <input
+                    type="datetime-local"
+                    value={broadcastForm.scheduledAt}
+                    onChange={(e) => setBroadcastForm({ ...broadcastForm, scheduledAt: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    留空表示立即发送，设置未来时间则定时发送
+                  </p>
+                </div>
+              </div>
+
+              {/* 重复发送配置 */}
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="repeatEnabled"
+                    checked={broadcastForm.repeatEnabled}
+                    onChange={(e) => setBroadcastForm({ ...broadcastForm, repeatEnabled: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="repeatEnabled" className="font-medium cursor-pointer">
+                    🔄 启用重复发送
+                  </label>
+                </div>
+
+                {broadcastForm.repeatEnabled && (
+                  <div className="space-y-3 ml-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">重复间隔（小时）</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={broadcastForm.repeatInterval}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, repeatInterval: parseInt(e.target.value) || 24 })}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                        placeholder="24"
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        例如：24 = 每天发送一次，168 = 每周发送一次
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">最大重复次数</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={broadcastForm.maxRepeatCount}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, maxRepeatCount: parseInt(e.target.value) || 0 })}
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                        placeholder="0"
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        0 = 无限重复，大于 0 = 重复指定次数后停止
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                      <p className="font-medium mb-1">💡 重复发送说明</p>
+                      <ul className="text-xs space-y-1">
+                        <li>• 首次发送后，系统会按设定的间隔自动重复发送</li>
+                        <li>• 可随时在群发列表中停止重复</li>
+                        <li>• 适合每日签到提醒、定期活动通知等场景</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>
