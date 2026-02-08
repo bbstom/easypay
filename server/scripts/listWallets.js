@@ -36,7 +36,7 @@ async function listWallets() {
       console.log(`   能量: ${wallet.resources.energy.available.toLocaleString()} / ${wallet.resources.energy.limit.toLocaleString()}`);
       console.log(`   带宽: ${wallet.resources.bandwidth.available.toLocaleString()} / ${wallet.resources.bandwidth.limit.toLocaleString()}`);
       console.log(`   交易: ${wallet.stats.totalTransactions} 笔 (成功率: ${wallet.successRate}%)`);
-      console.log(`   最后使用: ${wallet.stats.lastUsedAt ? new Date(wallet.stats.lastUsedAt).toLocaleString('zh-CN') : '从未使用'}`);
+      console.log(`   最后使用: ${wallet.stats.lastUsedAt ? new Date(wallet.stats.lastUsedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '从未使用'}`);
       
       if (wallet.needsAlert) {
         console.log(`   ⚠️  预警: 余额或资源不足`);

@@ -97,6 +97,7 @@ async function showOrdersList(ctx) {
     orders.slice(0, 5).forEach((order, index) => {
       const statusText = getStatusText(order.status);
       const date = new Date(order.createdAt).toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -181,15 +182,15 @@ async function showOrderDetail(ctx) {
     }
 
     const status = getStatusText(order.status);
-    const date = new Date(order.createdAt).toLocaleString('zh-CN');
+    const date = new Date(order.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
     // 构建可选字段
     const paymentTime = order.paymentTime 
-      ? `<code>支付时间：</code>${new Date(order.paymentTime).toLocaleString('zh-CN')}\n`
+      ? `<code>支付时间：</code>${new Date(order.paymentTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`
       : '';
     
     const transferTime = order.transferTime
-      ? `<code>完成时间：</code>${new Date(order.transferTime).toLocaleString('zh-CN')}\n`
+      ? `<code>完成时间：</code>${new Date(order.transferTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`
       : '';
     
     const txHash = order.txHash
@@ -247,11 +248,11 @@ async function showOrderDetail(ctx) {
         `<code>创建时间：</code>${date}\n`;
 
       if (order.paymentTime) {
-        detailText += `<code>支付时间：</code>${new Date(order.paymentTime).toLocaleString('zh-CN')}\n`;
+        detailText += `<code>支付时间：</code>${new Date(order.paymentTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
       }
 
       if (order.transferTime) {
-        detailText += `<code>完成时间：</code>${new Date(order.transferTime).toLocaleString('zh-CN')}\n`;
+        detailText += `<code>完成时间：</code>${new Date(order.transferTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
       }
 
       if (order.txHash) {

@@ -76,6 +76,7 @@ async function showTicketsList(ctx) {
       const status = getStatusEmoji(ticket.status);
       const statusText = getStatusText(ticket.status);
       const date = new Date(ticket.createdAt).toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -235,7 +236,7 @@ async function showTicketDetail(ctx) {
     }
 
     const status = getStatusText(ticket.status);
-    const date = new Date(ticket.createdAt).toLocaleString('zh-CN');
+    const date = new Date(ticket.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
     let detailText = `💬 <b>工单详情</b>\n\n` +
       `━━━━━━━━━━━━━━━\n` +
@@ -252,6 +253,7 @@ async function showTicketDetail(ctx) {
       ticket.messages.slice(-3).forEach(msg => {
         const sender = msg.sender === 'admin' ? '👨‍💼 客服' : '👤 您';
         const time = new Date(msg.createdAt).toLocaleString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
           month: '2-digit',
           day: '2-digit',
           hour: '2-digit',

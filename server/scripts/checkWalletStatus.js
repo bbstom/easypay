@@ -27,8 +27,8 @@ async function checkWalletStatus() {
       console.log(`健康状态: ${wallet.health.status}`);
       console.log(`TRX 余额: ${wallet.balance.trx.toFixed(2)}`);
       console.log(`USDT 余额: ${wallet.balance.usdt.toFixed(2)}`);
-      console.log(`余额更新时间: ${wallet.balance.lastUpdated ? new Date(wallet.balance.lastUpdated).toLocaleString('zh-CN') : '从未更新'}`);
-      console.log(`最后使用时间: ${wallet.stats.lastUsedAt ? new Date(wallet.stats.lastUsedAt).toLocaleString('zh-CN') : '从未使用'}`);
+      console.log(`余额更新时间: ${wallet.balance.lastUpdated ? new Date(wallet.balance.lastUpdated).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '从未更新'}`);
+      console.log(`最后使用时间: ${wallet.stats.lastUsedAt ? new Date(wallet.stats.lastUsedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '从未使用'}`);
       console.log(`总交易次数: ${wallet.stats.totalTransactions}`);
       console.log(`成功次数: ${wallet.stats.successCount}`);
       console.log(`失败次数: ${wallet.stats.failCount}`);

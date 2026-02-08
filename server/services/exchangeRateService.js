@@ -153,7 +153,7 @@ class ExchangeRateService {
       console.log(`✅ 汇率更新成功！`);
       console.log(`   USDT: ${rates.USDT} CNY (加成后: ${finalUSDT} CNY)`);
       console.log(`   TRX: ${rates.TRX} CNY (加成后: ${finalTRX} CNY)`);
-      console.log(`   下次更新: ${new Date(Date.now() + this.updateInterval).toLocaleString('zh-CN')}`);
+      console.log(`   下次更新: ${new Date(Date.now() + this.updateInterval).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`);
       
     } catch (error) {
       console.error('❌ 更新汇率到数据库失败:', error.message);

@@ -230,7 +230,7 @@ class NotificationService {
         `工单号：#${ticket.ticketNumber}\n` +
         `标题：${ticket.subject}\n\n` +
         `客服回复：\n${reply.message}\n\n` +
-        `回复时间：${new Date(reply.createdAt).toLocaleString('zh-CN')}`,
+        `回复时间：${new Date(reply.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`,
         {
           reply_markup: {
             inline_keyboard: [[

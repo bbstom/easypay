@@ -82,7 +82,7 @@ class EmailService {
                   </div>
                   <div class="info-row">
                     <span class="label">支付时间</span>
-                    <span class="value">${new Date(payment.paymentTime).toLocaleString('zh-CN')}</span>
+                    <span class="value">${new Date(payment.paymentTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</span>
                   </div>
                 </div>
 
@@ -201,7 +201,7 @@ class EmailService {
                   </div>
                   <div class="info-row">
                     <span class="label">完成时间</span>
-                    <span class="value">${new Date(payment.transferTime).toLocaleString('zh-CN')}</span>
+                    <span class="value">${new Date(payment.transferTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</span>
                   </div>
                 </div>
 
@@ -329,7 +329,7 @@ class EmailService {
                   </div>
                   <div class="info-row">
                     <span class="label">完成时间：</span>
-                    <span class="value">${new Date(payment.transferTime).toLocaleString('zh-CN')}</span>
+                    <span class="value">${new Date(payment.transferTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</span>
                   </div>
                 </div>
                 

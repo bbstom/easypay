@@ -42,6 +42,7 @@ const swapHandler = {
         if (settings?.updatedAt) {
           const updateTime = new Date(settings.updatedAt);
           lastUpdate = updateTime.toLocaleString('zh-CN', { 
+            timeZone: 'Asia/Shanghai',
             month: '2-digit', 
             day: '2-digit', 
             hour: '2-digit', 

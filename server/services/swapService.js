@@ -414,7 +414,7 @@ class SwapService {
           <li><strong>汇率:</strong> 1 USDT = ${order.exchangeRate} TRX</li>
           <li><strong>接收地址:</strong> ${order.userAddress}</li>
           <li><strong>交易哈希:</strong> ${order.sendTxHash}</li>
-          <li><strong>完成时间:</strong> ${order.sendTime?.toLocaleString('zh-CN')}</li>
+          <li><strong>完成时间:</strong> ${order.sendTime?.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</li>
         </ul>
         <p>感谢使用我们的服务！</p>
       `;
@@ -464,8 +464,8 @@ class SwapService {
         <ul>
           <li><strong>订单号:</strong> ${order.orderNumber}</li>
           <li><strong>兑换:</strong> ${order.fromAmount} USDT → ${order.toAmount} TRX</li>
-          <li><strong>创建时间:</strong> ${order.createdAt.toLocaleString('zh-CN')}</li>
-          <li><strong>过期时间:</strong> ${order.expiresAt.toLocaleString('zh-CN')}</li>
+          <li><strong>创建时间:</strong> ${order.createdAt.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</li>
+          <li><strong>过期时间:</strong> ${order.expiresAt.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</li>
         </ul>
         <p>订单已自动取消。如有疑问，请联系客服。</p>
       `;
