@@ -54,20 +54,73 @@ const DEFAULT_TEMPLATES = {
     category: 'payment',
     content: {
       type: 'text',
-      text: `✅ <b>支付成功！</b>\n\n` +
+      text: `🎉 <b>支付成功！</b>\n\n` +
         `━━━━━━━━━━━━━━━\n` +
-        `<code>订单号：</code>{{orderId}}\n` +
-        `<code>金  额：</code>{{amount}} CNY\n` +
-        `<code>时  间：</code>{{time}}\n` +
+        `<code>订单号：</code><code>{{orderId}}</code>\n` +
+        `<code>金  额：</code><b>{{totalCNY}} CNY</b>\n` +
         `━━━━━━━━━━━━━━━\n\n` +
-        `⏳ 正在处理您的订单，请稍候...\n` +
-        `💬 完成后会自动通知您`,
+        `⏳ 正在处理 <b>{{payType}} 代付</b>...\n` +
+        `⏱️ 预计 <b>2-10 分钟</b>完成\n\n` +
+        `💬 完成后会自动通知您\n` +
+        `⚠️ 请勿关闭此页面`,
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'orderId', description: '订单号', example: 'ORD123456' },
-      { key: 'amount', description: '金额', example: '100.00' },
-      { key: 'time', description: '时间', example: '2024-01-01 12:00:00' }
+      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: 'totalCNY', description: '支付金额', example: '75.60' },
+      { key: 'payType', description: '支付类型', example: 'USDT' }
+    ]
+  },
+  transfer_complete: {
+    name: '代付完成通知',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `✅ <b>代付完成！</b>\n\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>订单号：</code><code>{{orderId}}</code>\n` +
+        `<code>数  量：</code><b>{{amount}} {{payType}}</b>\n` +
+        `<code>地  址：</code><code>{{address}}</code>\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `🔗 <b>交易哈希</b>\n` +
+        `<code>{{txHash}}</code>\n\n` +
+        `🔍 点击下方按钮查看交易详情`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'payType', description: '类型', example: 'USDT' },
+      { key: 'address', description: '收款地址（缩写）', example: 'TXXXxx...xxXXXx' },
+      { key: 'txHash', description: '交易哈希', example: 'abc123def456...' }
+    ],
+    buttons: [
+      { text: '🔍 查看交易', type: 'url', data: 'https://tronscan.org/#/transaction/{{txHash}}', row: 0, col: 0 },
+      { text: '📋 查看订单详情', type: 'callback', data: 'order_detail_{{orderId}}', row: 1, col: 0 }
+    ]
+  },
+  transfer_failed: {
+    name: '代付失败通知',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `❌ <b>代付失败</b>\n\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>订单号：</code><code>{{orderId}}</code>\n` +
+        `<code>数  量：</code>{{amount}} {{payType}}\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `<b>失败原因：</b>\n<i>{{reason}}</i>\n\n` +
+        `💬 请联系客服处理`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'orderId', description: '订单号', example: 'ORD177053402578855GZ9G5' },
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'payType', description: '类型', example: 'USDT' },
+      { key: 'reason', description: '失败原因', example: '余额不足' }
+    ],
+    buttons: [
+      { text: '📋 查看订单', type: 'callback', data: 'order_detail_{{orderId}}', row: 0, col: 0 }
     ]
   },
   order_completed: {

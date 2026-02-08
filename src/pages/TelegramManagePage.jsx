@@ -1082,9 +1082,11 @@ const TelegramManagePage = () => {
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg"
                 >
                   <option value="welcome">欢迎消息</option>
-                  <option value="payment_success">支付成功</option>
-                  <option value="transfer_complete">代付完成</option>
-                  <option value="transfer_failed">代付失败</option>
+                  <option value="payment_success">支付成功通知</option>
+                  <option value="transfer_complete">代付完成通知</option>
+                  <option value="transfer_failed">代付失败通知</option>
+                  <option value="order_completed">订单完成通知</option>
+                  <option value="order_failed">订单失败通知</option>
                   <option value="custom">自定义</option>
                 </select>
               </div>
