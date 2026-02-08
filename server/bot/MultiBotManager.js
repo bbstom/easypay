@@ -226,9 +226,11 @@ class MultiBotManager {
     // 回调查询处理
     bot.on('callback_query', async (ctx) => {
       const data = ctx.callbackQuery.data;
+      console.log(`🔍 [@${bot.botUsername}] 收到回调: ${data}`);
       
       // 通用回调（必须在前面）
       if (data === 'back_to_main') {
+        console.log(`✅ [@${bot.botUsername}] 处理返回主菜单`);
         return startHandler.handleBack(ctx);
       }
       
@@ -265,6 +267,7 @@ class MultiBotManager {
         return startHandler.handleLoginConfirm(ctx);
       }
       
+      console.log(`❌ [@${bot.botUsername}] 未知操作: ${data}`);
       await ctx.answerCbQuery('未知操作');
     });
   }
