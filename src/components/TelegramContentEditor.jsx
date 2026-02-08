@@ -371,12 +371,13 @@ const DEFAULT_TEMPLATES = {
         `<code>订单号：</code><code>{{orderId}}</code>\n` +
         `<code>类  型：</code>{{payType}} 代付\n` +
         `<code>数  量：</code><b>{{amount}} {{payType}}</b>\n` +
-        `<code>地  址：</code>\n<code>{{address}}</code>\n` +  // ✅ 换行显示完整地址
+        `<code>地  址：</code>\n<code>{{address}}</code>\n` +
         `━━━━━━━━━━━━━━━\n` +
         `<code>支付金额：</code>{{totalCNY}} CNY\n` +
         `<code>服务费：</code>{{serviceFee}} CNY\n` +
         `━━━━━━━━━━━━━━━\n` +
-        `<code>状  态：</code>{{status}}\n` +
+        `<code>💳 支付状态：</code>{{paymentStatus}}\n` +
+        `<code>🔄 代付状态：</code>{{transferStatus}}\n` +
         `<code>创建时间：</code>{{createdAt}}\n` +
         `{{paymentTime}}` +
         `{{transferTime}}` +
@@ -390,7 +391,9 @@ const DEFAULT_TEMPLATES = {
       { key: 'address', description: '收款地址（完整）', example: 'TXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXxxx' },
       { key: 'totalCNY', description: '支付金额', example: '75.60' },
       { key: 'serviceFee', description: '服务费', example: '3.60' },
-      { key: 'status', description: '状态', example: '✅ 已完成' },
+      { key: 'paymentStatus', description: '💳 支付状态', example: '✅ 已支付' },
+      { key: 'transferStatus', description: '🔄 代付状态', example: '🔄 处理中' },
+      { key: 'status', description: '状态（旧的，向后兼容）', example: '✅ 已完成' },
       { key: 'createdAt', description: '创建时间', example: '2024-02-07 12:00:00' },
       { key: 'paymentTime', description: '支付时间（可选）', example: '<code>支付时间：</code>2024-02-07 12:05:00\n' },
       { key: 'transferTime', description: '完成时间（可选）', example: '<code>完成时间：</code>2024-02-07 12:10:00\n' },
