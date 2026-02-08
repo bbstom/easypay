@@ -539,16 +539,43 @@ router.get('/contents/:key', auth, async (req, res) => {
   }
 });
 
-// 创建内容配置
+// 创建内容配置（如果已存在则更新）
 router.post('/contents', auth, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: '无权限' });
     }
 
-    const content = await TelegramContent.create(req.body);
-    res.status(201).json(content);
+    const { key } = req.body;
+    
+    // 检查是否已存在
+    const existing = await TelegramContent.findOne({ key });
+    
+    if (existing) {
+      // 已存在，更新
+      console.log(`📝 内容 "${key}" 已存在，更新为新配置`);
+      const updated = await TelegramContent.findOneAndUpdate(
+        { key },
+        req.body,
+        { new: true, runValidators: true }
+      );
+      return res.status(200).json({ 
+        message: '内容已更新',
+        content: updated,
+        isUpdate: true
+      });
+    } else {
+      // 不存在，创建
+      console.log(`✨ 创建新内容 "${key}"`);
+      const content = await TelegramContent.create(req.body);
+      return res.status(201).json({ 
+        message: '内容已创建',
+        content,
+        isUpdate: false
+      });
+    }
   } catch (error) {
+    console.error('创建/更新内容失败:', error);
     res.status(400).json({ error: error.message });
   }
 });

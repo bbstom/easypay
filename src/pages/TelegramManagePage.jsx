@@ -1207,7 +1207,13 @@ const TelegramManagePage = () => {
                     });
 
                     if (res.ok) {
-                      alert(editingContent ? '内容已更新' : '内容已创建');
+                      const data = await res.json();
+                      // 显示是创建还是更新
+                      if (data.isUpdate !== undefined) {
+                        alert(data.isUpdate ? '内容已更新（已存在的内容）' : '内容已创建');
+                      } else {
+                        alert(editingContent ? '内容已更新' : '内容已创建');
+                      }
                       setShowContentEditor(false);
                       setEditingContent(null);
                       fetchData();
