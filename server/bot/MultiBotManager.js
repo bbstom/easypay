@@ -236,7 +236,7 @@ class MultiBotManager {
         }
         
         // 功能回调
-        if (data.startsWith('payment_') || data === 'confirm_payment' || data.startsWith('pay_')) {
+        if (data.startsWith('payment_') || data === 'confirm_payment' || data.startsWith('pay_') || data.startsWith('check_order_')) {
           return paymentHandler.handleCallback(ctx);
         }
         
