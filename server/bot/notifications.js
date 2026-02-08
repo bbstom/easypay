@@ -1,4 +1,6 @@
 const { getBotInstance } = require('./index');
+const contentService = require('./services/contentService');
+const { Markup } = require('telegraf');
 
 class NotificationService {
   constructor() {
@@ -19,24 +21,48 @@ class NotificationService {
     if (!this.bot || !telegramId) return;
 
     try {
+      // 尝试使用自定义模板
+      const TelegramContent = require('../models/TelegramContent');
+      const template = await TelegramContent.findOne({ 
+        key: 'payment_success', 
+        enabled: true 
+      });
+
+      let message = null;
+      let buttons = Markup.inlineKeyboard([[
+        Markup.button.callback('📋 查看订单', `order_detail_${order._id}`)
+      ]]);
+
+      if (template && template.content && template.content.text) {
+        // 使用自定义模板
+        message = template.content.text
+          .replace(/{{orderId}}/g, order.platformOrderId)
+          .replace(/{{totalCNY}}/g, Number(order.totalCNY).toFixed(2))
+          .replace(/{{payType}}/g, order.payType);
+        
+        // 如果有自定义按钮，使用自定义按钮
+        if (template.buttons && template.buttons.length > 0) {
+          buttons = contentService.buildButtons(template);
+        }
+      } else {
+        // 使用默认消息
+        message = `🎉 <b>支付成功！</b>\n\n` +
+          `━━━━━━━━━━━━━━━\n` +
+          `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
+          `<code>金  额：</code><b>${Number(order.totalCNY).toFixed(2)} CNY</b>\n` +
+          `━━━━━━━━━━━━━━━\n\n` +
+          `⏳ 正在处理 <b>${order.payType} 代付</b>...\n` +
+          `⏱️ 预计 <b>2-10 分钟</b>完成\n\n` +
+          `💬 完成后会自动通知您\n` +
+          `⚠️ 请勿关闭此页面`;
+      }
+
       await this.bot.sendMessage(
         telegramId,
-        `🎉 <b>支付成功！</b>\n\n` +
-        `━━━━━━━━━━━━━━━\n` +
-        `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
-        `<code>金  额：</code><b>${order.totalCNY} CNY</b>\n` +
-        `━━━━━━━━━━━━━━━\n\n` +
-        `⏳ 正在处理 <b>${order.payType} 代付</b>...\n` +
-        `⏱ 预计 <b>2-10 分钟</b>完成\n\n` +
-        `💬 完成后会自动通知您\n` +
-        `⚠️ 请勿关闭此页面`,
+        message,
         {
           parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '📋 查看订单', callback_data: `order_detail_${order._id}` }
-            ]]
-          }
+          ...buttons
         }
       );
       console.log(`✅ 支付成功通知已发送: TG ${telegramId}`);
@@ -51,31 +77,50 @@ class NotificationService {
     if (!this.bot || !telegramId) return;
 
     try {
+      // 尝试使用自定义模板
+      const TelegramContent = require('../models/TelegramContent');
+      const template = await TelegramContent.findOne({ 
+        key: 'transfer_complete', 
+        enabled: true 
+      });
+
+      let message = null;
+      let buttons = Markup.inlineKeyboard([
+        [Markup.button.url('🔍 查看交易', `https://tronscan.org/#/transaction/${order.txHash}`)],
+        [Markup.button.callback('📋 查看订单详情', `order_detail_${order._id}`)]
+      ]);
+
+      if (template && template.content && template.content.text) {
+        // 使用自定义模板
+        message = template.content.text
+          .replace(/{{orderId}}/g, order.platformOrderId)
+          .replace(/{{amount}}/g, order.amount)
+          .replace(/{{payType}}/g, order.payType)
+          .replace(/{{address}}/g, this.formatAddress(order.address))
+          .replace(/{{txHash}}/g, order.txHash);
+        
+        if (template.buttons && template.buttons.length > 0) {
+          buttons = contentService.buildButtons(template);
+        }
+      } else {
+        // 使用默认消息
+        message = `✅ <b>代付完成！</b>\n\n` +
+          `━━━━━━━━━━━━━━━\n` +
+          `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
+          `<code>数  量：</code><b>${order.amount} ${order.payType}</b>\n` +
+          `<code>地  址：</code><code>${this.formatAddress(order.address)}</code>\n` +
+          `━━━━━━━━━━━━━━━\n\n` +
+          `🔗 <b>交易哈希</b>\n` +
+          `<code>${order.txHash}</code>\n\n` +
+          `🔍 点击下方按钮查看交易详情`;
+      }
+
       await this.bot.sendMessage(
         telegramId,
-        `✅ <b>代付完成！</b>\n\n` +
-        `━━━━━━━━━━━━━━━\n` +
-        `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
-        `<code>数  量：</code><b>${order.amount} ${order.payType}</b>\n` +
-        `<code>地  址：</code><code>${this.formatAddress(order.address)}</code>\n` +
-        `━━━━━━━━━━━━━━━\n\n` +
-        `🔗 <b>交易哈希</b>\n` +
-        `<code>${order.txHash}</code>\n\n` +
-        `🔍 点击下方按钮查看交易详情`,
+        message,
         {
           parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{ 
-                text: '🔍 查看交易', 
-                url: `https://tronscan.org/#/transaction/${order.txHash}` 
-              }],
-              [{ 
-                text: '📋 查看订单详情', 
-                callback_data: `order_detail_${order._id}` 
-              }]
-            ]
-          }
+          ...buttons
         }
       );
       console.log(`✅ 代付完成通知已发送: TG ${telegramId}`);
@@ -90,22 +135,46 @@ class NotificationService {
     if (!this.bot || !telegramId) return;
 
     try {
+      // 尝试使用自定义模板
+      const TelegramContent = require('../models/TelegramContent');
+      const template = await TelegramContent.findOne({ 
+        key: 'transfer_failed', 
+        enabled: true 
+      });
+
+      let message = null;
+      let buttons = Markup.inlineKeyboard([[
+        Markup.button.callback('📋 查看订单', `order_detail_${order._id}`)
+      ]]);
+
+      if (template && template.content && template.content.text) {
+        // 使用自定义模板
+        message = template.content.text
+          .replace(/{{orderId}}/g, order.platformOrderId)
+          .replace(/{{amount}}/g, order.amount)
+          .replace(/{{payType}}/g, order.payType)
+          .replace(/{{reason}}/g, reason);
+        
+        if (template.buttons && template.buttons.length > 0) {
+          buttons = contentService.buildButtons(template);
+        }
+      } else {
+        // 使用默认消息
+        message = `❌ <b>代付失败</b>\n\n` +
+          `━━━━━━━━━━━━━━━\n` +
+          `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
+          `<code>数  量：</code>${order.amount} ${order.payType}\n` +
+          `━━━━━━━━━━━━━━━\n\n` +
+          `<b>失败原因：</b>\n<i>${reason}</i>\n\n` +
+          `💬 请联系客服处理`;
+      }
+
       await this.bot.sendMessage(
         telegramId,
-        `❌ <b>代付失败</b>\n\n` +
-        `━━━━━━━━━━━━━━━\n` +
-        `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
-        `<code>数  量：</code>${order.amount} ${order.payType}\n` +
-        `━━━━━━━━━━━━━━━\n\n` +
-        `<b>失败原因：</b>\n<i>${reason}</i>\n\n` +
-        `💬 请联系客服处理`,
+        message,
         {
           parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '📋 查看订单', callback_data: `order_detail_${order._id}` }
-            ]]
-          }
+          ...buttons
         }
       );
       console.log(`✅ 代付失败通知已发送: TG ${telegramId}`);
