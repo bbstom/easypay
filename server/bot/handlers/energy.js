@@ -70,11 +70,6 @@ const energyHandler = {
       await ctx.reply('❌ 系统错误，请稍后重试');
     }
   },
-      if (ctx.callbackQuery) {
-        await ctx.answerCbQuery('系统错误');
-      }
-    }
-  },
 
   // 处理回调
   async handleCallback(ctx) {
