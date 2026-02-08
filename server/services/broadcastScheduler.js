@@ -149,12 +149,9 @@ class BroadcastScheduler {
     const bot = botInstance.bot;
     let sentCount = 0;
     let failedCount = 0;
+    const failedDetails = []; // 记录失败详情
 
     try {
-      // 获取目标用户列表
-      const targetUsers = await this.getTargetUsers(broadcast);
-      console.log(`👥 目标用户数: ${targetUsers.length}`);
-
       // 构建消息选项
       const messageOptions = {
         parse_mode: broadcast.parseMode
@@ -198,50 +195,115 @@ class BroadcastScheduler {
         messageOptions.reply_markup = Markup.inlineKeyboard(buttons).reply_markup;
       }
 
-      // 发送消息
-      const failedDetails = []; // 记录失败详情
-      
-      for (const user of targetUsers) {
-        try {
-          if (broadcast.contentType === 'photo' && broadcast.mediaUrl) {
-            await bot.telegram.sendPhoto(user.telegramId, broadcast.mediaUrl, {
-              caption: broadcast.content,
-              ...messageOptions
-            });
-          } else if (broadcast.contentType === 'video' && broadcast.mediaUrl) {
-            await bot.telegram.sendVideo(user.telegramId, broadcast.mediaUrl, {
-              caption: broadcast.content,
-              ...messageOptions
-            });
-          } else if (broadcast.contentType === 'document' && broadcast.mediaUrl) {
-            await bot.telegram.sendDocument(user.telegramId, broadcast.mediaUrl, {
-              caption: broadcast.content,
-              ...messageOptions
-            });
-          } else {
-            await bot.telegram.sendMessage(user.telegramId, broadcast.content, messageOptions);
-          }
+      // 如果是群组群发，特殊处理
+      if (broadcast.targetType === 'group' && broadcast.targetGroups && broadcast.targetGroups.length > 0) {
+        console.log(`👥 目标群组数: ${broadcast.targetGroups.length}`);
+        
+        // 发送到群组
+        for (const groupChatId of broadcast.targetGroups) {
+          try {
+            if (broadcast.contentType === 'photo' && broadcast.mediaUrl) {
+              await bot.telegram.sendPhoto(groupChatId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else if (broadcast.contentType === 'video' && broadcast.mediaUrl) {
+              await bot.telegram.sendVideo(groupChatId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else if (broadcast.contentType === 'document' && broadcast.mediaUrl) {
+              await bot.telegram.sendDocument(groupChatId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else {
+              await bot.telegram.sendMessage(groupChatId, broadcast.content, messageOptions);
+            }
 
-          sentCount++;
+            sentCount++;
+            console.log(`✅ 已发送到群组: ${groupChatId}`);
 
-          // 每发送 10 条消息暂停 1 秒，避免触发限流
-          if (sentCount % 10 === 0) {
+            // 每发送一个群组暂停 1 秒
             await new Promise(resolve => setTimeout(resolve, 1000));
-          }
 
-        } catch (error) {
-          const errorMsg = error.response?.description || error.message;
-          console.error(`发送失败 (TG ${user.telegramId}): ${error.response?.error_code || 'ERROR'}: ${errorMsg}`);
-          
-          // 记录失败详情
-          failedDetails.push({
-            telegramId: user.telegramId,
-            username: user.telegramUsername || user.username,
-            error: errorMsg,
-            errorCode: error.response?.error_code
-          });
-          
-          failedCount++;
+          } catch (error) {
+            const errorMsg = error.response?.description || error.message;
+            console.error(`发送失败 (群组 ${groupChatId}): ${error.response?.error_code || 'ERROR'}: ${errorMsg}`);
+            
+            // 记录失败详情
+            failedDetails.push({
+              telegramId: groupChatId,
+              username: `群组_${groupChatId}`,
+              error: errorMsg,
+              errorCode: error.response?.error_code
+            });
+            
+            failedCount++;
+          }
+        }
+        
+        // 更新总数
+        broadcast.totalUsers = broadcast.targetGroups.length;
+        
+      } else {
+        // 发送给用户
+        const targetUsers = await this.getTargetUsers(broadcast);
+        console.log(`👥 目标用户数: ${targetUsers.length}`);
+        
+        if (targetUsers.length === 0) {
+          console.warn('⚠️  没有找到目标用户，请检查：');
+          console.warn('   1. 是否有用户绑定了 Telegram');
+          console.warn('   2. targetType 是否正确');
+          console.warn('   3. 如果是自定义列表，是否填写了 targetUsers');
+        }
+        
+        // 更新总数
+        broadcast.totalUsers = targetUsers.length;
+
+        // 发送消息给用户
+        for (const user of targetUsers) {
+          try {
+            if (broadcast.contentType === 'photo' && broadcast.mediaUrl) {
+              await bot.telegram.sendPhoto(user.telegramId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else if (broadcast.contentType === 'video' && broadcast.mediaUrl) {
+              await bot.telegram.sendVideo(user.telegramId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else if (broadcast.contentType === 'document' && broadcast.mediaUrl) {
+              await bot.telegram.sendDocument(user.telegramId, broadcast.mediaUrl, {
+                caption: broadcast.content,
+                ...messageOptions
+              });
+            } else {
+              await bot.telegram.sendMessage(user.telegramId, broadcast.content, messageOptions);
+            }
+
+            sentCount++;
+
+            // 每发送 10 条消息暂停 1 秒，避免触发限流
+            if (sentCount % 10 === 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+          } catch (error) {
+            const errorMsg = error.response?.description || error.message;
+            console.error(`发送失败 (TG ${user.telegramId}): ${error.response?.error_code || 'ERROR'}: ${errorMsg}`);
+            
+            // 记录失败详情
+            failedDetails.push({
+              telegramId: user.telegramId,
+              username: user.telegramUsername || user.username,
+              error: errorMsg,
+              errorCode: error.response?.error_code
+            });
+            
+            failedCount++;
+          }
         }
       }
 
@@ -335,10 +397,13 @@ class BroadcastScheduler {
   async getTargetUsers(broadcast) {
     let users = [];
 
+    console.log(`🔍 查询目标用户，类型: ${broadcast.targetType}`);
+
     switch (broadcast.targetType) {
       case 'all':
         // 所有用户
         users = await User.find({ telegramId: { $exists: true, $ne: null } });
+        console.log(`   找到 ${users.length} 个用户（所有用户）`);
         break;
 
       case 'active':
@@ -348,6 +413,7 @@ class BroadcastScheduler {
           telegramId: { $exists: true, $ne: null },
           lastLoginAt: { $gte: thirtyDaysAgo }
         });
+        console.log(`   找到 ${users.length} 个用户（活跃用户）`);
         break;
 
       case 'inactive':
@@ -360,6 +426,7 @@ class BroadcastScheduler {
             { lastLoginAt: { $exists: false } }
           ]
         });
+        console.log(`   找到 ${users.length} 个用户（不活跃用户）`);
         break;
 
       case 'custom':
@@ -368,15 +435,26 @@ class BroadcastScheduler {
           users = await User.find({
             telegramId: { $in: broadcast.targetUsers }
           });
+          console.log(`   找到 ${users.length} 个用户（自定义列表）`);
+        } else {
+          console.warn('   ⚠️  自定义用户列表为空');
         }
         break;
 
       case 'group':
-        // 群组（暂不支持，需要特殊处理）
-        console.warn('群组群发暂不支持');
+        // 群组群发
+        if (broadcast.targetGroups && broadcast.targetGroups.length > 0) {
+          console.log(`   目标群组数: ${broadcast.targetGroups.length}`);
+          // 群组群发不需要用户列表，直接返回空数组
+          // 在发送时会特殊处理
+          users = [];
+        } else {
+          console.warn('   ⚠️  目标群组列表为空');
+        }
         break;
 
       default:
+        console.warn(`   ⚠️  未知的目标类型: ${broadcast.targetType}`);
         users = [];
     }
 
