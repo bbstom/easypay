@@ -464,7 +464,7 @@ async function generatePaymentQR(ctx, paymentMethod) {
           `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
           `<code>数  量：</code>${data.amount} ${data.type}\n` +
           `<code>地  址：</code>\n<code>${data.address}</code>\n` +
-          `<code>金  额：</code><b>${order.totalCNY} CNY</b>\n` +
+          `<code>金  额：</code><b>${Number(order.totalCNY).toFixed(2)} CNY</b>\n` +
           `━━━━━━━━━━━━━━━\n\n` +
           `⏰ 支付后请等待 <b>2-10 分钟</b>\n` +
           `💬 完成后会自动通知您`,

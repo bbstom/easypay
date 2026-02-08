@@ -200,8 +200,8 @@ async function showOrderDetail(ctx) {
       payType: order.payType,
       amount: order.amount,
       address: order.address,  // ✅ 使用完整地址
-      totalCNY: order.totalCNY,
-      serviceFee: order.serviceFee,
+      totalCNY: Number(order.totalCNY).toFixed(2),
+      serviceFee: Number(order.serviceFee).toFixed(2),
       status: status,
       createdAt: date,
       paymentTime: paymentTime,
@@ -218,8 +218,8 @@ async function showOrderDetail(ctx) {
         `<code>数  量：</code><b>${order.amount} ${order.payType}</b>\n` +
         `<code>地  址：</code>\n<code>${order.address}</code>\n` +  // ✅ 使用完整地址并换行
         `━━━━━━━━━━━━━━━\n` +
-        `<code>支付金额：</code>${order.totalCNY} CNY\n` +
-        `<code>服务费：</code>${order.serviceFee} CNY\n` +
+        `<code>支付金额：</code>${Number(order.totalCNY).toFixed(2)} CNY\n` +
+        `<code>服务费：</code>${Number(order.serviceFee).toFixed(2)} CNY\n` +
         `━━━━━━━━━━━━━━━\n` +
         `<code>状  态：</code>${status}\n` +
         `<code>创建时间：</code>${date}\n`;
