@@ -225,50 +225,59 @@ class MultiBotManager {
 
     // 回调查询处理
     bot.on('callback_query', async (ctx) => {
-      const data = ctx.callbackQuery.data;
-      console.log(`🔍 [@${bot.botUsername}] 收到回调: ${data}`);
-      
-      // 通用回调（必须在前面）
-      if (data === 'back_to_main') {
-        console.log(`✅ [@${bot.botUsername}] 处理返回主菜单`);
-        return startHandler.handleBack(ctx);
-      }
-      
-      // 功能回调
-      if (data.startsWith('payment_') || data === 'confirm_payment' || data.startsWith('pay_')) {
-        return paymentHandler.handleCallback(ctx);
-      }
-      
-      if (data.startsWith('order') || data === 'my_orders') {
-        return ordersHandler.handleCallback(ctx);
-      }
-      
-      if (data.startsWith('ticket') || data === 'create_ticket') {
-        return ticketsHandler.handleCallback(ctx);
-      }
-      
-      if (data.startsWith('energy') || data === 'energy_rental') {
-        return energyHandler.handleCallback(ctx);
-      }
-      
-      if (data.startsWith('swap') || data === 'swap_service') {
-        return swapHandler.handleCallback(ctx);
-      }
-      
-      if (data === 'account_info' || data === 'change_email') {
-        if (data === 'account_info') {
-          return startHandler.accountInfo(ctx);
-        } else if (data === 'change_email') {
-          return startHandler.changeEmail(ctx);
+      try {
+        const data = ctx.callbackQuery.data;
+        console.log(`🔍 [@${bot.botUsername}] 收到回调: ${data}`);
+        
+        // 通用回调（必须在前面）
+        if (data === 'back_to_main') {
+          console.log(`✅ [@${bot.botUsername}] 处理返回主菜单`);
+          return startHandler.handleBack(ctx);
+        }
+        
+        // 功能回调
+        if (data.startsWith('payment_') || data === 'confirm_payment' || data.startsWith('pay_')) {
+          return paymentHandler.handleCallback(ctx);
+        }
+        
+        if (data.startsWith('order') || data === 'my_orders') {
+          return ordersHandler.handleCallback(ctx);
+        }
+        
+        if (data.startsWith('ticket') || data === 'create_ticket') {
+          return ticketsHandler.handleCallback(ctx);
+        }
+        
+        if (data.startsWith('energy') || data === 'energy_rental') {
+          return energyHandler.handleCallback(ctx);
+        }
+        
+        if (data.startsWith('swap') || data === 'swap_service') {
+          return swapHandler.handleCallback(ctx);
+        }
+        
+        if (data === 'account_info' || data === 'change_email') {
+          if (data === 'account_info') {
+            return startHandler.accountInfo(ctx);
+          } else if (data === 'change_email') {
+            return startHandler.changeEmail(ctx);
+          }
+        }
+        
+        if (data.startsWith('login_confirm_')) {
+          return startHandler.handleLoginConfirm(ctx);
+        }
+        
+        console.log(`❌ [@${bot.botUsername}] 未知操作: ${data}`);
+        await ctx.answerCbQuery('未知操作').catch(() => {});
+      } catch (error) {
+        // 忽略回调查询超时错误
+        if (error.message && error.message.includes('query is too old')) {
+          console.log(`⚠️  [@${bot.botUsername}] 回调查询已超时（可忽略）`);
+        } else {
+          console.error(`❌ [@${bot.botUsername}] 回调处理错误:`, error.message);
         }
       }
-      
-      if (data.startsWith('login_confirm_')) {
-        return startHandler.handleLoginConfirm(ctx);
-      }
-      
-      console.log(`❌ [@${bot.botUsername}] 未知操作: ${data}`);
-      await ctx.answerCbQuery('未知操作');
     });
   }
 
@@ -414,7 +423,12 @@ class MultiBotManager {
           bot.launch().then(() => {
             console.log(`🤖 Bot #${index} 已启动: @${username}`);
           }).catch((error) => {
-            console.error(`❌ Bot #${index} (@${username}) 启动失败:`, error.message);
+            // 忽略启动时的旧回调超时错误
+            if (error.message && error.message.includes('query is too old')) {
+              console.log(`⚠️  Bot #${index} (@${username}) 启动时有旧回调超时（可忽略）`);
+            } else {
+              console.error(`❌ Bot #${index} (@${username}) 启动失败:`, error.message);
+            }
           });
           
           // 等待一小段时间确保 Bot 开始启动
