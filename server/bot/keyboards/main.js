@@ -65,8 +65,8 @@ function getDefaultMainKeyboard() {
 function getPaymentMethodKeyboard() {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback('💳 微信支付', 'pay_wechat'),
-      Markup.button.callback('💳 支付宝', 'pay_alipay')
+      Markup.button.callback('💚 微信支付', 'pay_wechat'),
+      Markup.button.callback('🔵 支付宝', 'pay_alipay')
     ],
     [Markup.button.callback('« 返回主菜单', 'back_to_main')]
   ]);
