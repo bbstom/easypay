@@ -48,15 +48,57 @@ class TelegramBot {
         ctx.session = {};
       }
 
+      // 检查是否是群组消息
+      const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
+      
+      // 如果是群组消息且不是 /start 命令，引导用户私聊
+      if (isGroup && !ctx.message?.text?.startsWith('/start')) {
+        const telegramId = ctx.from?.id?.toString();
+        const botUsername = this.bot.botInfo?.username || 'bot';
+        
+        // 只对命令和回调查询做出响应，忽略普通文本消息
+        if (ctx.message?.text?.startsWith('/') || ctx.callbackQuery) {
+          const { Markup } = require('telegraf');
+          
+          const message = `👋 你好！\n\n` +
+            `为了保护您的隐私和账户安全，请点击下方按钮与我私聊进行操作。\n\n` +
+            `💡 在私聊中，您可以：\n` +
+            `• 💰 USDT/TRX 代付\n` +
+            `• 📋 查看订单\n` +
+            `• 💬 创建工单\n` +
+            `• ⚡ 能量租赁\n` +
+            `• 🔄 USDT 闪兑 TRX`;
+          
+          try {
+            if (ctx.callbackQuery) {
+              // 回调查询：编辑消息或回答
+              await ctx.answerCbQuery('请私聊我进行操作 🔒', { show_alert: true });
+            } else {
+              // 命令：发送提示消息
+              await ctx.reply(message, {
+                parse_mode: 'HTML',
+                ...Markup.inlineKeyboard([
+                  [Markup.button.url('💬 开始私聊', `https://t.me/${botUsername}?start=group_${telegramId}`)]
+                ])
+              });
+            }
+          } catch (error) {
+            console.error('发送群组提示失败:', error);
+          }
+          
+          return; // 不继续处理
+        }
+        
+        // 普通文本消息：静默忽略
+        return;
+      }
+
       // /start 命令不需要认证
       if (ctx.message?.text?.startsWith('/start')) {
         return next();
       }
 
-      // 检查是否是群组消息
-      const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
-
-      // 获取或创建用户
+      // 获取或创建用户（仅私聊）
       if (!ctx.session.user) {
         const telegramId = ctx.from?.id?.toString();
         if (!telegramId) {
@@ -68,18 +110,11 @@ class TelegramBot {
         if (user) {
           ctx.session.user = user;
         } else {
-          // 未找到用户
-          if (isGroup) {
-            // 在群组中：静默忽略未注册用户，不发送提示
-            console.log(`⚠️  群组中的未注册用户: ${telegramId}`);
-            return; // 直接返回，不继续处理
-          } else {
-            // 在私聊中：提示使用 /start
-            return ctx.reply(
-              '❌ 请先使用 /start 命令开始使用',
-              { reply_markup: { remove_keyboard: true } }
-            );
-          }
+          // 未找到用户，提示使用 /start
+          return ctx.reply(
+            '❌ 请先使用 /start 命令开始使用',
+            { reply_markup: { remove_keyboard: true } }
+          );
         }
       }
 
