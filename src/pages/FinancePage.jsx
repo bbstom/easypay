@@ -59,17 +59,17 @@ const FinancePage = () => {
   };
 
   const handleRetryTransfer = async (paymentId) => {
-    if (!confirm('确定要重试此订单的转账吗？')) return;
+    if (!confirm('确定要手动补单吗？\n\n系统会重新执行代付操作，请确保：\n1. 用户已成功支付\n2. 代付地址正确\n3. 钱包余额充足')) return;
     
     setRetryingPayment(paymentId);
     try {
       await axios.post(`/api/payments/retry/${paymentId}`);
-      alert('已开始重试转账，请稍后刷新查看结果');
+      alert('✅ 补单成功！\n\n系统已开始重新执行代付，请稍后刷新查看结果。');
       setTimeout(() => {
         fetchPayments();
       }, 3000);
     } catch (error) {
-      alert('重试失败: ' + (error.response?.data?.error || error.message));
+      alert('❌ 补单失败\n\n' + (error.response?.data?.error || error.message));
     } finally {
       setRetryingPayment(null);
     }
@@ -383,16 +383,17 @@ const FinancePage = () => {
                           onClick={() => handleRetryTransfer(payment._id)}
                           disabled={retryingPayment === payment._id}
                           className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-lg flex items-center gap-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
+                          title="手动补单 - 重新执行代付"
                         >
                           {retryingPayment === payment._id ? (
                             <>
                               <RefreshCw size={12} className="animate-spin" />
-                              重试中
+                              补单中
                             </>
                           ) : (
                             <>
                               <RefreshCw size={12} />
-                              重试
+                              补单
                             </>
                           )}
                         </button>

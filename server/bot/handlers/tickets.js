@@ -9,6 +9,9 @@ async function handleCallback(ctx) {
     await showTicketsList(ctx);
   } else if (action === 'tickets_create') {
     await startCreateTicket(ctx);
+  } else if (action.startsWith('create_ticket_order_')) {
+    // 从订单创建工单
+    await createTicketFromOrder(ctx);
   } else if (action.startsWith('ticket_detail_')) {
     await showTicketDetail(ctx);
   } else if (action.startsWith('ticket_reply_')) {
@@ -17,7 +20,7 @@ async function handleCallback(ctx) {
 
   // 只在真正的 callback query 上下文中回答
   if (ctx.callbackQuery && ctx.update?.callback_query) {
-    await ctx.answerCbQuery();
+    await ctx.answerCbQuery().catch(() => {});
   }
 }
 
@@ -355,6 +358,76 @@ async function handleTicketReply(ctx) {
   } catch (error) {
     console.error('回复工单失败:', error);
     await ctx.reply('❌ 回复失败，请稍后重试');
+  }
+}
+
+// 从订单创建工单
+async function createTicketFromOrder(ctx) {
+  const action = ctx.callbackQuery.data;
+  const orderId = action.replace('create_ticket_order_', '');
+  
+  try {
+    const Payment = require('../../models/Payment');
+    const order = await Payment.findById(orderId);
+    
+    if (!order) {
+      await ctx.answerCbQuery('❌ 订单不存在').catch(() => {});
+      return;
+    }
+    
+    const user = ctx.session.user;
+    
+    // 自动创建工单
+    const ticketNumber = Date.now().toString().slice(-8);
+    const subject = `代付失败 - 订单 ${order.platformOrderId}`;
+    const description = `订单号：${order.platformOrderId}\n` +
+      `金额：${order.amount} ${order.payType}\n` +
+      `收款地址：${order.recipientAddress}\n` +
+      `状态：代付失败\n\n` +
+      `请帮我处理这个订单，谢谢！`;
+    
+    const ticket = await Ticket.create({
+      userId: user._id,
+      ticketNumber,
+      subject,
+      description,
+      status: 'open',
+      priority: 'high', // 代付失败设为高优先级
+      relatedOrderId: order._id, // 关联订单
+      messages: [{
+        sender: 'user',
+        message: description,
+        createdAt: new Date()
+      }]
+    });
+    
+    await ctx.answerCbQuery('✅ 工单已创建').catch(() => {});
+    
+    await ctx.reply(
+      `✅ <b>工单已自动创建</b>\n\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `<code>工单号：</code>#${ticket.ticketNumber}\n` +
+      `<code>标  题：</code>${ticket.subject}\n` +
+      `<code>优先级：</code>高\n` +
+      `<code>状  态：</code>待处理\n` +
+      `━━━━━━━━━━━━━━━\n\n` +
+      `💬 我们会优先处理代付失败的工单！\n` +
+      `📱 请保持 Telegram 在线，客服会尽快联系您`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '📋 查看工单', callback_data: `ticket_detail_${ticket._id}` }],
+            [{ text: '📦 查看订单', callback_data: `order_detail_${order._id}` }],
+            [{ text: '« 返回主菜单', callback_data: 'back_to_main' }]
+          ]
+        }
+      }
+    );
+  } catch (error) {
+    console.error('从订单创建工单失败:', error);
+    await ctx.answerCbQuery('❌ 创建工单失败').catch(() => {});
+    await ctx.reply('❌ 创建工单失败，请稍后重试');
   }
 }
 

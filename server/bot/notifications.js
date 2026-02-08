@@ -143,9 +143,14 @@ class NotificationService {
       });
 
       let message = null;
-      let buttons = Markup.inlineKeyboard([[
-        Markup.button.callback('📋 查看订单', `order_detail_${order._id}`)
-      ]]);
+      let buttons = Markup.inlineKeyboard([
+        [
+          Markup.button.callback('📋 查看订单', `order_detail_${order._id}`)
+        ],
+        [
+          Markup.button.callback('💬 联系客服', `create_ticket_order_${order._id}`)
+        ]
+      ]);
 
       if (template && template.content && template.content.text) {
         // 使用自定义模板
@@ -166,7 +171,11 @@ class NotificationService {
           `<code>数  量：</code>${order.amount} ${order.payType}\n` +
           `━━━━━━━━━━━━━━━\n\n` +
           `<b>失败原因：</b>\n<i>${reason}</i>\n\n` +
-          `💬 请联系客服处理`;
+          `💡 <b>处理说明：</b>\n` +
+          `• 您的支付已成功收到\n` +
+          `• 系统会自动重试代付\n` +
+          `• 如长时间未到账，请联系客服\n` +
+          `• 我们会尽快为您处理`;
       }
 
       await this.bot.sendMessage(
