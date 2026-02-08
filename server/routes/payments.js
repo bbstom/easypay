@@ -425,6 +425,12 @@ async function processTransfer(paymentId, retryCount = 0) {
     console.log(`   地址: ${payment.address}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 
+    // 0. 更新所有钱包余额（确保获取最新余额）
+    console.log('🔄 正在更新钱包余额...');
+    const walletUpdateService = require('../services/walletUpdateService');
+    await walletUpdateService.updateAllWallets();
+    console.log('✅ 钱包余额已更新\n');
+
     // 1. 选择最优钱包
     console.log('📊 正在选择最优钱包...');
     const selectedWallet = await walletSelector.selectBestWallet({

@@ -292,12 +292,26 @@ async function refreshOrderStatus(ctx) {
       return;
     }
 
-    const status = getStatusText(order.status);
-    await ctx.answerCbQuery(`当前状态：${status}`);
+    // 获取支付状态和代付状态
+    const paymentStatus = getPaymentStatusText(order.paymentStatus);
+    const transferStatus = getTransferStatusText(order.transferStatus);
+    
+    await ctx.answerCbQuery(`💳 ${paymentStatus} | 🔄 ${transferStatus}`);
 
+    // 临时修改 callback data 以便 showOrderDetail 能正确提取 ID
+    const originalData = ctx.callbackQuery.data;
+    ctx.callbackQuery.data = `order_detail_${orderId}`;
+    
     // 重新显示订单详情
     await showOrderDetail(ctx);
+    
+    // 恢复原始 data
+    ctx.callbackQuery.data = originalData;
   } catch (error) {
+    console.error('刷新订单状态失败:', error);
+    await ctx.answerCbQuery('❌ 刷新失败');
+  }
+}
     console.error('刷新订单状态失败:', error);
     await ctx.answerCbQuery('❌ 刷新失败');
   }
