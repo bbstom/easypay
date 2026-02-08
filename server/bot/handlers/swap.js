@@ -76,7 +76,7 @@ const swapHandler = {
                 { text: '🔄 刷新汇率', callback_data: 'swap_service' }
               ],
               [
-                { text: '🔙 返回主菜单', callback_data: 'back_main' }
+                { text: '🔙 返回主菜单', callback_data: 'back_to_main' }
               ]
             ]
           }

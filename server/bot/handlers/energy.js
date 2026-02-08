@@ -54,7 +54,7 @@ const energyHandler = {
           reply_markup: {
             inline_keyboard: [
               [
-                { text: '🔙 返回主菜单', callback_data: 'back_main' }
+                { text: '🔙 返回主菜单', callback_data: 'back_to_main' }
               ]
             ]
           }
