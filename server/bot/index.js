@@ -120,6 +120,7 @@ class TelegramBot {
     this.bot.action('cancel', startHandler.cancel);
     this.bot.action('help_center', startHandler.help);
     this.bot.action('account_info', startHandler.accountInfo);
+    this.bot.action('change_email', startHandler.changeEmail);
     
     // 支付相关回调
     this.bot.action(/^payment_/, paymentHandler.handleCallback);
@@ -266,6 +267,9 @@ class TelegramBot {
       case 'waiting_ticket_reply':
         console.log('✅ 处理工单回复');
         return ticketsHandler.handleTicketReply(ctx);
+      case 'waiting_new_email':
+        console.log('✅ 处理新邮箱');
+        return startHandler.handleNewEmail(ctx);
       default:
         console.log('⚠️  未知状态，显示默认消息');
         return ctx.reply(

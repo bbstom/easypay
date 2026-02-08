@@ -395,18 +395,23 @@ async function accountInfo(ctx) {
     `📊 <b>账户信息</b>\n` +
     `━━━━━━━━━━━━━━━\n` +
     `<code>用户名：</code>${user.username}\n` +
-    `<code>邮  箱：</code>${user.email}\n` +
+    `<code>邮  箱：</code>${user.email || '未设置'}\n` +
     `<code>TG ID：</code>${user.telegramId}\n` +
     `<code>注册于：</code>${new Date(user.createdAt).toLocaleDateString('zh-CN')}\n` +
     `━━━━━━━━━━━━━━━\n\n` +
     `📈 <b>订单统计</b>\n` +
     `<code>📦 总订单：</code>${totalOrders}\n` +
     `<code>✅ 已完成：</code>${completedOrders}\n` +
-    `<code>🔄 处理中：</code>${totalOrders - completedOrders}`;
+    `<code>🔄 处理中：</code>${totalOrders - completedOrders}\n\n` +
+    `💡 点击下方按钮修改邮箱`;
 
+  const { Markup } = require('telegraf');
   const options = { 
     parse_mode: 'HTML',
-    ...getBackKeyboard() 
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback('📧 修改邮箱', 'change_email')],
+      [Markup.button.callback('« 返回主菜单', 'back_to_main')]
+    ])
   };
 
   try {
@@ -423,7 +428,125 @@ async function accountInfo(ctx) {
     }
   }
 
-  await ctx.answerCbQuery();
+  if (ctx.callbackQuery) {
+    await ctx.answerCbQuery();
+  }
+}
+
+// 修改邮箱 - 请求输入新邮箱
+async function changeEmail(ctx) {
+  const user = ctx.session?.user;
+  if (!user) {
+    return ctx.reply('请先使用 /start 命令');
+  }
+
+  ctx.session.state = 'waiting_new_email';
+
+  const message = `📧 <b>修改邮箱</b>\n\n` +
+    `<code>当前邮箱：</code>${user.email || '未设置'}\n\n` +
+    `📝 请输入新的邮箱地址\n` +
+    `<i>用于接收订单通知和重要消息</i>\n\n` +
+    `💡 <b>示例：</b>\n` +
+    `<code>user@example.com</code>`;
+
+  const { Markup } = require('telegraf');
+  const options = { 
+    parse_mode: 'HTML',
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback('« 取消', 'account_info')]
+    ])
+  };
+
+  try {
+    await ctx.editMessageText(message, options);
+  } catch (error) {
+    if (error.message.includes('message to edit') || 
+        error.message.includes('message is not modified')) {
+      await ctx.reply(message, options);
+    } else {
+      throw error;
+    }
+  }
+
+  if (ctx.callbackQuery) {
+    await ctx.answerCbQuery();
+  }
+}
+
+// 处理新邮箱输入
+async function handleNewEmail(ctx) {
+  const email = ctx.message.text.trim();
+  const user = ctx.session?.user;
+
+  if (!user) {
+    return ctx.reply('请先使用 /start 命令');
+  }
+
+  // 验证邮箱格式
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return ctx.reply(
+      `❌ <b>邮箱格式不正确</b>\n\n` +
+      `请输入有效的邮箱地址，例如：\n` +
+      `<code>user@example.com</code>`,
+      { parse_mode: 'HTML' }
+    );
+  }
+
+  try {
+    // 检查邮箱是否已被其他用户使用
+    const User = require('../../models/User');
+    const existingUser = await User.findOne({ 
+      email: email,
+      _id: { $ne: user._id }
+    });
+
+    if (existingUser) {
+      return ctx.reply(
+        `❌ <b>邮箱已被使用</b>\n\n` +
+        `该邮箱已被其他用户绑定\n` +
+        `请使用其他邮箱地址`,
+        { parse_mode: 'HTML' }
+      );
+    }
+
+    // 更新用户邮箱
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { email: email },
+      { new: true }
+    );
+
+    // 更新 session 中的用户信息
+    ctx.session.user = updatedUser;
+
+    // 清除状态
+    delete ctx.session.state;
+
+    const { Markup } = require('telegraf');
+    await ctx.reply(
+      `✅ <b>邮箱修改成功！</b>\n\n` +
+      `<code>新邮箱：</code>${email}\n\n` +
+      `📬 您将在此邮箱接收订单通知`,
+      { 
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('👤 返回个人中心', 'account_info')],
+          [Markup.button.callback('« 返回主菜单', 'back_to_main')]
+        ])
+      }
+    );
+
+    console.log(`✅ 用户 ${user.telegramId} 邮箱已更新: ${email}`);
+  } catch (error) {
+    console.error('更新邮箱失败:', error);
+    await ctx.reply(
+      `❌ <b>更新失败</b>\n\n` +
+      `${error.message}\n\n` +
+      `请稍后重试或联系客服`,
+      { parse_mode: 'HTML' }
+    );
+  }
 }
 
 // 处理返回按钮
@@ -496,5 +619,7 @@ module.exports = {
   handleBack,
   handleLoginConfirm,
   accountInfo,
+  changeEmail,
+  handleNewEmail,
   getMainKeyboard
 };

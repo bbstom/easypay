@@ -135,27 +135,125 @@ function roundRect(ctx, x, y, width, height, radius) {
 }
 
 /**
- * 能量租赁二维码样式
+ * 能量租赁二维码样式（蓝紫渐变，宽度1280，高度480）
  */
 async function generateEnergyQRCode(address) {
-  return generateStyledQRCode(address, {
-    borderColor: '#10B981', // 绿色边框
-    gradientStart: '#D1FAE5', // 浅绿色
-    gradientEnd: '#FFFFFF'
-    // 不显示底部文字
-  });
+  try {
+    // 配置
+    const canvasWidth = 1280;
+    const qrSize = 400;  // 二维码尺寸
+    const paddingX = (canvasWidth - qrSize) / 2;  // 左右内边距
+    const paddingY = 40;  // 上下内边距
+    const borderRadius = 30;
+    const borderWidth = 6;
+
+    // 1. 生成二维码
+    const qrDataUrl = await QRCode.toDataURL(address, {
+      width: qrSize,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#00000000' // 透明背景
+      }
+    });
+
+    // 2. 创建画布
+    const canvasHeight = qrSize + paddingY * 2;  // 高度约480
+    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const ctx = canvas.getContext('2d');
+
+    // 3. 绘制蓝紫渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+    gradient.addColorStop(0, '#3B82F6');  // 蓝色
+    gradient.addColorStop(1, '#8B5CF6');  // 紫色
+    
+    ctx.fillStyle = gradient;
+    roundRect(ctx, 0, 0, canvasWidth, canvasHeight, borderRadius);
+    ctx.fill();
+
+    // 4. 绘制边框
+    ctx.strokeStyle = '#FFFFFF';  // 白色边框
+    ctx.lineWidth = borderWidth;
+    roundRect(ctx, borderWidth / 2, borderWidth / 2, canvasWidth - borderWidth, canvasHeight - borderWidth, borderRadius);
+    ctx.stroke();
+
+    // 5. 绘制二维码（居中）
+    const qrImage = await loadImage(qrDataUrl);
+    const qrX = paddingX;
+    const qrY = paddingY;
+    ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+    // 6. 转换为 Buffer
+    return canvas.toBuffer('image/png');
+  } catch (error) {
+    console.error('生成能量租赁二维码失败:', error);
+    // 降级：返回普通二维码
+    return QRCode.toBuffer(address, {
+      width: 400,
+      margin: 2
+    });
+  }
 }
 
 /**
- * 闪兑服务二维码样式
+ * 闪兑服务二维码样式（蓝紫渐变，宽度1280，高度480）
  */
 async function generateSwapQRCode(address) {
-  return generateStyledQRCode(address, {
-    borderColor: '#3B82F6', // 蓝色边框
-    gradientStart: '#DBEAFE', // 浅蓝色
-    gradientEnd: '#FFFFFF'
-    // 不显示底部文字
-  });
+  try {
+    // 配置
+    const canvasWidth = 1280;
+    const qrSize = 400;  // 二维码尺寸
+    const paddingX = (canvasWidth - qrSize) / 2;  // 左右内边距
+    const paddingY = 40;  // 上下内边距
+    const borderRadius = 30;
+    const borderWidth = 6;
+
+    // 1. 生成二维码
+    const qrDataUrl = await QRCode.toDataURL(address, {
+      width: qrSize,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#00000000' // 透明背景
+      }
+    });
+
+    // 2. 创建画布
+    const canvasHeight = qrSize + paddingY * 2;  // 高度约480
+    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const ctx = canvas.getContext('2d');
+
+    // 3. 绘制蓝紫渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+    gradient.addColorStop(0, '#3B82F6');  // 蓝色
+    gradient.addColorStop(1, '#8B5CF6');  // 紫色
+    
+    ctx.fillStyle = gradient;
+    roundRect(ctx, 0, 0, canvasWidth, canvasHeight, borderRadius);
+    ctx.fill();
+
+    // 4. 绘制边框
+    ctx.strokeStyle = '#FFFFFF';  // 白色边框
+    ctx.lineWidth = borderWidth;
+    roundRect(ctx, borderWidth / 2, borderWidth / 2, canvasWidth - borderWidth, canvasHeight - borderWidth, borderRadius);
+    ctx.stroke();
+
+    // 5. 绘制二维码（居中）
+    const qrImage = await loadImage(qrDataUrl);
+    const qrX = paddingX;
+    const qrY = paddingY;
+    ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+    // 6. 转换为 Buffer
+    return canvas.toBuffer('image/png');
+  } catch (error) {
+    console.error('生成闪兑二维码失败:', error);
+    // 降级：返回普通二维码
+    return QRCode.toBuffer(address, {
+      width: 400,
+      margin: 2
+    });
+  }
 }
 
 /**
