@@ -453,25 +453,8 @@ async function generatePaymentQR(ctx, paymentMethod) {
 
     const paymentName = paymentMethod === 'wechat' ? '微信' : '支付宝';
 
-    // 获取自定义 logo URL（如果配置了）
-    let logoUrl = null;
-    try {
-      const TelegramContent = require('../../models/TelegramContent');
-      const logoContent = await TelegramContent.findOne({ 
-        key: 'payment_qrcode', 
-        enabled: true 
-      });
-      
-      if (logoContent && logoContent.content && logoContent.content.mediaUrl) {
-        logoUrl = logoContent.content.mediaUrl;
-        console.log('✅ 找到自定义 logo:', logoUrl);
-      }
-    } catch (error) {
-      console.log('⚠️  获取 logo 失败:', error.message);
-    }
-
-    // 生成带 logo 的二维码
-    const qrBuffer = await generatePaymentQRCode(paymentUrl, logoUrl);
+    // 生成支付二维码
+    const qrBuffer = await generatePaymentQRCode(paymentUrl);
 
     await ctx.replyWithPhoto(
       { source: qrBuffer },
