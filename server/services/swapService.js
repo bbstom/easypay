@@ -483,38 +483,7 @@ class SwapService {
   // 从API获取 USDT/TRX 汇率
   async fetchSwapRateFromAPI() {
     try {
-      // 方法1: 使用 Binance API 获取 TRX/USDT 交易对
-      // 注意：TRXUSDT 返回的是 1 TRX = X USDT 的价格
-      const response = await axios.get('https://api.binance.com/api/v3/ticker/price', {
-        params: { symbol: 'TRXUSDT' },
-        timeout: 10000
-      });
-
-      const trxPriceInUsdt = parseFloat(response.data.price); // 1 TRX = X USDT
-      
-      if (!trxPriceInUsdt || trxPriceInUsdt <= 0) {
-        throw new Error('API返回的汇率无效');
-      }
-
-      // 我们需要的是 1 USDT = X TRX，所以要取倒数
-      const rate = 1 / trxPriceInUsdt;
-
-      console.log(`✅ 获取闪兑汇率成功: 1 TRX = ${trxPriceInUsdt} USDT, 1 USDT = ${rate.toFixed(4)} TRX`);
-      return rate;
-
-    } catch (error) {
-      console.error('❌ 获取闪兑汇率失败:', error.message);
-      
-      // 备用方案：使用 CoinGecko
-      return this.fetchSwapRateFromBackupAPI();
-    }
-  }
-
-  // 备用API：CoinGecko
-  async fetchSwapRateFromBackupAPI() {
-    try {
-      console.log('🔄 尝试使用备用API (CoinGecko)...');
-      
+      // 方法1: 使用 CoinGecko API（免费，无地区限制）
       const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
         params: {
           ids: 'tether,tron',
@@ -533,15 +502,44 @@ class SwapService {
       // 计算 1 USDT = X TRX（取倒数）
       const rate = usdtPrice / trxPriceInUsd;
       
-      console.log(`✅ 备用API获取成功: 1 TRX = ${trxPriceInUsd} USD, 1 USDT = ${rate.toFixed(4)} TRX`);
+      console.log(`✅ 获取闪兑汇率成功 (CoinGecko): 1 USDT = ${rate.toFixed(4)} TRX`);
       return rate;
 
     } catch (error) {
-      console.error('❌ 备用API也失败:', error.message);
+      console.log(`ℹ️  CoinGecko API 暂时不可用，使用备用 API...`);
       
-      // 返回默认值（基于当前市场价格 1 USDT ≈ 3.4 TRX）
-      console.log('⚠️ 使用默认汇率: 3.4');
-      return 3.4;
+      // 备用方案：使用 Binance
+      return this.fetchSwapRateFromBackupAPI();
+    }
+  }
+
+  // 备用API：Binance
+  async fetchSwapRateFromBackupAPI() {
+    try {
+      // 使用 Binance API 获取 TRX/USDT 交易对
+      const response = await axios.get('https://api.binance.com/api/v3/ticker/price', {
+        params: { symbol: 'TRXUSDT' },
+        timeout: 10000
+      });
+
+      const trxPriceInUsdt = parseFloat(response.data.price); // 1 TRX = X USDT
+      
+      if (!trxPriceInUsdt || trxPriceInUsdt <= 0) {
+        throw new Error('API返回的汇率无效');
+      }
+
+      // 我们需要的是 1 USDT = X TRX，所以要取倒数
+      const rate = 1 / trxPriceInUsdt;
+
+      console.log(`✅ 获取闪兑汇率成功 (Binance): 1 USDT = ${rate.toFixed(4)} TRX`);
+      return rate;
+
+    } catch (error) {
+      console.error('❌ 所有API都失败:', error.message);
+      
+      // 返回默认值（基于当前市场价格 1 USDT ≈ 3.6 TRX）
+      console.log('⚠️ 使用默认汇率: 3.6 TRX');
+      return 3.6;
     }
   }
 
