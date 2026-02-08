@@ -106,8 +106,6 @@ const DEFAULT_TEMPLATES = {
         `<code>订单号：</code>{{orderId}}\n` +
         `<code>原  因：</code>{{reason}}\n` +
         `━━━━━━━━━━━━━━━\n\n` +
-        `💰 <b>退款说明</b>\n` +
-        `您支付的金额将在 1-3 个工作日内原路退回\n\n` +
         `💬 如有疑问，请联系客服`,
       parseMode: 'HTML'
     },
@@ -116,30 +114,247 @@ const DEFAULT_TEMPLATES = {
       { key: 'reason', description: '失败原因', example: '余额不足' }
     ]
   },
-  help_info: {
-    name: '帮助信息',
-    category: 'help',
+  // 支付流程模板
+  payment_usdt_input: {
+    name: 'USDT 代付 - 输入数量',
+    category: 'payment',
     content: {
       type: 'text',
-      text: `❓ <b>帮助中心</b>\n\n` +
-        `📖 <b>使用说明</b>\n` +
+      text: `💰 <b>USDT 代付</b>\n\n` +
+        `📝 <b>请输入 USDT 数量</b>\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>最小：</code>{{minAmount}} USDT\n` +
+        `<code>最大：</code>{{maxAmount}} USDT\n` +
         `━━━━━━━━━━━━━━━\n\n` +
-        `💰 <b>代付服务</b>\n` +
-        `<code>•</code> 支持 USDT 和 TRX 代付\n` +
-        `<code>•</code> 输入数量和地址即可\n` +
-        `<code>•</code> 支持微信和支付宝支付\n` +
-        `<code>•</code> 2-10分钟内完成\n\n` +
-        `📋 <b>订单查询</b>\n` +
-        `<code>•</code> 查看所有历史订单\n` +
-        `<code>•</code> 实时查看订单状态\n` +
-        `<code>•</code> 查看交易哈希\n\n` +
-        `💬 <b>需要帮助？</b>\n` +
-        `联系客服：{{customerService}}`,
+        `💡 直接输入数字即可\n` +
+        `例如：<code>100</code>`,
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'customerService', description: '客服联系方式', example: '@customer_service' }
+      { key: 'minAmount', description: '最小金额', example: '1' },
+      { key: 'maxAmount', description: '最大金额', example: '999' }
     ]
+  },
+  payment_trx_input: {
+    name: 'TRX 代付 - 输入数量',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `💎 <b>TRX 代付</b>\n\n` +
+        `📝 <b>请输入 TRX 数量</b>\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>最小：</code>{{minAmount}} TRX\n` +
+        `<code>最大：</code>{{maxAmount}} TRX\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `💡 直接输入数字即可\n` +
+        `例如：<code>100</code>`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'minAmount', description: '最小金额', example: '1' },
+      { key: 'maxAmount', description: '最大金额', example: '999' }
+    ]
+  },
+  payment_usdt_order_detail: {
+    name: 'USDT 代付 - 订单详情',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `📊 <b>订单详情</b>\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💵 数量：</code>{{amount}} USDT\n` +
+        `<code>💱 汇率：</code>{{rate}} CNY/USDT\n` +
+        `<code>💰 金额：</code>{{cnyAmount}} CNY\n` +
+        `<code>🔧 服务费：</code>{{serviceFee}} CNY {{feeLabel}}\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💳 总计：</code><b>{{totalCNY}} CNY</b>\n\n` +
+        `📍 <b>请输入收款地址</b>\n` +
+        `<i>(TRON 地址，以 T 开头)</i>`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'amount', description: 'USDT 数量', example: '10' },
+      { key: 'rate', description: '汇率', example: '7.20' },
+      { key: 'cnyAmount', description: '人民币金额', example: '72.00' },
+      { key: 'serviceFee', description: '服务费', example: '3.60' },
+      { key: 'feeLabel', description: '费率标签', example: '[5%]' },
+      { key: 'totalCNY', description: '总计', example: '75.60' }
+    ]
+  },
+  payment_trx_order_detail: {
+    name: 'TRX 代付 - 订单详情',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `📊 <b>订单详情</b>\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💵 数量：</code>{{amount}} TRX\n` +
+        `<code>💱 汇率：</code>{{rate}} CNY/TRX\n` +
+        `<code>💰 金额：</code>{{cnyAmount}} CNY\n` +
+        `<code>🔧 服务费：</code>{{serviceFee}} CNY {{feeLabel}}\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💳 总计：</code><b>{{totalCNY}} CNY</b>\n\n` +
+        `📍 <b>请输入收款地址</b>\n` +
+        `<i>(TRON 地址，以 T 开头)</i>`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'amount', description: 'TRX 数量', example: '100' },
+      { key: 'rate', description: '汇率', example: '0.95' },
+      { key: 'cnyAmount', description: '人民币金额', example: '95.00' },
+      { key: 'serviceFee', description: '服务费', example: '4.75' },
+      { key: 'feeLabel', description: '费率标签', example: '[5%]' },
+      { key: 'totalCNY', description: '总计', example: '99.75' }
+    ]
+  },
+  payment_order_confirm: {
+    name: '订单确认 - 输入地址后',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `✅ <b>订单确认</b>\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💵 数量：</code>{{amount}} {{type}}\n` +
+        `<code>📍 地址：</code>\n<code>{{address}}</code>\n` +
+        `<code>💳 总计：</code><b>{{totalCNY}} CNY</b>\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `👇 请确认订单信息`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'type', description: '类型', example: 'USDT' },
+      { key: 'address', description: '收款地址', example: 'TXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXxxx' },
+      { key: 'totalCNY', description: '总计', example: '75.60' }
+    ]
+  },
+  payment_select_method: {
+    name: '选择支付方式',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `✅ <b>订单确认</b>\n\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💵 数量：</code>{{amount}} {{type}}\n` +
+        `<code>📍 地址：</code>\n<code>{{address}}</code>\n` +
+        `<code>💰 金额：</code>{{cnyAmount}} CNY\n` +
+        `<code>🔧 服务费：</code>{{serviceFee}} CNY\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>💳 总计：</code><b>{{totalCNY}} CNY</b>\n\n` +
+        `💳 <b>请选择支付方式</b> 👇`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'type', description: '类型', example: 'USDT' },
+      { key: 'address', description: '收款地址', example: 'TXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXxxx' },
+      { key: 'cnyAmount', description: '人民币金额', example: '72.00' },
+      { key: 'serviceFee', description: '服务费', example: '3.60' },
+      { key: 'totalCNY', description: '总计', example: '75.60' }
+    ]
+  },
+  payment_qrcode: {
+    name: '支付二维码',
+    category: 'payment',
+    content: {
+      type: 'text',
+      text: `📱 <b>请使用{{paymentName}}扫码支付</b>\n\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>订单号：</code><code>{{orderId}}</code>\n` +
+        `<code>数  量：</code>{{amount}} {{type}}\n` +
+        `<code>地  址：</code>\n<code>{{address}}</code>\n` +
+        `<code>金  额：</code><b>{{totalCNY}} CNY</b>\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `⏰ 支付后请等待 <b>2-10 分钟</b>\n` +
+        `💬 完成后会自动通知您`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'paymentName', description: '支付方式名称', example: '微信' },
+      { key: 'orderId', description: '订单号', example: '20240207123456' },
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'type', description: '类型', example: 'USDT' },
+      { key: 'address', description: '收款地址', example: 'TXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXxxx' },
+      { key: 'totalCNY', description: '总金额', example: '75.60' }
+    ]
+  },
+  // 订单相关模板
+  orders_empty: {
+    name: '我的订单 - 空列表',
+    category: 'order',
+    content: {
+      type: 'text',
+      text: `📋 <b>我的订单</b>\n\n` +
+        `暂无订单记录\n\n` +
+        `💡 您可以开始创建第一个订单`,
+      parseMode: 'HTML'
+    },
+    variables: []
+  },
+  orders_list: {
+    name: '我的订单 - 列表',
+    category: 'order',
+    content: {
+      type: 'text',
+      text: `📋 <b>我的订单</b>\n\n` +
+        `最近 <b>{{orderCount}}</b> 条订单\n` +
+        `━━━━━━━━━━━━━━━\n\n` +
+        `{{orderList}}\n` +
+        `👇 点击订单查看详情`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'orderCount', description: '订单数量', example: '5' },
+      { key: 'orderList', description: '订单列表（自动生成）', example: '1. USDT 代付订单 | 02-07 12:00 ✅ 已完成\n2. TRX 代付订单 | 02-07 11:30 ⏳ 待支付' }
+    ]
+  },
+  order_detail: {
+    name: '订单详情',
+    category: 'order',
+    content: {
+      type: 'text',
+      text: `📋 <b>订单详情</b>\n\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>订单号：</code><code>{{orderId}}</code>\n` +
+        `<code>类  型：</code>{{payType}} 代付\n` +
+        `<code>数  量：</code><b>{{amount}} {{payType}}</b>\n` +
+        `<code>地  址：</code>\n<code>{{address}}</code>\n` +  // ✅ 换行显示完整地址
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>支付金额：</code>{{totalCNY}} CNY\n` +
+        `<code>服务费：</code>{{serviceFee}} CNY\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `<code>状  态：</code>{{status}}\n` +
+        `<code>创建时间：</code>{{createdAt}}\n` +
+        `{{paymentTime}}` +
+        `{{transferTime}}` +
+        `{{txHash}}`,
+      parseMode: 'HTML'
+    },
+    variables: [
+      { key: 'orderId', description: '订单号', example: '20240207123456' },
+      { key: 'payType', description: '类型', example: 'USDT' },
+      { key: 'amount', description: '数量', example: '10' },
+      { key: 'address', description: '收款地址（完整）', example: 'TXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXxxx' },
+      { key: 'totalCNY', description: '支付金额', example: '75.60' },
+      { key: 'serviceFee', description: '服务费', example: '3.60' },
+      { key: 'status', description: '状态', example: '✅ 已完成' },
+      { key: 'createdAt', description: '创建时间', example: '2024-02-07 12:00:00' },
+      { key: 'paymentTime', description: '支付时间（可选）', example: '<code>支付时间：</code>2024-02-07 12:05:00\n' },
+      { key: 'transferTime', description: '完成时间（可选）', example: '<code>完成时间：</code>2024-02-07 12:10:00\n' },
+      { key: 'txHash', description: '交易哈希（可选）', example: '\n🔗 <b>交易哈希</b>\n<code>abc123...</code>\n' }
+    ]
+  },
+  // 主菜单模板
+  main_menu: {
+    name: '主菜单',
+    category: 'welcome',
+    content: {
+      type: 'text',
+      text: `📋 <b>主菜单</b>\n\n` +
+        `👇 请选择您需要的服务`,
+      parseMode: 'HTML'
+    },
+    variables: []
   }
 };
 

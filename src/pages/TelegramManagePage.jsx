@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import TelegramContentEditor from '../components/TelegramContentEditor';
+import TelegramCommandsManager from '../components/TelegramCommandsManager';
 
 const TelegramManagePage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('templates');
+  const [activeTab, setActiveTab] = useState('commands');
   const [templates, setTemplates] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -495,6 +496,16 @@ const TelegramManagePage = () => {
         {/* 标签页 */}
         <div className="flex gap-4 mb-6 border-b border-slate-200 overflow-x-auto">
           <button
+            onClick={() => setActiveTab('commands')}
+            className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'commands'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            ⚡ 快捷指令
+          </button>
+          <button
             onClick={() => setActiveTab('menu')}
             className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'menu'
@@ -545,6 +556,11 @@ const TelegramManagePage = () => {
             📊 统计数据
           </button>
         </div>
+
+        {/* 快捷指令管理 */}
+        {activeTab === 'commands' && (
+          <TelegramCommandsManager />
+        )}
 
         {/* 主菜单设置 */}
         {activeTab === 'menu' && menu && (

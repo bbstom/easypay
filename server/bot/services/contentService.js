@@ -51,8 +51,14 @@ class ContentService {
   // 构建按钮
   buildButtons(content) {
     if (!content.buttons || content.buttons.length === 0) {
+      console.log(`🔍 [contentService] 没有自定义按钮`);
       return null;
     }
+
+    console.log(`🔍 [contentService] 构建自定义按钮，数量: ${content.buttons.length}`);
+    content.buttons.forEach(btn => {
+      console.log(`  - 按钮: "${btn.text}", 类型: ${btn.type}, 数据: ${btn.data}`);
+    });
 
     // 按行分组
     const rows = {};
@@ -98,6 +104,8 @@ class ContentService {
         return false;
       }
 
+      console.log(`🔍 [contentService] 渲染内容: ${key}, 类型: ${rendered.type}, 有媒体: ${!!rendered.mediaUrl}`);
+
       const options = {
         parse_mode: rendered.parseMode
       };
@@ -105,12 +113,65 @@ class ContentService {
       // 如果有自定义按钮，使用自定义按钮；否则使用默认键盘
       if (rendered.buttons) {
         options.reply_markup = rendered.buttons.reply_markup;
+        console.log(`🔍 [contentService] 使用自定义按钮`);
       } else if (defaultKeyboard) {
         options.reply_markup = defaultKeyboard.reply_markup;
+        console.log(`🔍 [contentService] 使用默认键盘`);
       }
 
       // 根据类型发送
       if (rendered.type === 'photo' && rendered.mediaUrl) {
+        console.log(`📷 [contentService] 发送图片消息: ${key}`);
+        
+        // 如果是回调查询（按钮点击），先删除旧消息
+        if (ctx.callbackQuery && ctx.update?.callback_query) {
+          try {
+            await ctx.deleteMessage();
+            console.log(`🗑️  [contentService] 已删除旧消息`);
+          } catch (error) {
+            console.log(`⚠️  [contentService] 删除旧消息失败: ${error.message}`);
+          }
+        }
+        
+        await ctx.replyWithPhoto(rendered.mediaUrl, {
+          caption: rendered.caption || rendered.text,
+          ...options
+        });
+      } else if (rendered.type === 'video' && rendered.mediaUrl) {
+        console.log(`🎥 [contentService] 发送视频消息: ${key}`);
+        
+        // 如果是回调查询（按钮点击），先删除旧消息
+        if (ctx.callbackQuery && ctx.update?.callback_query) {
+          try {
+            await ctx.deleteMessage();
+            console.log(`🗑️  [contentService] 已删除旧消息`);
+          } catch (error) {
+            console.log(`⚠️  [contentService] 删除旧消息失败: ${error.message}`);
+          }
+        }
+        
+        await ctx.replyWithVideo(rendered.mediaUrl, {
+          caption: rendered.caption || rendered.text,
+          ...options
+        });
+      } else if (rendered.type === 'document' && rendered.mediaUrl) {
+        console.log(`📄 [contentService] 发送文档消息: ${key}`);
+        
+        // 如果是回调查询（按钮点击），先删除旧消息
+        if (ctx.callbackQuery && ctx.update?.callback_query) {
+          try {
+            await ctx.deleteMessage();
+            console.log(`🗑️  [contentService] 已删除旧消息`);
+          } catch (error) {
+            console.log(`⚠️  [contentService] 删除旧消息失败: ${error.message}`);
+          }
+        }
+        
+        await ctx.replyWithDocument(rendered.mediaUrl, {
+          caption: rendered.caption || rendered.text,
+          ...options
+        });
+      } else if (rendered.type === 'photo' && !rendered.mediaUrl) {
         await ctx.replyWithPhoto(rendered.mediaUrl, {
           caption: rendered.caption || rendered.text,
           ...options
@@ -125,8 +186,51 @@ class ContentService {
           caption: rendered.caption || rendered.text,
           ...options
         });
+      } else if (rendered.type === 'photo' && !rendered.mediaUrl) {
+        // 图片类型但没有媒体URL，当作文本处理
+        console.log(`⚠️  [contentService] 图片类型但无媒体URL，当作文本处理: ${key}`);
+        if (ctx.callbackQuery && ctx.update?.callback_query) {
+          try {
+            console.log(`📝 [contentService] 尝试编辑消息: ${key}`);
+            await ctx.editMessageText(rendered.text, options);
+            console.log(`✅ [contentService] 消息编辑成功: ${key}`);
+          } catch (error) {
+            console.log(`⚠️  [contentService] 编辑失败: ${error.message}`);
+            if (error.message.includes('message to edit') || 
+                error.message.includes('message is not modified')) {
+              await ctx.reply(rendered.text, options);
+              console.log(`✅ [contentService] 已发送新消息: ${key}`);
+            } else {
+              throw error;
+            }
+          }
+        } else {
+          console.log(`📤 [contentService] 发送新消息: ${key}`);
+          await ctx.reply(rendered.text, options);
+        }
       } else {
-        await ctx.reply(rendered.text, options);
+        // 文本消息：尝试编辑，失败则发送新消息
+        console.log(`📝 [contentService] 文本消息处理: ${key}`);
+        if (ctx.callbackQuery && ctx.update?.callback_query) {
+          try {
+            console.log(`📝 [contentService] 尝试编辑消息: ${key}`);
+            await ctx.editMessageText(rendered.text, options);
+            console.log(`✅ [contentService] 消息编辑成功: ${key}`);
+          } catch (error) {
+            console.log(`⚠️  [contentService] 编辑失败: ${error.message}`);
+            // 如果编辑失败（比如是图片消息），发送新消息
+            if (error.message.includes('message to edit') || 
+                error.message.includes('message is not modified')) {
+              await ctx.reply(rendered.text, options);
+              console.log(`✅ [contentService] 已发送新消息: ${key}`);
+            } else {
+              throw error;
+            }
+          }
+        } else {
+          console.log(`📤 [contentService] 发送新消息: ${key}`);
+          await ctx.reply(rendered.text, options);
+        }
       }
 
       return true;

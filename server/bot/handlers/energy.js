@@ -61,11 +61,16 @@ const energyHandler = {
         }
       );
 
-      await ctx.answerCbQuery?.();
+      // 只在 callback 上下文中回答
+      if (ctx.callbackQuery) {
+        await ctx.answerCbQuery();
+      }
     } catch (error) {
       console.error('能量租赁显示失败:', error);
       await ctx.reply('❌ 系统错误，请稍后重试');
-      await ctx.answerCbQuery?.('系统错误');
+      if (ctx.callbackQuery) {
+        await ctx.answerCbQuery('系统错误');
+      }
     }
   },
 
@@ -80,7 +85,9 @@ const energyHandler = {
     }
 
     console.log('未知的能量租赁操作:', action);
-    await ctx.answerCbQuery('未知操作');
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery('未知操作');
+    }
   }
 };
 

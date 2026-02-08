@@ -83,11 +83,16 @@ const swapHandler = {
         }
       );
 
-      await ctx.answerCbQuery?.('汇率已更新');
+      // 只在 callback 上下文中回答
+      if (ctx.callbackQuery) {
+        await ctx.answerCbQuery('汇率已更新');
+      }
     } catch (error) {
       console.error('闪兑服务显示失败:', error);
       await ctx.reply('❌ 系统错误，请稍后重试');
-      await ctx.answerCbQuery?.('系统错误');
+      if (ctx.callbackQuery) {
+        await ctx.answerCbQuery('系统错误');
+      }
     }
   },
 
@@ -102,7 +107,9 @@ const swapHandler = {
     }
 
     console.log('未知的闪兑操作:', action);
-    await ctx.answerCbQuery('未知操作');
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery('未知操作');
+    }
   }
 };
 

@@ -99,7 +99,8 @@ router.post('/', async (req, res) => {
       totalCNY: req.body.totalCNY,
       serviceFee,
       platformOrderId: orderId,
-      email: email || null
+      email: email || null,
+      telegramId: req.body.telegramId || null  // 添加 telegramId
     });
     await payment.save();
 

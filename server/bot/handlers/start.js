@@ -179,11 +179,17 @@ async function handleLoginConfirm(ctx) {
   const callbackData = ctx.callbackQuery.data;
   
   if (callbackData === 'cancel_login') {
-    await ctx.editMessageText(
-      `❌ <b>登录已取消</b>\n\n` +
-      `如果不是您本人操作，请注意账户安全。`,
-      { parse_mode: 'HTML' }
-    );
+    const cancelText = `❌ <b>登录已取消</b>\n\n` +
+      `如果不是您本人操作，请注意账户安全。`;
+    
+    try {
+      await ctx.editMessageText(cancelText, { parse_mode: 'HTML' });
+    } catch (error) {
+      if (error.message.includes('message to edit') || 
+          error.message.includes('message is not modified')) {
+        await ctx.reply(cancelText, { parse_mode: 'HTML' });
+      }
+    }
     await ctx.answerCbQuery('已取消登录');
     return;
   }
@@ -252,22 +258,35 @@ async function handleLoginConfirm(ctx) {
 
       console.log('✅ 登录确认成功:', response.data);
 
-      await ctx.editMessageText(
-        `✅ <b>登录成功！</b>\n\n` +
+      const successText = `✅ <b>登录成功！</b>\n\n` +
         `🎉 您已成功登录网站\n` +
-        `请返回浏览器查看`,
-        { parse_mode: 'HTML' }
-      );
+        `请返回浏览器查看`;
+
+      try {
+        await ctx.editMessageText(successText, { parse_mode: 'HTML' });
+      } catch (error) {
+        if (error.message.includes('message to edit') || 
+            error.message.includes('message is not modified')) {
+          await ctx.reply(successText, { parse_mode: 'HTML' });
+        }
+      }
       await ctx.answerCbQuery('登录成功！');
     } catch (error) {
       console.error('❌ 确认登录错误:', error.message);
       console.error('错误详情:', error.response?.data || error);
-      await ctx.editMessageText(
-        `❌ <b>登录失败</b>\n\n` +
+      
+      const errorText = `❌ <b>登录失败</b>\n\n` +
         `请重新扫码或稍后重试\n` +
-        `错误: ${error.message}`,
-        { parse_mode: 'HTML' }
-      );
+        `错误: ${error.message}`;
+
+      try {
+        await ctx.editMessageText(errorText, { parse_mode: 'HTML' });
+      } catch (editError) {
+        if (editError.message.includes('message to edit') || 
+            editError.message.includes('message is not modified')) {
+          await ctx.reply(errorText, { parse_mode: 'HTML' });
+        }
+      }
       await ctx.answerCbQuery('登录失败，请重试');
     }
   }
@@ -280,14 +299,21 @@ async function menu(ctx) {
     return ctx.reply('请先使用 /start 命令');
   }
 
-  await ctx.reply(
-    `📋 <b>主菜单</b>\n\n` +
-    `👇 请选择您需要的服务`,
-    { 
-      parse_mode: 'HTML',
-      ...(await getMainKeyboard())
-    }
-  );
+  // 尝试使用自定义内容
+  const mainKeyboard = await getMainKeyboard();
+  const sent = await contentService.sendContent(ctx, 'main_menu', {}, mainKeyboard);
+
+  // 如果没有自定义内容，使用默认消息
+  if (!sent) {
+    await ctx.reply(
+      `📋 <b>主菜单</b>\n\n` +
+      `👇 请选择您需要的服务`,
+      { 
+        parse_mode: 'HTML',
+        ...(await getMainKeyboard())
+      }
+    );
+  }
 }
 
 // /help 命令处理
@@ -365,8 +391,7 @@ async function accountInfo(ctx) {
     status: 'completed'
   });
 
-  await ctx.editMessageText(
-    `👤 <b>个人中心</b>\n\n` +
+  const accountText = `👤 <b>个人中心</b>\n\n` +
     `📊 <b>账户信息</b>\n` +
     `━━━━━━━━━━━━━━━\n` +
     `<code>用户名：</code>${user.username}\n` +
@@ -377,12 +402,26 @@ async function accountInfo(ctx) {
     `📈 <b>订单统计</b>\n` +
     `<code>📦 总订单：</code>${totalOrders}\n` +
     `<code>✅ 已完成：</code>${completedOrders}\n` +
-    `<code>🔄 处理中：</code>${totalOrders - completedOrders}`,
-    { 
-      parse_mode: 'HTML',
-      ...getBackKeyboard() 
+    `<code>🔄 处理中：</code>${totalOrders - completedOrders}`;
+
+  const options = { 
+    parse_mode: 'HTML',
+    ...getBackKeyboard() 
+  };
+
+  try {
+    // 尝试编辑消息（如果是文本消息）
+    await ctx.editMessageText(accountText, options);
+  } catch (error) {
+    // 如果编辑失败（比如是图片消息或消息内容相同），发送新消息
+    if (error.message.includes('message to edit') || 
+        error.message.includes('message is not modified')) {
+      await ctx.reply(accountText, options);
+    } else {
+      console.error('显示个人中心失败:', error);
+      throw error;
     }
-  );
+  }
 
   await ctx.answerCbQuery();
 }
@@ -390,6 +429,10 @@ async function accountInfo(ctx) {
 // 处理返回按钮
 async function handleBack(ctx) {
   const action = ctx.callbackQuery.data;
+  
+  console.log('📥 收到返回按钮回调:', action);
+  console.log('🔍 ctx.callbackQuery 存在:', !!ctx.callbackQuery);
+  console.log('🔍 ctx.update.callback_query 存在:', !!ctx.update?.callback_query);
 
   // 清除状态
   if (ctx.session) {
@@ -398,30 +441,51 @@ async function handleBack(ctx) {
   }
 
   if (action === 'back_to_main' || action === 'back_main') {
-    try {
-      // 尝试编辑消息（如果是文本消息）
-      await ctx.editMessageText(
-        `📋 <b>主菜单</b>\n\n` +
-        `👇 请选择您需要的服务`,
-        { 
-          parse_mode: 'HTML',
-          ...(await getMainKeyboard())
+    console.log('🔄 处理返回主菜单');
+    
+    const mainKeyboard = await getMainKeyboard();
+    console.log('⌨️  主菜单键盘已获取');
+    
+    // 尝试使用自定义内容
+    console.log('🔍 尝试使用自定义内容: main_menu');
+    const sent = await contentService.sendContent(ctx, 'main_menu', {}, mainKeyboard);
+    console.log('📊 contentService.sendContent 返回:', sent);
+
+    // 如果没有自定义内容，使用默认消息
+    if (!sent) {
+      console.log('⚠️  没有自定义内容，使用默认消息');
+      const mainMenuText = `📋 <b>主菜单</b>\n\n` +
+        `👇 请选择您需要的服务`;
+      
+      const options = { 
+        parse_mode: 'HTML',
+        ...mainKeyboard
+      };
+
+      try {
+        // 尝试编辑消息（如果是文本消息）
+        await ctx.editMessageText(mainMenuText, options);
+        console.log('✅ 主菜单消息已编辑');
+      } catch (error) {
+        console.log('⚠️  编辑消息失败，尝试发送新消息:', error.message);
+        // 如果编辑失败（比如是图片消息或消息内容相同），发送新消息
+        if (error.message.includes('message to edit') || 
+            error.message.includes('message is not modified')) {
+          await ctx.reply(mainMenuText, options);
+          console.log('✅ 主菜单新消息已发送');
+        } else {
+          console.error('❌ 返回主菜单失败:', error);
+          throw error;
         }
-      );
-    } catch (error) {
-      // 如果编辑失败（比如是图片消息），发送新消息
-      await ctx.reply(
-        `📋 <b>主菜单</b>\n\n` +
-        `👇 请选择您需要的服务`,
-        { 
-          parse_mode: 'HTML',
-          ...(await getMainKeyboard())
-        }
-      );
+      }
+    } else {
+      console.log('✅ 使用自定义内容成功');
     }
   }
 
+  console.log('📞 准备应答回调查询');
   await ctx.answerCbQuery();
+  console.log('✅ 回调已应答');
 }
 
 module.exports = {

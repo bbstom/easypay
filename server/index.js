@@ -14,6 +14,7 @@ const faqRoutes = require('./routes/faq'); // FAQ路由
 const ticketsRoutes = require('./routes/tickets'); // 工单路由
 const swapRoutes = require('./routes/swap'); // 闪兑路由
 const telegramRoutes = require('./routes/telegram'); // Telegram管理路由
+const telegramCommandsRoutes = require('./routes/telegram-commands'); // Telegram命令管理路由
 const exchangeRateService = require('./services/exchangeRateService');
 const orderTimeoutService = require('./services/orderTimeoutService');
 const swapService = require('./services/swapService'); // 闪兑服务
@@ -77,6 +78,7 @@ app.use('/api/faq', faqRoutes); // FAQ API
 app.use('/api/tickets', ticketsRoutes); // 工单 API
 app.use('/api/swap', swapRoutes); // 闪兑 API
 app.use('/api/telegram', telegramRoutes); // Telegram管理 API
+app.use('/api/telegram-commands', telegramCommandsRoutes); // Telegram命令管理 API
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

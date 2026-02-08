@@ -2,6 +2,7 @@ const { Telegraf, session } = require('telegraf');
 const User = require('../models/User');
 const Settings = require('../models/Settings');
 const contentService = require('./services/contentService');
+const { registerCustomCommands, handleCommand, initializeDefaultCommands } = require('./commandHandler');
 
 // 导入处理器
 const startHandler = require('./handlers/start');
@@ -32,9 +33,12 @@ class TelegramBot {
     // 日志中间件
     this.bot.use(async (ctx, next) => {
       const start = Date.now();
+      const updateType = ctx.updateType;
+      const text = ctx.message?.text;
+      console.log(`📥 收到更新: ${updateType}${text ? ` - "${text}"` : ''}`);
       await next();
       const ms = Date.now() - start;
-      console.log(`📱 TG: ${ctx.updateType} - ${ms}ms`);
+      console.log(`📱 TG: ${updateType} - ${ms}ms`);
     });
 
     // 用户认证中间件
@@ -74,20 +78,48 @@ class TelegramBot {
   }
 
   setupHandlers() {
-    // 命令处理
+    // 命令处理（保留作为备用）
     this.bot.command('start', startHandler.start);
     this.bot.command('menu', startHandler.menu);
     this.bot.command('help', startHandler.help);
     this.bot.command('cancel', startHandler.cancel);
-
+    
     // 群组/频道消息监听（自动记录）
     this.bot.on('my_chat_member', this.handleChatMemberUpdate.bind(this));
-    this.bot.on('message', this.handleGroupMessage.bind(this));
-
-    // 回调查询处理（按钮点击）
+    
+    // 统一的文本消息处理器（处理命令和用户输入）
+    console.log('✅ 注册统一文本消息处理器');
+    this.bot.on('text', async (ctx) => {
+      const text = ctx.message.text;
+      console.log(`🔍 收到文本: "${text}"`);
+      
+      // 先更新群组消息统计（如果是群组消息）
+      await this.handleGroupMessage(ctx);
+      
+      // 1. 检查是否是命令
+      if (text && text.startsWith('/')) {
+        console.log('  → 这是命令，调用 handleCommand');
+        const handled = await handleCommand(ctx, text);
+        if (handled) {
+          console.log('  → 命令已处理');
+          return;
+        }
+        console.log('  → 命令未处理，继续');
+      }
+      
+      // 2. 处理用户输入
+      console.log('  → 调用 handleText 处理用户输入');
+      await this.handleText(ctx);
+    });
     // 注意：登录相关的回调必须在 confirm_ 之前注册，避免被 payment 处理器捕获
     this.bot.action(/^confirm_login_/, startHandler.handleLoginConfirm);
     this.bot.action('cancel_login', startHandler.handleLoginConfirm);
+    
+    // 通用回调（放在前面，优先匹配）
+    this.bot.action(/^back_/, startHandler.handleBack);
+    this.bot.action('cancel', startHandler.cancel);
+    this.bot.action('help_center', startHandler.help);
+    this.bot.action('account_info', startHandler.accountInfo);
     
     // 支付相关回调
     this.bot.action(/^payment_/, paymentHandler.handleCallback);
@@ -108,15 +140,6 @@ class TelegramBot {
       const data = ctx.callbackQuery.data.replace('copy_', '');
       await contentService.handleCopyButton(ctx, data);
     });
-    
-    // 通用回调
-    this.bot.action(/^back_/, startHandler.handleBack);
-    this.bot.action('cancel', startHandler.cancel);
-    this.bot.action('help_center', startHandler.help);
-    this.bot.action('account_info', startHandler.accountInfo);
-
-    // 文本消息处理
-    this.bot.on('text', this.handleText.bind(this));
 
     // 错误处理
     this.bot.catch((err, ctx) => {
@@ -206,29 +229,45 @@ class TelegramBot {
   }
 
   async handleText(ctx) {
+    console.log('🎯 ========== handleText 被调用 ==========');
     const user = ctx.session?.user;
     if (!user) {
+      console.log('❌ 用户未登录');
       return ctx.reply('请先使用 /start 命令');
     }
 
     const state = ctx.session?.state;
+    const text = ctx.message?.text;
+    
+    console.log('📝 收到文本消息:', text);
+    console.log('📊 当前状态:', state);
+    console.log('👤 用户:', user?.username);
+    console.log('🔑 Session keys:', Object.keys(ctx.session));
     
     switch (state) {
       case 'waiting_usdt_amount':
+        console.log('✅ 处理 USDT 数量');
         return paymentHandler.handleUSDTAmount(ctx);
       case 'waiting_trx_amount':
+        console.log('✅ 处理 TRX 数量');
         return paymentHandler.handleTRXAmount(ctx);
       case 'waiting_usdt_address':
+        console.log('✅ 处理 USDT 地址');
         return paymentHandler.handleUSDTAddress(ctx);
       case 'waiting_trx_address':
+        console.log('✅ 处理 TRX 地址');
         return paymentHandler.handleTRXAddress(ctx);
       case 'waiting_ticket_subject':
+        console.log('✅ 处理工单标题');
         return ticketsHandler.handleTicketSubject(ctx);
       case 'waiting_ticket_description':
+        console.log('✅ 处理工单描述');
         return ticketsHandler.handleTicketDescription(ctx);
       case 'waiting_ticket_reply':
+        console.log('✅ 处理工单回复');
         return ticketsHandler.handleTicketReply(ctx);
       default:
+        console.log('⚠️  未知状态，显示默认消息');
         return ctx.reply(
           '💡 请使用菜单选择功能，或发送 /menu 查看菜单',
           await startHandler.getMainKeyboard()
@@ -240,6 +279,12 @@ class TelegramBot {
     if (!this.bot) return;
 
     try {
+      // 初始化默认命令（首次运行）
+      await initializeDefaultCommands();
+      
+      // 注册自定义命令到 Telegram
+      await registerCustomCommands(this.bot);
+      
       // 启动 Bot
       await this.bot.launch();
       console.log('🤖 Telegram Bot 已启动');
@@ -249,6 +294,18 @@ class TelegramBot {
       process.once('SIGTERM', () => this.bot.stop('SIGTERM'));
     } catch (error) {
       console.error('❌ Bot 启动失败:', error);
+    }
+  }
+
+  // 重新加载命令（用于后台更新命令后刷新）
+  async reloadCommands() {
+    if (!this.bot) return;
+    
+    try {
+      await registerCustomCommands(this.bot);
+      console.log('✅ 已重新加载 Bot 命令');
+    } catch (error) {
+      console.error('❌ 重新加载命令失败:', error);
     }
   }
 

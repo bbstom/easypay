@@ -15,7 +15,10 @@ async function handleCallback(ctx) {
     await startReplyTicket(ctx);
   }
 
-  await ctx.answerCbQuery();
+  // 只在真正的 callback query 上下文中回答
+  if (ctx.callbackQuery && ctx.update?.callback_query) {
+    await ctx.answerCbQuery();
+  }
 }
 
 // 显示工单列表
