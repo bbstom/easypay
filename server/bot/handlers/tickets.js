@@ -381,6 +381,7 @@ function getStatusText(status) {
 
 module.exports = {
   handleCallback,
+  startCreateTicket,
   handleTicketSubject,
   handleTicketDescription,
   handleTicketReply

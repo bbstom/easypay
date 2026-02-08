@@ -623,6 +623,8 @@ function getStatusText(status) {
 
 module.exports = {
   handleCallback,
+  handleUSDTPayment,
+  handleTRXPayment,
   handleUSDTAmount,
   handleTRXAmount,
   handleUSDTAddress,

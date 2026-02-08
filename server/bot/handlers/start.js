@@ -662,13 +662,13 @@ async function handleStartPayload(ctx, payload) {
     // 根据参数执行相应操作
     switch (payload) {
       case 'payment_usdt':
-        return await paymentHandler.handleCallback(ctx);
+        return await paymentHandler.handleUSDTPayment(ctx);
       case 'payment_trx':
-        return await paymentHandler.handleCallback(ctx);
+        return await paymentHandler.handleTRXPayment(ctx);
       case 'my_orders':
-        return await ordersHandler.handleCallback(ctx);
+        return await ordersHandler.showOrdersList(ctx);
       case 'create_ticket':
-        return await ticketsHandler.handleCallback(ctx);
+        return await ticketsHandler.startCreateTicket(ctx);
       case 'energy_rental':
         return await energyHandler.start(ctx);
       case 'swap_service':
