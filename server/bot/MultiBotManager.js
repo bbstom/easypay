@@ -397,18 +397,33 @@ class MultiBotManager {
       // 初始化默认命令
       await initializeDefaultCommands();
       
-      // 启动所有 Bot
-      for (const botInstance of this.bots) {
+      // 并行启动所有 Bot
+      const launchPromises = this.bots.map(async (botInstance) => {
         const { bot, username, index } = botInstance;
         
-        // 注册自定义命令
-        await registerCustomCommands(bot);
-        
-        // 启动 Bot
-        await bot.launch();
-        console.log(`🤖 Bot #${index} 已启动: @${username}`);
-      }
+        try {
+          console.log(`🔄 正在启动 Bot #${index}: @${username}...`);
+          
+          // 注册自定义命令
+          await registerCustomCommands(bot);
+          
+          // 启动 Bot（不等待，让它在后台运行）
+          bot.launch().then(() => {
+            console.log(`🤖 Bot #${index} 已启动: @${username}`);
+          }).catch((error) => {
+            console.error(`❌ Bot #${index} (@${username}) 启动失败:`, error.message);
+          });
+          
+          // 等待一小段时间确保 Bot 开始启动
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (error) {
+          console.error(`❌ Bot #${index} (@${username}) 初始化失败:`, error.message);
+          console.error('详细错误:', error);
+        }
+      });
 
+      await Promise.all(launchPromises);
       console.log(`✅ 所有 Bot 已启动 (共 ${this.bots.length} 个)`);
 
       // 优雅关闭
