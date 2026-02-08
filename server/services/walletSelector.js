@@ -14,7 +14,7 @@ class WalletSelector {
    * @returns {Promise<Object>} 选中的钱包
    */
   async selectBestWallet(options = {}) {
-    const { amount = 0, type = 'USDT', estimatedFee = 15 } = options;
+    const { amount = 0, type = 'USDT', estimatedFee = 5 } = options;
 
     console.log(`\n🔍 开始选择钱包:`);
     console.log(`   转账类型: ${type}`);
@@ -151,7 +151,7 @@ class WalletSelector {
    * @returns {Promise<Array>} 钱包列表及得分
    */
   async getWalletRecommendations(options = {}) {
-    const { amount = 0, type = 'USDT', estimatedFee = 15 } = options;
+    const { amount = 0, type = 'USDT', estimatedFee = 5 } = options;
 
     const wallets = await Wallet.find({ enabled: true }).sort({ priority: -1 });
 

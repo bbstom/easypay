@@ -57,7 +57,7 @@ class WalletUpdateService {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
       // 获取所有启用的钱包
-      const wallets = await Wallet.find({ status: 'active' });
+      const wallets = await Wallet.find({ enabled: true });
       
       if (wallets.length === 0) {
         console.log('⚠️  没有找到启用的钱包');

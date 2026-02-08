@@ -391,7 +391,7 @@ router.post('/select', auth, async (req, res) => {
     const wallet = await walletSelector.selectBestWallet({
       amount: amount || 0,
       type: type || 'USDT',
-      estimatedFee: estimatedFee || 15
+      estimatedFee: estimatedFee || 5 // 默认 5 TRX 预估手续费
     });
 
     res.json({
@@ -426,7 +426,7 @@ router.post('/recommendations', auth, async (req, res) => {
     const recommendations = await walletSelector.getWalletRecommendations({
       amount: amount || 0,
       type: type || 'USDT',
-      estimatedFee: estimatedFee || 15
+      estimatedFee: estimatedFee || 5 // 默认 5 TRX 预估手续费
     });
 
     res.json({

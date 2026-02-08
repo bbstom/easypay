@@ -438,10 +438,17 @@ async function processTransfer(paymentId, retryCount = 0) {
 
     // 1. 选择最优钱包
     console.log('📊 正在选择最优钱包...');
+    
+    // 根据转账类型设置合理的预估手续费
+    // TRX 转账：约 1-2 TRX
+    // USDT 转账（有能量）：约 0 TRX
+    // USDT 转账（无能量）：约 13-30 TRX
+    const estimatedFee = payment.payType === 'TRX' ? 2 : 5; // TRX 转账 2 TRX，USDT 转账预留 5 TRX
+    
     const selectedWallet = await walletSelector.selectBestWallet({
       amount: payment.amount,
       type: payment.payType,
-      estimatedFee: 15 // 预估手续费
+      estimatedFee: estimatedFee
     });
 
     // 2. 使用选中的钱包执行转账
