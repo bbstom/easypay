@@ -454,6 +454,7 @@ async function generatePaymentQR(ctx, paymentMethod) {
     const paymentName = paymentMethod === 'wechat' ? '微信' : '支付宝';
 
     // 1. 先发送自定义横幅图片（如果配置了）
+    let customCaption = null;
     try {
       const TelegramContent = require('../../models/TelegramContent');
       const bannerContent = await TelegramContent.findOne({ 
@@ -461,33 +462,52 @@ async function generatePaymentQR(ctx, paymentMethod) {
         enabled: true 
       });
       
-      if (bannerContent && bannerContent.content && bannerContent.content.mediaUrl) {
-        const bannerUrl = bannerContent.content.mediaUrl;
-        console.log('✅ 发送自定义横幅:', bannerUrl);
+      if (bannerContent) {
+        // 如果有媒体URL，发送横幅图片
+        if (bannerContent.content && bannerContent.content.mediaUrl) {
+          const bannerUrl = bannerContent.content.mediaUrl;
+          console.log('✅ 发送自定义横幅:', bannerUrl);
+          await ctx.replyWithPhoto(bannerUrl);
+        }
         
-        // 发送横幅图片（不带按钮，不带说明文字）
-        await ctx.replyWithPhoto(bannerUrl);
+        // 如果有自定义文本，使用自定义文本
+        if (bannerContent.content && bannerContent.content.text) {
+          customCaption = bannerContent.content.text;
+          // 替换变量
+          customCaption = customCaption
+            .replace(/{{paymentName}}/g, paymentName)
+            .replace(/{{orderId}}/g, order.platformOrderId)
+            .replace(/{{amount}}/g, data.amount)
+            .replace(/{{type}}/g, data.type)
+            .replace(/{{address}}/g, data.address)
+            .replace(/{{totalCNY}}/g, Number(order.totalCNY).toFixed(2));
+          console.log('✅ 使用自定义文本');
+        }
       }
     } catch (error) {
-      console.log('⚠️  发送横幅失败:', error.message);
+      console.log('⚠️  获取自定义模板失败:', error.message);
     }
 
     // 2. 然后发送支付二维码
     const qrBuffer = await generatePaymentQRCode(paymentUrl);
 
+    // 使用自定义文本或默认文本
+    const caption = customCaption || (
+      `📱 <b>请使用${paymentName}扫码支付</b>\n\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
+      `<code>数  量：</code>${data.amount} ${data.type}\n` +
+      `<code>地  址：</code>\n<code>${data.address}</code>\n` +
+      `<code>金  额：</code><b>${Number(order.totalCNY).toFixed(2)} CNY</b>\n` +
+      `━━━━━━━━━━━━━━━\n\n` +
+      `⏰ 支付后请等待 <b>2-10 分钟</b>\n` +
+      `💬 完成后会自动通知您`
+    );
+
     await ctx.replyWithPhoto(
       { source: qrBuffer },
       {
-        caption:
-          `📱 <b>请使用${paymentName}扫码支付</b>\n\n` +
-          `━━━━━━━━━━━━━━━\n` +
-          `<code>订单号：</code><code>${order.platformOrderId}</code>\n` +
-          `<code>数  量：</code>${data.amount} ${data.type}\n` +
-          `<code>地  址：</code>\n<code>${data.address}</code>\n` +
-          `<code>金  额：</code><b>${Number(order.totalCNY).toFixed(2)} CNY</b>\n` +
-          `━━━━━━━━━━━━━━━\n\n` +
-          `⏰ 支付后请等待 <b>2-10 分钟</b>\n` +
-          `💬 完成后会自动通知您`,
+        caption: caption,
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
