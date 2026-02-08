@@ -629,10 +629,20 @@ router.get('/stats', auth, async (req, res) => {
 // 查询订单状态
 router.get('/order/:orderId', async (req, res) => {
   try {
-    const payment = await Payment.findOne({ platformOrderId: req.params.orderId });
+    const orderId = req.params.orderId;
+    
+    // 先尝试用 MongoDB _id 查找
+    let payment = await Payment.findById(orderId);
+    
+    // 如果没找到，再用 platformOrderId 查找
+    if (!payment) {
+      payment = await Payment.findOne({ platformOrderId: orderId });
+    }
+    
     if (!payment) {
       return res.status(404).json({ error: '订单不存在' });
     }
+    
     res.json(payment);
   } catch (error) {
     res.status(400).json({ error: error.message });

@@ -531,17 +531,26 @@ async function generatePaymentQR(ctx, paymentMethod) {
 // 检查订单状态
 async function checkOrderStatus(ctx) {
   const orderId = ctx.callbackQuery.data.replace('check_order_', '');
+  console.log(`🔍 检查订单状态: ${orderId}`);
 
   try {
     const apiUrl = process.env.API_URL || 'http://localhost:5000';
     const response = await axios.get(`${apiUrl}/api/payments/order/${orderId}`);
     const order = response.data;
 
-    const statusText = getStatusText(order.status);
+    console.log(`✅ 订单查询成功: ${order.platformOrderId}, 状态: ${order.status}`);
 
-    await ctx.answerCbQuery(`当前状态：${statusText}`);
+    const statusText = getStatusText(order.status);
+    const paymentStatusText = getPaymentStatusText(order.paymentStatus);
+    const transferStatusText = getTransferStatusText(order.transferStatus);
+
+    await ctx.answerCbQuery(`💳 支付: ${paymentStatusText} | 🔄 代付: ${transferStatusText}`);
   } catch (error) {
-    await ctx.answerCbQuery('❌ 查询失败');
+    console.error('❌ 查询订单状态失败:', error.message);
+    if (error.response) {
+      console.error('API 响应:', error.response.status, error.response.data);
+    }
+    await ctx.answerCbQuery('❌ 查询失败，请稍后重试');
   }
 }
 
@@ -619,6 +628,26 @@ function getStatusText(status) {
     'failed': '❌ 失败'
   };
   return statusMap[status] || '❓ 未知';
+}
+
+function getPaymentStatusText(status) {
+  const statusMap = {
+    'pending': '待支付',
+    'paid': '已支付',
+    'failed': '失败',
+    'expired': '已过期'
+  };
+  return statusMap[status] || '未知';
+}
+
+function getTransferStatusText(status) {
+  const statusMap = {
+    'pending': '待处理',
+    'processing': '处理中',
+    'completed': '已完成',
+    'failed': '失败'
+  };
+  return statusMap[status] || '未知';
 }
 
 module.exports = {
