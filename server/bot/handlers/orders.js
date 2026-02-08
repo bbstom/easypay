@@ -312,10 +312,6 @@ async function refreshOrderStatus(ctx) {
     await ctx.answerCbQuery('❌ 刷新失败');
   }
 }
-    console.error('刷新订单状态失败:', error);
-    await ctx.answerCbQuery('❌ 刷新失败');
-  }
-}
 
 // 辅助函数
 function formatAddress(address) {
