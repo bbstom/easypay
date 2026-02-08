@@ -17,6 +17,7 @@ const TelegramManagePage = () => {
   const [editingContent, setEditingContent] = useState(null);
   const [showContentEditor, setShowContentEditor] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // 模板表单
   const [templateForm, setTemplateForm] = useState({
@@ -759,10 +760,12 @@ const TelegramManagePage = () => {
               {['all', 'welcome', 'payment', 'order', 'help', 'custom'].map(cat => (
                 <button
                   key={cat}
-                  onClick={() => {
-                    // 可以添加过滤逻辑
-                  }}
-                  className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 whitespace-nowrap"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 text-sm border rounded-lg whitespace-nowrap transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-slate-300 hover:bg-slate-50'
+                  }`}
                 >
                   {cat === 'all' && '全部'}
                   {cat === 'welcome' && '欢迎页面'}
@@ -776,7 +779,9 @@ const TelegramManagePage = () => {
 
             {/* 内容列表 */}
             <div className="grid gap-4">
-              {contents.map(content => (
+              {contents
+                .filter(content => selectedCategory === 'all' || content.category === selectedCategory)
+                .map(content => (
                 <div key={content._id} className="bg-white rounded-lg border border-slate-200 p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>

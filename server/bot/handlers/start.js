@@ -321,35 +321,47 @@ async function help(ctx) {
   const settings = await Settings.findOne();
   const siteName = settings?.siteName || 'FastPay';
   const telegramCustomerService = settings?.telegramCustomerService || '';
+  const appUrl = process.env.APP_URL || 'https://kk.vpno.eu.org';
 
-  let helpText = `❓ <b>帮助中心</b>\n\n` +
-    `📖 <b>使用说明</b>\n` +
-    `━━━━━━━━━━━━━━━\n\n` +
-    `💰 <b>代付服务</b>\n` +
-    `<code>•</code> 支持 USDT 和 TRX 代付\n` +
-    `<code>•</code> 输入数量和地址即可\n` +
-    `<code>•</code> 支持微信和支付宝支付\n` +
-    `<code>•</code> 2-10分钟内完成\n\n` +
-    `📋 <b>订单查询</b>\n` +
-    `<code>•</code> 查看所有历史订单\n` +
-    `<code>•</code> 实时查看订单状态\n` +
-    `<code>•</code> 查看交易哈希\n\n` +
-    `🔔 <b>通知功能</b>\n` +
-    `<code>•</code> 支付成功自动通知\n` +
-    `<code>•</code> 代付完成自动通知\n` +
-    `<code>•</code> 无需手动刷新\n\n`;
+  // 尝试使用自定义内容
+  const contentService = require('../services/contentService');
+  const sent = await contentService.sendContent(ctx, 'help_center', {
+    siteName,
+    customerService: telegramCustomerService,
+    websiteUrl: appUrl
+  }, getBackKeyboard());
 
-  if (telegramCustomerService) {
-    helpText += `💬 <b>需要帮助？</b>\n` +
-      `联系客服：${telegramCustomerService}\n\n`;
+  // 如果没有自定义内容，使用默认消息
+  if (!sent) {
+    let helpText = `❓ <b>帮助中心</b>\n\n` +
+      `📖 <b>使用说明</b>\n` +
+      `━━━━━━━━━━━━━━━\n\n` +
+      `💰 <b>代付服务</b>\n` +
+      `<code>•</code> 支持 USDT 和 TRX 代付\n` +
+      `<code>•</code> 输入数量和地址即可\n` +
+      `<code>•</code> 支持微信和支付宝支付\n` +
+      `<code>•</code> 2-10分钟内完成\n\n` +
+      `📋 <b>订单查询</b>\n` +
+      `<code>•</code> 查看所有历史订单\n` +
+      `<code>•</code> 实时查看订单状态\n` +
+      `<code>•</code> 查看交易哈希\n\n` +
+      `🔔 <b>通知功能</b>\n` +
+      `<code>•</code> 支付成功自动通知\n` +
+      `<code>•</code> 代付完成自动通知\n` +
+      `<code>•</code> 无需手动刷新\n\n`;
+
+    if (telegramCustomerService) {
+      helpText += `💬 <b>需要帮助？</b>\n` +
+        `联系客服：${telegramCustomerService}\n\n`;
+    }
+
+    helpText += `🌐 <b>网站地址</b>\n${appUrl}`;
+
+    await ctx.reply(helpText, { 
+      parse_mode: 'HTML',
+      ...getBackKeyboard() 
+    });
   }
-
-  helpText += `🌐 <b>网站地址</b>\n${process.env.APP_URL || 'https://kk.vpno.eu.org'}`;
-
-  await ctx.reply(helpText, { 
-    parse_mode: 'HTML',
-    ...getBackKeyboard() 
-  });
 }
 
 // /cancel 命令处理

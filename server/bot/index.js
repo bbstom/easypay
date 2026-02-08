@@ -53,6 +53,9 @@ class TelegramBot {
         return next();
       }
 
+      // 检查是否是群组消息
+      const isGroup = ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup';
+
       // 获取或创建用户
       if (!ctx.session.user) {
         const telegramId = ctx.from?.id?.toString();
@@ -65,11 +68,18 @@ class TelegramBot {
         if (user) {
           ctx.session.user = user;
         } else {
-          // 未找到用户，提示使用 /start
-          return ctx.reply(
-            '❌ 请先使用 /start 命令开始使用',
-            { reply_markup: { remove_keyboard: true } }
-          );
+          // 未找到用户
+          if (isGroup) {
+            // 在群组中：静默忽略未注册用户，不发送提示
+            console.log(`⚠️  群组中的未注册用户: ${telegramId}`);
+            return; // 直接返回，不继续处理
+          } else {
+            // 在私聊中：提示使用 /start
+            return ctx.reply(
+              '❌ 请先使用 /start 命令开始使用',
+              { reply_markup: { remove_keyboard: true } }
+            );
+          }
         }
       }
 
