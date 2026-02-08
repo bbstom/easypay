@@ -60,25 +60,35 @@ class TelegramBot {
         if (ctx.message?.text?.startsWith('/') || ctx.callbackQuery) {
           const { Markup } = require('telegraf');
           
-          const message = `👋 你好！\n\n` +
-            `为了保护您的隐私和账户安全，请点击下方按钮与我私聊进行操作。\n\n` +
-            `💡 在私聊中，您可以：\n` +
-            `• 💰 USDT/TRX 代付\n` +
-            `• 📋 查看订单\n` +
-            `• 💬 创建工单\n` +
-            `• ⚡ 能量租赁\n` +
-            `• 🔄 USDT 闪兑 TRX`;
+          // 获取用户想要执行的操作
+          let action = 'start';
+          if (ctx.callbackQuery) {
+            action = ctx.callbackQuery.data || 'start';
+          } else if (ctx.message?.text) {
+            const command = ctx.message.text.split(' ')[0].replace('/', '');
+            action = command;
+          }
+          
+          const message = `🔒 <b>隐私保护</b>\n\n` +
+            `为了保护您的账户安全和隐私信息，所有操作需要在私聊中进行。\n\n` +
+            `👇 点击下方按钮，我会在私聊中为您继续操作`;
           
           try {
             if (ctx.callbackQuery) {
-              // 回调查询：编辑消息或回答
-              await ctx.answerCbQuery('请私聊我进行操作 🔒', { show_alert: true });
+              // 回调查询：先回答，再发送消息
+              await ctx.answerCbQuery('请点击按钮跳转到私聊 🔒');
+              await ctx.reply(message, {
+                parse_mode: 'HTML',
+                ...Markup.inlineKeyboard([
+                  [Markup.button.url('💬 跳转到私聊', `https://t.me/${botUsername}?start=${action}`)]
+                ])
+              });
             } else {
               // 命令：发送提示消息
               await ctx.reply(message, {
                 parse_mode: 'HTML',
                 ...Markup.inlineKeyboard([
-                  [Markup.button.url('💬 开始私聊', `https://t.me/${botUsername}?start=group_${telegramId}`)]
+                  [Markup.button.url('💬 跳转到私聊', `https://t.me/${botUsername}?start=${action}`)]
                 ])
               });
             }

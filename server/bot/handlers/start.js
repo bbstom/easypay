@@ -35,6 +35,18 @@ async function start(ctx) {
       // 已有账户，欢迎回来
       ctx.session.user = user;
       
+      // 检查是否有从群组跳转的操作参数
+      if (startPayload && startPayload !== 'start') {
+        // 先发送欢迎消息
+        await ctx.reply(
+          `👋 欢迎回来！正在为您执行操作...`,
+          { parse_mode: 'HTML' }
+        );
+        
+        // 根据参数执行相应操作
+        return await handleStartPayload(ctx, startPayload);
+      }
+      
       // 尝试使用自定义内容
       const mainKeyboard = await getMainKeyboard();
       const sent = await contentService.sendContent(ctx, 'welcome_returning_user', {
@@ -75,6 +87,18 @@ async function start(ctx) {
       });
 
       ctx.session.user = user;
+
+      // 检查是否有从群组跳转的操作参数
+      if (startPayload && startPayload !== 'start') {
+        // 先发送欢迎消息
+        await ctx.reply(
+          `🎊 欢迎使用 ${siteName}！账户已创建，正在为您执行操作...`,
+          { parse_mode: 'HTML' }
+        );
+        
+        // 根据参数执行相应操作
+        return await handleStartPayload(ctx, startPayload);
+      }
 
       // 尝试使用自定义内容
       const mainKeyboard = await getMainKeyboard();
@@ -621,6 +645,52 @@ async function handleBack(ctx) {
   console.log('📞 准备应答回调查询');
   await ctx.answerCbQuery();
   console.log('✅ 回调已应答');
+}
+
+// 处理从群组跳转的操作参数
+async function handleStartPayload(ctx, payload) {
+  console.log(`🔗 处理群组跳转参数: ${payload}`);
+  
+  // 导入处理器
+  const paymentHandler = require('./payment');
+  const ordersHandler = require('./orders');
+  const ticketsHandler = require('./tickets');
+  const energyHandler = require('./energy');
+  const swapHandler = require('./swap');
+  
+  try {
+    // 根据参数执行相应操作
+    switch (payload) {
+      case 'payment_usdt':
+        return await paymentHandler.handleCallback(ctx);
+      case 'payment_trx':
+        return await paymentHandler.handleCallback(ctx);
+      case 'my_orders':
+        return await ordersHandler.handleCallback(ctx);
+      case 'create_ticket':
+        return await ticketsHandler.handleCallback(ctx);
+      case 'energy_rental':
+        return await energyHandler.start(ctx);
+      case 'swap_service':
+        return await swapHandler.start(ctx);
+      case 'account_info':
+        return await accountInfo(ctx);
+      case 'help':
+        return await help(ctx);
+      case 'menu':
+        return await menu(ctx);
+      default:
+        // 未知操作，显示主菜单
+        console.log(`⚠️  未知操作参数: ${payload}`);
+        return await menu(ctx);
+    }
+  } catch (error) {
+    console.error('处理群组跳转参数失败:', error);
+    await ctx.reply(
+      '❌ 操作失败，请重试',
+      await getMainKeyboard()
+    );
+  }
 }
 
 module.exports = {
