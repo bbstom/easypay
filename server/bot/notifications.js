@@ -1,4 +1,4 @@
-const { getBotInstance } = require('./index');
+const { getBotInstance } = require('./MultiBotManager');
 const contentService = require('./services/contentService');
 const { Markup } = require('telegraf');
 
