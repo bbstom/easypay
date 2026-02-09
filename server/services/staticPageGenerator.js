@@ -21,7 +21,9 @@ class StaticPageGenerator {
       const settings = await Settings.findOne();
       return {
         siteName: settings?.siteName || 'EasyPay',
+        seoTitle: settings?.seoTitle || '',
         siteDescription: settings?.siteDescription || 'EasyPay 提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
+        seoDescription: settings?.seoDescription || '',
         footerCompanyName: settings?.footerCompanyName || 'EasyPay',
         footerDescription: settings?.footerDescription || '领先的自动化代付协议，为 TRON 生态提供安全、快速、便捷的 USDT 和 TRX 代付服务。'
       };
@@ -29,7 +31,9 @@ class StaticPageGenerator {
       console.error('获取网站设置失败:', error);
       return {
         siteName: 'EasyPay',
+        seoTitle: '',
         siteDescription: 'EasyPay 提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
+        seoDescription: '',
         footerCompanyName: 'EasyPay',
         footerDescription: '领先的自动化代付协议，为 TRON 生态提供安全、快速、便捷的 USDT 和 TRX 代付服务。'
       };
@@ -48,8 +52,8 @@ class StaticPageGenerator {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- SEO 标签 -->
-  <title>${settings.siteName} - USDT/TRX 代付平台 | 自动化加密货币转账服务</title>
-  <meta name="description" content="${settings.siteDescription}">
+  <title>${settings.seoTitle || settings.siteName + ' - USDT/TRX 代付平台'}</title>
+  <meta name="description" content="${settings.seoDescription || settings.siteDescription}">
   <meta name="keywords" content="USDT代付,TRX代付,加密货币支付,TRON转账,自动化代付,区块链支付,数字货币,USDT转账,TRX转账">
   <meta name="author" content="${settings.footerCompanyName}">
   <meta name="robots" content="index, follow">
@@ -57,16 +61,16 @@ class StaticPageGenerator {
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="${this.domain}/">
-  <meta property="og:title" content="${settings.siteName} - USDT/TRX 代付平台">
-  <meta property="og:description" content="${settings.siteDescription}">
+  <meta property="og:title" content="${settings.seoTitle || settings.siteName + ' - USDT/TRX 代付平台'}">
+  <meta property="og:description" content="${settings.seoDescription || settings.siteDescription}">
   <meta property="og:image" content="${this.domain}/og-image.jpg">
   <meta property="og:locale" content="zh_CN">
   
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="${this.domain}/">
-  <meta name="twitter:title" content="${settings.siteName} - USDT/TRX 代付平台">
-  <meta name="twitter:description" content="${settings.siteDescription}">
+  <meta name="twitter:title" content="${settings.seoTitle || settings.siteName + ' - USDT/TRX 代付平台'}">
+  <meta name="twitter:description" content="${settings.seoDescription || settings.siteDescription}">
   <meta name="twitter:image" content="${this.domain}/og-image.jpg">
   
   <!-- 规范链接 -->
@@ -78,7 +82,7 @@ class StaticPageGenerator {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "${settings.siteName}",
-    "description": "${settings.siteDescription}",
+    "description": "${settings.seoDescription || settings.siteDescription}",
     "url": "${this.domain}",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",

@@ -154,9 +154,11 @@ const App = () => {
           siteLogo: data.siteLogo || ''
         }); // 同时设置网站名称和Logo
         
-        // 更新页面标题
-        if (data.siteName) {
-          document.title = data.siteName;
+        // 更新页面标题 - 优先使用 seoTitle，如果没有则使用 siteName
+        if (data.seoTitle) {
+          document.title = data.seoTitle;
+        } else if (data.siteName) {
+          document.title = `${data.siteName} - USDT/TRX 代付平台`;
         }
       } catch (error) {
         console.error('获取Footer设置失败:', error);
