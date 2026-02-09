@@ -115,6 +115,7 @@ const AdminLayout = ({ children }) => {
         { id: 'email', icon: <Mail size={18} />, label: '邮件配置' }
       ]
     },
+    { path: '/seo-manage', icon: <Globe size={20} />, label: 'SEO 管理' },
   ];
 
   const isActive = (path) => {

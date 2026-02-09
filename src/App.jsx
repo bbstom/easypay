@@ -25,6 +25,7 @@ import PaymentSystemPage from './pages/PaymentSystemPage';
 import SwapSystemPage from './pages/SwapSystemPage';
 import EnergySystemPage from './pages/EnergySystemPage';
 import TelegramManagePage from './pages/TelegramManagePage';
+import SEOManagePage from './pages/SEOManagePage';
 
 // 动态加载 Favicon
 const useFavicon = () => {
@@ -134,7 +135,7 @@ const App = () => {
   useFavicon();
   useFavicon();
 
-  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system', '/user-manage', '/telegram-manage'].includes(location.pathname);
+  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system', '/user-manage', '/telegram-manage', '/seo-manage'].includes(location.pathname);
   const isUserCenterPage = ['/user-center', '/my-orders', '/my-tickets'].includes(location.pathname);
 
   useEffect(() => {
@@ -433,6 +434,7 @@ const App = () => {
         <Route path="/swap-system" element={<SwapSystemPage />} />
         <Route path="/energy-system" element={<EnergySystemPage />} />
         <Route path="/telegram-manage" element={<TelegramManagePage />} />
+        <Route path="/seo-manage" element={<SEOManagePage />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>
 
