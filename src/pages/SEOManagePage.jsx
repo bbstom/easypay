@@ -121,6 +121,30 @@ export default function SEOManagePage() {
       generateType: 'homepage'
     },
     {
+      key: 'energy.html',
+      name: '能量租赁页面',
+      description: '能量租赁服务介绍页面',
+      icon: RefreshCw,
+      color: 'text-yellow-500',
+      generateType: 'energy'
+    },
+    {
+      key: 'swap.html',
+      name: '闪兑页面',
+      description: 'TRX/USDT 闪兑服务介绍页面',
+      icon: RefreshCw,
+      color: 'text-purple-500',
+      generateType: 'swap'
+    },
+    {
+      key: 'faq.html',
+      name: '常见问题页面',
+      description: 'FAQ 帮助中心页面',
+      icon: FileText,
+      color: 'text-orange-500',
+      generateType: 'faq'
+    },
+    {
       key: 'sitemap.xml',
       name: 'Sitemap',
       description: '网站地图，帮助搜索引擎索引网站',
@@ -187,7 +211,7 @@ export default function SEOManagePage() {
         )}
 
         {/* 文件列表 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {files.map((file) => {
             const fileStatus = status?.files?.[file.key];
             const Icon = file.icon;
@@ -285,9 +309,12 @@ export default function SEOManagePage() {
         set $is_bot 1;
     }
     
-    # 爬虫访问首页时返回静态页面
+    # 爬虫访问时返回对应的静态页面
     if ($is_bot = 1) {
         rewrite ^/$ /landing.html last;
+        rewrite ^/energy$ /energy.html last;
+        rewrite ^/swap$ /swap.html last;
+        rewrite ^/faq$ /faq.html last;
     }
     
     # 普通用户正常访问
