@@ -124,7 +124,13 @@ router.post('/telegram-login', async (req, res) => {
     const { id, first_name, last_name, username, photo_url, auth_date, hash } = req.body;
 
     // 验证 Telegram 数据
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    // 支持多 Bot 模式：优先使用 TELEGRAM_BOT_TOKEN，如果不存在则使用第一个 Token
+    let botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken && process.env.TELEGRAM_BOT_TOKENS) {
+      // 多 Bot 模式：使用第一个 Token
+      botToken = process.env.TELEGRAM_BOT_TOKENS.split(',')[0].trim();
+    }
+    
     if (!botToken) {
       return res.status(500).json({ error: 'Telegram Bot 未配置' });
     }
@@ -373,7 +379,17 @@ router.post('/confirm-qr-login', async (req, res) => {
 
     // 生成 hash
     const crypto = require('crypto');
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    // 支持多 Bot 模式：优先使用 TELEGRAM_BOT_TOKEN，如果不存在则使用第一个 Token
+    let botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken && process.env.TELEGRAM_BOT_TOKENS) {
+      // 多 Bot 模式：使用第一个 Token
+      botToken = process.env.TELEGRAM_BOT_TOKENS.split(',')[0].trim();
+    }
+    
+    if (!botToken) {
+      throw new Error('未配置 Telegram Bot Token');
+    }
+    
     const checkString = Object.keys(userData)
       .sort()
       .map(key => `${key}=${userData[key]}`)
