@@ -268,7 +268,7 @@ class MultiBotManager {
           return startHandler.help(ctx);
         }
         
-        if (data.startsWith('login_confirm_')) {
+        if (data.startsWith('confirm_login_') || data === 'cancel_login') {
           return startHandler.handleLoginConfirm(ctx);
         }
         
