@@ -15,6 +15,7 @@ import WalletConfigPage from './pages/WalletConfigPage';
 import UserCenterPage from './pages/UserCenterPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import UserManagePage from './pages/UserManagePage';
+import UserDetailPage from './pages/UserDetailPage';
 import FAQManagePage from './pages/FAQManagePage';
 import FAQPage from './pages/FAQPage';
 import TicketsPage from './pages/TicketsPage';
@@ -519,6 +520,7 @@ const App = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/finance" element={<FinancePage />} />
         <Route path="/user-manage" element={<UserManagePage />} />
+        <Route path="/admin/users/:userId" element={<UserDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/wallet" element={<WalletConfigPage />} />
         <Route path="/faq-manage" element={<FAQManagePage />} />
