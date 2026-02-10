@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Eye, Tag, ArrowLeft, Share2 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import SEOHead from '../components/SEOHead';
 
 const BlogDetailPage = () => {
@@ -180,28 +183,30 @@ const BlogDetailPage = () => {
           )}
 
           {/* 文章内容 */}
-          <div className="prose prose-lg max-w-none 
-            prose-headings:font-bold prose-headings:text-slate-900
-            prose-h1:text-4xl prose-h1:mb-6 prose-h1:mt-8
-            prose-h2:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200
-            prose-h3:text-2xl prose-h3:mb-3 prose-h3:mt-6
-            prose-h4:text-xl prose-h4:mb-2 prose-h4:mt-4
-            prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4
-            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-slate-900 prose-strong:font-bold
-            prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
-            prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
-            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-slate-600
-            prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-4
-            prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-4
-            prose-li:text-slate-700 prose-li:mb-2
-            prose-table:w-full prose-table:border-collapse prose-table:my-6
-            prose-th:bg-slate-100 prose-th:p-3 prose-th:text-left prose-th:font-bold prose-th:border prose-th:border-slate-300
-            prose-td:p-3 prose-td:border prose-td:border-slate-300
-            prose-img:max-w-full prose-img:h-auto prose-img:rounded-lg prose-img:shadow-lg prose-img:my-6
-            prose-hr:my-8 prose-hr:border-slate-300
+          <div className="prose prose-lg prose-slate max-w-none
+            prose-headings:scroll-mt-24
+            prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-6 prose-h2:pb-3 prose-h2:border-b-2 prose-h2:border-slate-200
+            prose-h3:text-2xl prose-h3:font-bold prose-h3:mt-8 prose-h3:mb-4
+            prose-h4:text-xl prose-h4:font-semibold prose-h4:mt-6 prose-h4:mb-3
+            prose-p:text-base prose-p:leading-7 prose-p:my-4
+            prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-blue-700
+            prose-strong:font-bold prose-strong:text-slate-900
+            prose-ul:my-6 prose-ul:space-y-2
+            prose-ol:my-6 prose-ol:space-y-2
+            prose-li:text-slate-700 prose-li:leading-7
+            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:my-6 prose-blockquote:italic
+            prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+            prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:shadow-lg prose-pre:my-6
+            prose-table:my-8 prose-table:border-collapse prose-table:w-full
+            prose-thead:bg-slate-100
+            prose-th:border prose-th:border-slate-300 prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-bold prose-th:text-slate-900
+            prose-td:border prose-td:border-slate-300 prose-td:px-4 prose-td:py-3 prose-td:text-slate-700
+            prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8
+            prose-hr:my-12 prose-hr:border-slate-300
           ">
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
               components={{
                 // 自定义图片渲染
                 img: ({node, ...props}) => {
