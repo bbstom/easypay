@@ -174,6 +174,7 @@ const BlogEditModal = ({ blog, categories, onClose, onSuccess }) => {
     excerpt: blog?.excerpt || '',
     coverImage: blog?.coverImage || '',
     category: blog?.category?._id || '',
+    tags: blog?.tags?.map(t => t.name).join(', ') || '',
     status: blog?.status || 'draft',
     seo: {
       title: blog?.seo?.title || '',
@@ -190,6 +191,7 @@ const BlogEditModal = ({ blog, categories, onClose, onSuccess }) => {
     try {
       const data = {
         ...formData,
+        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
         seo: {
           ...formData.seo,
           keywords: formData.seo.keywords.split(',').map(k => k.trim()).filter(Boolean)
@@ -301,6 +303,22 @@ const BlogEditModal = ({ blog, categories, onClose, onSuccess }) => {
                 <option value="published">发布</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              标签
+            </label>
+            <input
+              type="text"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="USDT, 代付, TRC20, 区块链支付"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              用逗号分隔多个标签，系统会自动创建不存在的标签
+            </p>
           </div>
 
           <div>

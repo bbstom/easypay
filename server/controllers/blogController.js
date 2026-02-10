@@ -159,6 +159,30 @@ exports.createBlog = async (req, res) => {
       .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
       .replace(/^-+|-+$/g, '');
     
+    // 处理标签（如果是字符串数组，自动创建或查找标签）
+    let tagIds = [];
+    if (tags && Array.isArray(tags)) {
+      for (const tagName of tags) {
+        if (!tagName || !tagName.trim()) continue;
+        
+        const tagSlug = tagName
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        
+        // 查找或创建标签
+        let tag = await BlogTag.findOne({ slug: tagSlug });
+        if (!tag) {
+          tag = new BlogTag({
+            name: tagName.trim(),
+            slug: tagSlug
+          });
+          await tag.save();
+        }
+        tagIds.push(tag._id);
+      }
+    }
+    
     const blog = new Blog({
       title,
       slug,
@@ -166,7 +190,7 @@ exports.createBlog = async (req, res) => {
       excerpt,
       coverImage,
       category,
-      tags,
+      tags: tagIds,
       status,
       seo,
       author: req.user.userId
@@ -193,6 +217,31 @@ exports.updateBlog = async (req, res) => {
         .toLowerCase()
         .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
         .replace(/^-+|-+$/g, '');
+    }
+    
+    // 处理标签（如果是字符串数组，自动创建或查找标签）
+    if (updates.tags && Array.isArray(updates.tags)) {
+      let tagIds = [];
+      for (const tagName of updates.tags) {
+        if (!tagName || !tagName.trim()) continue;
+        
+        const tagSlug = tagName
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        
+        // 查找或创建标签
+        let tag = await BlogTag.findOne({ slug: tagSlug });
+        if (!tag) {
+          tag = new BlogTag({
+            name: tagName.trim(),
+            slug: tagSlug
+          });
+          await tag.save();
+        }
+        tagIds.push(tag._id);
+      }
+      updates.tags = tagIds;
     }
     
     const blog = await Blog.findByIdAndUpdate(
