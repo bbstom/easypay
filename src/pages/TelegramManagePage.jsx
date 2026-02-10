@@ -446,7 +446,7 @@ const TelegramManagePage = () => {
           message += `🔄 重复发送\n`;
           message += `状态: 已启用\n`;
           message += `间隔: ${broadcast.repeatInterval} 小时\n`;
-          message += `已发送: ${broadcast.sentTimes || 0} 次\n`;
+          message += `已发送: ${broadcast.repeatCount || 0} 次\n`;
           message += `最大次数: ${broadcast.maxRepeatCount || '无限制'}\n`;
           if (broadcast.nextSendAt) {
             message += `下次发送: ${new Date(broadcast.nextSendAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`;
@@ -1338,7 +1338,7 @@ const TelegramManagePage = () => {
                     <div className="mt-3 pt-3 border-t border-slate-200 flex gap-6 text-sm">
                       <span className="text-orange-600 font-medium">🔄 重复发送已启用</span>
                       <span className="text-slate-600">间隔: {broadcast.repeatInterval}小时</span>
-                      <span className="text-slate-600">已发送: {broadcast.sentTimes || 0}次</span>
+                      <span className="text-slate-600">已发送: {broadcast.repeatCount || 0}次</span>
                       {broadcast.maxRepeatCount > 0 && (
                         <span className="text-slate-600">最大: {broadcast.maxRepeatCount}次</span>
                       )}
@@ -1492,7 +1492,7 @@ const TelegramManagePage = () => {
                               <div className="text-orange-600">
                                 <div className="font-medium">✓ 已启用</div>
                                 <div className="text-xs">
-                                  {broadcast.sentTimes || 0}
+                                  {broadcast.repeatCount || 0}
                                   {broadcast.maxRepeatCount > 0 ? `/${broadcast.maxRepeatCount}` : '/∞'}
                                 </div>
                               </div>

@@ -183,13 +183,34 @@ router.post('/broadcasts/:id/send', auth, async (req, res) => {
     // 立即发送：使用 broadcastScheduler
     const broadcastScheduler = require('../services/broadcastScheduler');
     
+    // 计算目标数量
+    let totalUsers = 0;
+    if (broadcast.targetType === 'group' && broadcast.targetGroups) {
+      totalUsers = broadcast.targetGroups.length;
+    } else {
+      // 获取目标用户数量
+      const User = require('../models/User');
+      let query = { telegramId: { $exists: true, $ne: null } };
+      
+      if (broadcast.targetType === 'active') {
+        query.lastActiveAt = { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+      } else if (broadcast.targetType === 'inactive') {
+        query.lastActiveAt = { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+      } else if (broadcast.targetType === 'custom' && broadcast.targetUsers) {
+        query.telegramId = { $in: broadcast.targetUsers };
+      }
+      
+      totalUsers = await User.countDocuments(query);
+    }
+    
     // 异步执行
     broadcastScheduler.triggerBroadcast(broadcast._id).catch(err => {
       console.error('群发失败:', err);
     });
 
     res.json({ 
-      message: '开始发送群发'
+      message: '开始发送群发',
+      totalUsers
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
