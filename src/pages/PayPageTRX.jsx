@@ -25,6 +25,8 @@ const PayPageTRX = () => {
   const [currentOrderId, setCurrentOrderId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [showAlert, setShowAlert] = useState(false); // 警告弹窗状态
+  const [dontShowToday, setDontShowToday] = useState(false); // 今日不再提示
   
   // 二维码扫描相关状态
   const [showScanner, setShowScanner] = useState(false);
@@ -98,6 +100,18 @@ const PayPageTRX = () => {
     try {
       const { data } = await axios.get('/api/settings/public');
       setSettings(data);
+      
+      // 检查是否需要显示警告弹窗
+      if (data.workspaceAlertEnabled && data.workspaceAlertContent) {
+        // 检查 localStorage，看今天是否已经选择不再提示
+        const dontShowDate = localStorage.getItem('workspaceAlertDontShowDate');
+        const today = new Date().toDateString();
+        
+        if (dontShowDate !== today) {
+          // 如果不是今天设置的，或者没有设置，则显示弹窗
+          setShowAlert(true);
+        }
+      }
     } catch (error) {
       console.error('获取设置失败:', error);
     }
@@ -105,6 +119,16 @@ const PayPageTRX = () => {
 
   const getAdsByPosition = (position) => {
     return ads.filter(ad => ad.position === position).sort((a, b) => a.order - b.order);
+  };
+
+  // 关闭警告弹窗
+  const handleCloseAlert = () => {
+    if (dontShowToday) {
+      // 如果勾选了"今日不再提示"，保存到 localStorage
+      const today = new Date().toDateString();
+      localStorage.setItem('workspaceAlertDontShowDate', today);
+    }
+    setShowAlert(false);
   };
 
   const calculateServiceFee = () => {
@@ -528,6 +552,88 @@ const PayPageTRX = () => {
 
   return (
     <div className="animate-in fade-in duration-500 pt-28 pb-20 min-h-screen relative overflow-hidden">
+      {/* 警告弹窗 - 优化版 */}
+      {showAlert && settings?.workspaceAlertEnabled && settings?.workspaceAlertContent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <style>{`
+            @keyframes modalFadeIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes pulse-warning {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+            .modal-animate-in {
+              animation: modalFadeIn 0.3s ease-out forwards;
+            }
+            .pulse-warning {
+              animation: pulse-warning 2s ease-in-out infinite;
+            }
+          `}</style>
+          
+          <div className="modal-animate-in bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            {/* 头部：警示图标 */}
+            <div className="bg-amber-500 p-6 flex justify-center relative">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-16 w-16 text-white" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth="2" 
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+                />
+              </svg>
+            </div>
+
+            {/* 内容区 */}
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">
+                {settings.workspaceAlertTitle || '交易风险重要提示'}
+              </h2>
+              
+              <div 
+                className="space-y-4 text-gray-600 leading-relaxed prose prose-slate max-w-none"
+                dangerouslySetInnerHTML={{ __html: settings.workspaceAlertContent }}
+              />
+            </div>
+
+            {/* 底部操作区 */}
+            <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={dontShowToday}
+                    onChange={(e) => setDontShowToday(e.target.checked)}
+                    className="w-4 h-4 text-amber-500 border-gray-300 rounded focus:ring-amber-500"
+                  />
+                  <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
+                    今日不再提示
+                  </span>
+                </label>
+              </div>
+              
+              <button
+                onClick={handleCloseAlert}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                我知道了，继续操作
+              </button>
+              
+              <p className="text-xs text-gray-400 text-center mt-3 uppercase tracking-widest">
+                Security Protocol Powered by KSDN
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 通知组件 - 居中显示，优雅设计，最高层级 */}
       {notification && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300 px-4">
@@ -608,26 +714,44 @@ const PayPageTRX = () => {
       <div className="max-w-5xl mx-auto px-6 space-y-6">
         {/* 工作台顶部 - 一句话广告 */}
         {getAdsByPosition('workspace-top').length > 0 && (
-          <div className="bg-gradient-to-r from-[#E0F2FE] to-[#F0F9FF] rounded-xl border border-[#00A3FF]/20 px-6 py-3">
-            <div className="flex items-center justify-center gap-3 text-center">
-              {getAdsByPosition('workspace-top').slice(0, 1).map((ad) => (
-                ad.link ? (
-                  <a 
-                    key={ad._id}
-                    href={ad.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm font-bold text-[#00A3FF] hover:text-[#0086D1] transition-colors"
-                  >
-                    {ad.content}
-                  </a>
-                ) : (
-                  <p key={ad._id} className="text-sm font-bold text-[#00A3FF]">
-                    {ad.content}
-                  </p>
-                )
-              ))}
-            </div>
+          <div className="space-y-3">
+            {getAdsByPosition('workspace-top').map((ad) => (
+              <div 
+                key={ad._id}
+                className="rounded-xl border px-6 py-3"
+                style={{ 
+                  backgroundColor: ad.backgroundColor || '#E0F2FE',
+                  borderColor: `${ad.backgroundColor || '#E0F2FE'}40`
+                }}
+              >
+                <div className="flex items-center justify-center gap-3 text-center">
+                  {ad.link ? (
+                    <a 
+                      href={ad.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm transition-opacity hover:opacity-80"
+                      style={{ 
+                        color: ad.textColor || '#00A3FF',
+                        fontWeight: ad.isBold ? 'bold' : 'normal'
+                      }}
+                    >
+                      {ad.content}
+                    </a>
+                  ) : (
+                    <p 
+                      className="text-sm"
+                      style={{ 
+                        color: ad.textColor || '#00A3FF',
+                        fontWeight: ad.isBold ? 'bold' : 'normal'
+                      }}
+                    >
+                      {ad.content}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

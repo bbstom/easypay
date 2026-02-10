@@ -21,7 +21,10 @@ const AdminPage = () => {
     height: 120,
     position: 'workspace-top',
     order: 0,
-    isActive: true
+    isActive: true,
+    backgroundColor: '#E0F2FE',
+    textColor: '#00A3FF',
+    isBold: true
   });
 
   // 从URL获取当前位置
@@ -86,7 +89,10 @@ const AdminPage = () => {
       height: ad.height || 120,
       position: ad.position || 'workspace-top',
       order: ad.order || 0,
-      isActive: ad.isActive !== undefined ? ad.isActive : true
+      isActive: ad.isActive !== undefined ? ad.isActive : true,
+      backgroundColor: ad.backgroundColor || '#E0F2FE',
+      textColor: ad.textColor || '#00A3FF',
+      isBold: ad.isBold !== undefined ? ad.isBold : true
     });
     setShowModal(true);
   };
@@ -111,7 +117,7 @@ const AdminPage = () => {
       </div>
 
       <div className="flex justify-between items-center mb-8">
-        <button onClick={() => { setShowModal(true); setEditingAd(null); setFormData({ title: '', type: 'text', content: '', imageUrl: '', link: '', height: 120, position: activePosition, order: 0, isActive: true }); }} className="bg-[#00A3FF] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0086D1] transition-all ml-auto">
+        <button onClick={() => { setShowModal(true); setEditingAd(null); setFormData({ title: '', type: 'text', content: '', imageUrl: '', link: '', height: 120, position: activePosition, order: 0, isActive: true, backgroundColor: '#E0F2FE', textColor: '#00A3FF', isBold: true }); }} className="bg-[#00A3FF] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0086D1] transition-all ml-auto">
           <Plus size={20} /> 新建广告
         </button>
       </div>
@@ -211,6 +217,79 @@ const AdminPage = () => {
                 <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="w-5 h-5" />
                 <label className="text-sm font-bold text-slate-600">启用广告</label>
               </div>
+              
+              {/* 样式配置 - 仅工作台顶部广告显示 */}
+              {formData.position === 'workspace-top' && (
+                <div className="border-t border-slate-200 pt-4 mt-4">
+                  <h3 className="text-sm font-black text-slate-700 mb-4">🎨 样式配置</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">背景颜色</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="color" 
+                          value={formData.backgroundColor} 
+                          onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })} 
+                          className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer"
+                        />
+                        <input 
+                          type="text" 
+                          value={formData.backgroundColor} 
+                          onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })} 
+                          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-cyan-500 outline-none font-mono text-sm"
+                          placeholder="#E0F2FE"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">文字颜色</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="color" 
+                          value={formData.textColor} 
+                          onChange={(e) => setFormData({ ...formData, textColor: e.target.value })} 
+                          className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer"
+                        />
+                        <input 
+                          type="text" 
+                          value={formData.textColor} 
+                          onChange={(e) => setFormData({ ...formData, textColor: e.target.value })} 
+                          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-cyan-500 outline-none font-mono text-sm"
+                          placeholder="#00A3FF"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-4">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.isBold} 
+                      onChange={(e) => setFormData({ ...formData, isBold: e.target.checked })} 
+                      className="w-5 h-5" 
+                    />
+                    <label className="text-sm font-bold text-slate-600">文字加粗显示</label>
+                  </div>
+                  {/* 预览 */}
+                  <div className="mt-4">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">预览效果</label>
+                    <div 
+                      className="rounded-xl border px-6 py-3"
+                      style={{ backgroundColor: formData.backgroundColor }}
+                    >
+                      <p 
+                        className="text-sm text-center"
+                        style={{ 
+                          color: formData.textColor,
+                          fontWeight: formData.isBold ? 'bold' : 'normal'
+                        }}
+                      >
+                        {formData.content || '这里是广告内容预览'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex gap-3 pt-4">
                 <button type="submit" className="flex-1 bg-cyan-500 text-white py-3 rounded-xl font-bold hover:bg-cyan-600 transition-all">
                   {editingAd ? '保存修改' : '创建广告'}

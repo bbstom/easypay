@@ -19,7 +19,10 @@
     "test-transfer": "node server/scripts/testTransfer.js",
     "migrate-key": "node server/scripts/migratePrivateKey.js",
     "test-private-key": "node server/scripts/testPrivateKey.js",
-    "check-tronweb": "node server/scripts/checkTronWeb.js"
+    "check-tronweb": "node server/scripts/checkTronWeb.js",
+    "generate-sitemap": "node scripts/generate-sitemap.js",
+    "verify-sitemap": "node scripts/verify-sitemap.js",
+    "prebuild": "npm run generate-sitemap"
   },
   "dependencies": {
     "axios": "^1.6.2",
@@ -38,6 +41,8 @@
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-helmet-async": "^2.0.5",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.20.0",
     "telegraf": "^4.16.3",
     "tronweb": "^6.1.1"

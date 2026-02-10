@@ -6,10 +6,40 @@ Allow: /
 # 不允许爬取的路径
 Disallow: /admin
 Disallow: /api/
-Disallow: /login
+Disallow: /user-center
+Disallow: /my-orders
+Disallow: /tickets
+Disallow: /finance
+
+# 允许爬取的内容页面
+Allow: /services
+Allow: /guides
+Allow: /about
+Allow: /pay
+Allow: /pay-trx
+Allow: /energy-rental
+Allow: /swap
 
 # 站点地图
 Sitemap: https://dd.vpno.eu.org/sitemap.xml
 
 # 爬取延迟（可选，避免服务器压力）
 Crawl-delay: 1
+
+# 针对特定搜索引擎的规则
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Baiduspider
+Crawl-delay: 1
+
+# 阻止不良爬虫（可选）
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+

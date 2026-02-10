@@ -60,7 +60,10 @@ router.get('/public', async (req, res) => {
       exchangeRateMarkup: settings.exchangeRateMarkup,
       paymentAlipayEnabled: settings.paymentAlipayEnabled,
       paymentWechatEnabled: settings.paymentWechatEnabled,
-      swapWallets: settings.swapWallets // 添加闪兑钱包配置
+      swapWallets: settings.swapWallets, // 添加闪兑钱包配置
+      workspaceAlertEnabled: settings.workspaceAlertEnabled, // 工作台警告弹窗开关
+      workspaceAlertTitle: settings.workspaceAlertTitle, // 工作台警告弹窗标题
+      workspaceAlertContent: settings.workspaceAlertContent // 工作台警告弹窗内容
     });
   } catch (error) {
     res.status(400).json({ error: error.message });

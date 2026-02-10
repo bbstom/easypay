@@ -20,7 +20,9 @@ import {
   HelpCircle,
   MessageSquare,
   TrendingUp,
-  ArrowDownUp
+  ArrowDownUp,
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -112,10 +114,21 @@ const AdminLayout = ({ children }) => {
         { id: 'telegram', icon: <MessageSquare size={18} />, label: 'TG客服' },
         { id: 'runtime', icon: <Zap size={18} />, label: '运行时间' },
         { id: 'payment', icon: <Key size={18} />, label: '支付配置' },
-        { id: 'email', icon: <Mail size={18} />, label: '邮件配置' }
+        { id: 'email', icon: <Mail size={18} />, label: '邮件配置' },
+        { id: 'blog', icon: <FileText size={18} />, label: '博客配置' },
+        { id: 'alert', icon: <AlertTriangle size={18} />, label: '警告弹窗' }
       ]
     },
     { path: '/seo-manage', icon: <Globe size={20} />, label: 'SEO 管理' },
+    { 
+      path: '/admin/blog', 
+      icon: <FileText size={20} />, 
+      label: '博客管理',
+      subItems: [
+        { id: 'articles', icon: <FileText size={18} />, label: '文章管理' },
+        { id: 'categories', icon: <LayoutIcon size={18} />, label: '分类管理' }
+      ]
+    },
   ];
 
   const isActive = (path) => {

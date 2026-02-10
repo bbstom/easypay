@@ -153,6 +153,16 @@ const settingsSchema = new mongoose.Schema({
     default: JSON.stringify([]) 
   }, // 闪兑专用钱包列表：[{ id, name, address, privateKeyEncrypted, enabled, priority }]
   
+  // 博客图片配置
+  blogImageMaxWidth: { type: String, default: '100%' }, // 博客图片最大宽度（如：100%, 800px）
+  blogImageMaxHeight: { type: String, default: '500px' }, // 博客图片最大高度（如：500px, 800px）
+  blogCoverMaxHeight: { type: String, default: '500px' }, // 博客封面图最大高度（如：500px, 600px）
+  
+  // 工作台警告弹窗配置
+  workspaceAlertEnabled: { type: Boolean, default: false }, // 是否启用警告弹窗
+  workspaceAlertTitle: { type: String, default: '重要提示' }, // 弹窗标题
+  workspaceAlertContent: { type: String, default: '请仔细核对收款地址，确保转账信息准确无误。' }, // 弹窗内容（支持HTML）
+  
   updatedAt: { type: Date, default: Date.now }
 });
 

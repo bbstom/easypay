@@ -548,56 +548,105 @@ class StaticPageGenerator {
 
   /**
    * 生成 sitemap.xml
+   * 包含所有 SEO 优化的内容页面（与脚本生成保持一致）
    */
   async generateSitemap() {
     const now = new Date().toISOString().split('T')[0];
     
+    // 页面配置（与 scripts/generate-sitemap.js 保持一致）
+    const pages = [
+      // 首页
+      { loc: '/', priority: '1.0', changefreq: 'daily' },
+      
+      // 博客列表
+      { loc: '/blog', priority: '0.9', changefreq: 'daily' },
+      
+      // 服务总览
+      { loc: '/services', priority: '0.9', changefreq: 'weekly' },
+      
+      // 服务详情页面
+      { loc: '/services/usdt-payment', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/services/trx-payment', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/services/energy-rental', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/services/swap', priority: '0.8', changefreq: 'weekly' },
+      
+      // 使用指南页面
+      { loc: '/guides/beginner', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/guides/api', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/guides/faq', priority: '0.7', changefreq: 'weekly' },
+      
+      // 关于我们页面
+      { loc: '/about/company', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/about/security', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/about/contact', priority: '0.6', changefreq: 'monthly' },
+      
+      // 功能页面
+      { loc: '/pay', priority: '0.9', changefreq: 'daily' },
+      { loc: '/pay-trx', priority: '0.9', changefreq: 'daily' },
+      { loc: '/energy-rental', priority: '0.9', changefreq: 'daily' },
+      { loc: '/swap', priority: '0.9', changefreq: 'daily' },
+      
+      // 用户中心
+      { loc: '/login', priority: '0.5', changefreq: 'monthly' }
+    ];
+    
+    try {
+      // 获取已发布的博客文章
+      const Blog = require('../models/Blog');
+      const blogs = await Blog.find({ status: 'published' })
+        .select('slug updatedAt')
+        .lean();
+      
+      console.log(`📝 找到 ${blogs.length} 篇已发布的博客文章`);
+      
+      // 添加博客文章到页面列表
+      blogs.forEach(blog => {
+        const lastmod = blog.updatedAt 
+          ? blog.updatedAt.toISOString().split('T')[0] 
+          : now;
+        pages.push({
+          loc: `/blog/${blog.slug}`,
+          priority: '0.7',
+          changefreq: 'weekly',
+          lastmod
+        });
+      });
+    } catch (error) {
+      console.error('获取博客文章失败:', error);
+      // 继续生成 sitemap，只是不包含博客文章
+    }
+    
+    // 生成 URL 条目
+    const urls = pages.map(page => {
+      const lastmod = page.lastmod || now;
+      return `  <url>
+    <loc>${this.domain}${page.loc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`;
+    }).join('\n\n');
+    
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- 首页 -->
-  <url>
-    <loc>${this.domain}/</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  
-  <!-- 能量租赁页面 -->
-  <url>
-    <loc>${this.domain}/energy</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- 闪兑页面 -->
-  <url>
-    <loc>${this.domain}/swap</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- 帮助中心 -->
-  <url>
-    <loc>${this.domain}/faq</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <!-- 用户中心 -->
-  <url>
-    <loc>${this.domain}/user</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+${urls}
+
 </urlset>`;
 
     const filePath = path.join(this.distPath, 'sitemap.xml');
     await fs.writeFile(filePath, sitemap, 'utf8');
-    return { success: true, path: filePath };
+    
+    console.log(`✅ Sitemap 生成成功！包含 ${pages.length} 个页面`);
+    
+    return { 
+      success: true, 
+      path: filePath,
+      pageCount: pages.length
+    };
   }
 
   /**

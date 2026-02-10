@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
+import SEOHead from '../components/SEOHead';
 
 const FAQPage = () => {
   const [faqs, setFaqs] = useState([]);
@@ -44,6 +45,31 @@ const FAQPage = () => {
 
   return (
     <div className="animate-in fade-in duration-700">
+      <SEOHead
+        title="常见问题 - USDT/TRX 代付常见疑问解答 | FAQ"
+        description="USDT/TRX 代付服务常见问题解答，包含账户注册、充值提现、订单查询、API 接入等问题的详细解答。"
+        keywords={[
+          '常见问题',
+          'FAQ',
+          'USDT 代付问题',
+          'TRX 代付问题',
+          '使用帮助',
+          '问题解答',
+          '客服支持'
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": filteredFaqs.slice(0, 10).map(faq => ({
+            "@type": "Question",
+            "name": faq.question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": faq.answer
+            }
+          }))
+        }}
+      />
       <section className="relative pt-24 pb-12 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-gradient-to-b from-cyan-50/50 to-transparent -z-10"></div>
         

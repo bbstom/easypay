@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp, Menu, X, FileText } from 'lucide-react';
+import { Zap, User, LogOut, Twitter, Facebook, Send, Mail, MessageCircle, Home, HelpCircle, Briefcase, ArrowDownUp, Menu, X, FileText, BookOpen, DollarSign, Coins, Battery, RefreshCw, GraduationCap, Code, Building2, Shield, Phone } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { USDTIcon, TRXIcon } from './components/Icons';
 import axios from 'axios';
@@ -26,6 +26,19 @@ import SwapSystemPage from './pages/SwapSystemPage';
 import EnergySystemPage from './pages/EnergySystemPage';
 import TelegramManagePage from './pages/TelegramManagePage';
 import SEOManagePage from './pages/SEOManagePage';
+import ServiceOverviewPage from './pages/ServiceOverviewPage';
+import USDTPaymentDetailPage from './pages/services/USDTPaymentDetailPage';
+import TRXPaymentDetailPage from './pages/services/TRXPaymentDetailPage';
+import EnergyRentalDetailPage from './pages/services/EnergyRentalDetailPage';
+import SwapDetailPage from './pages/services/SwapDetailPage';
+import BeginnerGuidePage from './pages/guides/BeginnerGuidePage';
+import APIDocPage from './pages/guides/APIDocPage';
+import CompanyPage from './pages/about/CompanyPage';
+import SecurityPage from './pages/about/SecurityPage';
+import ContactPage from './pages/about/ContactPage';
+import BlogListPage from './pages/BlogListPage';
+import BlogDetailPage from './pages/BlogDetailPage';
+import BlogManageContainer from './pages/admin/BlogManageContainer';
 
 // 动态加载 Favicon
 const useFavicon = () => {
@@ -128,6 +141,7 @@ const App = () => {
   const { user, logout, loading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [showPayMenu, setShowPayMenu] = useState(false);
+  const [showServicesMenu, setShowServicesMenu] = useState(false); // 服务总览下拉菜单
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // 移动端菜单状态
 
@@ -135,7 +149,7 @@ const App = () => {
   useFavicon();
   useFavicon();
 
-  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system', '/user-manage', '/telegram-manage', '/seo-manage'].includes(location.pathname);
+  const isAdminPage = ['/admin', '/finance', '/settings', '/wallet', '/faq-manage', '/admin-tickets', '/payment-system', '/swap-system', '/energy-system', '/user-manage', '/telegram-manage', '/seo-manage', '/admin/blog'].includes(location.pathname);
   const isUserCenterPage = ['/user-center', '/my-orders', '/my-tickets'].includes(location.pathname);
 
   useEffect(() => {
@@ -219,9 +233,13 @@ const App = () => {
                     <ArrowDownUp size={20} />
                     <span>闪兑中心</span>
                   </button>
-                  <button onClick={() => { navigate('/faq'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
-                    <HelpCircle size={20} />
-                    <span>常见问题</span>
+                  <button onClick={() => { navigate('/services'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <Menu size={20} />
+                    <span>服务总览</span>
+                  </button>
+                  <button onClick={() => { navigate('/blog'); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3">
+                    <BookOpen size={20} />
+                    <span>博客</span>
                   </button>
                   
                   {user && (
@@ -335,10 +353,86 @@ const App = () => {
                   闪兑中心
                 </button>
 
-                {/* 常见问题 */}
-                <button onClick={() => navigate('/faq')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
-                  <HelpCircle size={14} />
-                  常见问题
+                {/* 服务总览 - 下拉菜单 */}
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowServicesMenu(true)}
+                  onMouseLeave={() => setShowServicesMenu(false)}
+                >
+                  <button 
+                    onClick={() => navigate('/services')}
+                    className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5"
+                  >
+                    <Menu size={14} />
+                    服务总览
+                    <svg className={`w-3 h-3 transition-transform ${showServicesMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* 下拉菜单 - 使用 pt-2 而不是 mt-2，确保鼠标移动时不会离开触发区域 */}
+                  <div className={`absolute top-full left-0 pt-2 transition-opacity duration-200 ${showServicesMenu ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                    <div className="w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-50">
+                      {/* 服务介绍 */}
+                      <div className="px-3 py-2 text-xs font-black text-slate-400 uppercase tracking-wider">服务介绍</div>
+                      <button onClick={() => { navigate('/services/usdt-payment'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <USDTIcon className="w-4 h-4 flex-shrink-0" />
+                        USDT 代付详情
+                      </button>
+                      <button onClick={() => { navigate('/services/trx-payment'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <TRXIcon className="w-4 h-4 flex-shrink-0" />
+                        TRX 代付详情
+                      </button>
+                      <button onClick={() => { navigate('/services/energy-rental'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <Zap size={16} className="flex-shrink-0" />
+                        能量租赁详情
+                      </button>
+                      <button onClick={() => { navigate('/services/swap'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <RefreshCw size={16} className="flex-shrink-0" />
+                        闪兑服务详情
+                      </button>
+                      
+                      <div className="my-2 border-t border-slate-100"></div>
+                      
+                      {/* 使用指南 */}
+                      <div className="px-3 py-2 text-xs font-black text-slate-400 uppercase tracking-wider">使用指南</div>
+                      <button onClick={() => { navigate('/guides/beginner'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <GraduationCap size={16} className="flex-shrink-0" />
+                        新手教程
+                      </button>
+                      <button onClick={() => { navigate('/guides/api'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <Code size={16} className="flex-shrink-0" />
+                        API 文档
+                      </button>
+                      <button onClick={() => { navigate('/guides/faq'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <HelpCircle size={16} className="flex-shrink-0" />
+                        常见问题
+                      </button>
+                      
+                      <div className="my-2 border-t border-slate-100"></div>
+                      
+                      {/* 关于我们 */}
+                      <div className="px-3 py-2 text-xs font-black text-slate-400 uppercase tracking-wider">关于我们</div>
+                      <button onClick={() => { navigate('/about/company'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <Building2 size={16} className="flex-shrink-0" />
+                        公司介绍
+                      </button>
+                      <button onClick={() => { navigate('/about/security'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <Shield size={16} className="flex-shrink-0" />
+                        安全保障
+                      </button>
+                      <button onClick={() => { navigate('/about/contact'); setShowServicesMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors flex items-center gap-2">
+                        <Phone size={16} className="flex-shrink-0" />
+                        联系我们
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 博客 */}
+                <button onClick={() => navigate('/blog')} className="text-[13px] font-bold text-slate-500 hover:text-cyan-600 transition-colors flex items-center gap-1.5">
+                  <BookOpen size={14} />
+                  博客
                 </button>
 
                 {/* TG客服 */}
@@ -438,6 +532,30 @@ const App = () => {
         <Route path="/telegram-manage" element={<TelegramManagePage />} />
         <Route path="/seo-manage" element={<SEOManagePage />} />
         <Route path="/login" element={<LoginPage />} />
+        
+        {/* 服务总览 */}
+        <Route path="/services" element={<ServiceOverviewPage />} />
+        <Route path="/services/usdt-payment" element={<USDTPaymentDetailPage />} />
+        <Route path="/services/trx-payment" element={<TRXPaymentDetailPage />} />
+        <Route path="/services/energy-rental" element={<EnergyRentalDetailPage />} />
+        <Route path="/services/swap" element={<SwapDetailPage />} />
+        
+        {/* 使用指南 */}
+        <Route path="/guides/beginner" element={<BeginnerGuidePage />} />
+        <Route path="/guides/api" element={<APIDocPage />} />
+        <Route path="/guides/faq" element={<FAQPage />} />
+        
+        {/* 关于我们 */}
+        <Route path="/about/company" element={<CompanyPage />} />
+        <Route path="/about/security" element={<SecurityPage />} />
+        <Route path="/about/contact" element={<ContactPage />} />
+        
+        {/* 博客系统 */}
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogDetailPage />} />
+        <Route path="/admin/blog" element={<BlogManageContainer />} />
+        
+        {/* 保留 /faq 路由兼容性 */}
       </Routes>
 
       {/* 运行时间 - 独立区域，在footer上面，自动填充剩余空间 */}

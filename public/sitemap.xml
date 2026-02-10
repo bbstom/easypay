@@ -1,42 +1,154 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- 首页 -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
   <url>
     <loc>https://dd.vpno.eu.org/</loc>
-    <lastmod>2026-02-09</lastmod>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <priority>1</priority>
   </url>
-  
-  <!-- 能量租赁页面 -->
+
   <url>
-    <loc>https://dd.vpno.eu.org/energy</loc>
-    <lastmod>2026-02-09</lastmod>
+    <loc>https://dd.vpno.eu.org/blog</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/services</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/services/usdt-payment</loc>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- 闪兑页面 -->
+
   <url>
-    <loc>https://dd.vpno.eu.org/swap</loc>
-    <lastmod>2026-02-09</lastmod>
+    <loc>https://dd.vpno.eu.org/services/trx-payment</loc>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- 帮助中心 -->
+
   <url>
-    <loc>https://dd.vpno.eu.org/faq</loc>
-    <lastmod>2026-02-09</lastmod>
+    <loc>https://dd.vpno.eu.org/services/energy-rental</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/services/swap</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/guides/beginner</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/guides/api</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/guides/faq</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/about/company</loc>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  
-  <!-- 用户中心 -->
+
   <url>
-    <loc>https://dd.vpno.eu.org/user</loc>
-    <lastmod>2026-02-09</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://dd.vpno.eu.org/about/security</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/about/contact</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/pay</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/pay-trx</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/energy-rental</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/swap</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/login</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/blog/费瓦峰为</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/blog/费瓦发文发而无法哇二分</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://dd.vpno.eu.org/blog/发威锋网</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>
