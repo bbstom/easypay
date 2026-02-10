@@ -180,9 +180,30 @@ const BlogDetailPage = () => {
           )}
 
           {/* 文章内容 */}
-          <div className="prose prose-lg max-w-none prose-img:max-w-full prose-img:h-auto prose-img:rounded-lg prose-img:shadow-lg prose-img:my-6">
+          <div className="prose prose-lg max-w-none 
+            prose-headings:font-bold prose-headings:text-slate-900
+            prose-h1:text-4xl prose-h1:mb-6 prose-h1:mt-8
+            prose-h2:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200
+            prose-h3:text-2xl prose-h3:mb-3 prose-h3:mt-6
+            prose-h4:text-xl prose-h4:mb-2 prose-h4:mt-4
+            prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4
+            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+            prose-strong:text-slate-900 prose-strong:font-bold
+            prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
+            prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
+            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-slate-600
+            prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-4
+            prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-4
+            prose-li:text-slate-700 prose-li:mb-2
+            prose-table:w-full prose-table:border-collapse prose-table:my-6
+            prose-th:bg-slate-100 prose-th:p-3 prose-th:text-left prose-th:font-bold prose-th:border prose-th:border-slate-300
+            prose-td:p-3 prose-td:border prose-td:border-slate-300
+            prose-img:max-w-full prose-img:h-auto prose-img:rounded-lg prose-img:shadow-lg prose-img:my-6
+            prose-hr:my-8 prose-hr:border-slate-300
+          ">
             <ReactMarkdown
               components={{
+                // 自定义图片渲染
                 img: ({node, ...props}) => {
                   const maxHeight = imageSettings.maxHeight === 'none' ? 'none' : imageSettings.maxHeight;
                   const maxWidth = imageSettings.maxWidth === 'none' ? 'none' : imageSettings.maxWidth;
@@ -198,6 +219,53 @@ const BlogDetailPage = () => {
                       }}
                       alt={props.alt || ''}
                     />
+                  );
+                },
+                // 自定义代码块渲染
+                code: ({node, inline, className, children, ...props}) => {
+                  if (inline) {
+                    return (
+                      <code className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                  return (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                // 自定义表格渲染
+                table: ({node, ...props}) => (
+                  <div className="overflow-x-auto my-6">
+                    <table className="w-full border-collapse" {...props} />
+                  </div>
+                ),
+                // 自定义链接渲染
+                a: ({node, ...props}) => (
+                  <a 
+                    className="text-blue-600 hover:underline font-medium" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    {...props} 
+                  />
+                ),
+                // 自定义标题渲染（添加锚点）
+                h2: ({node, children, ...props}) => {
+                  const id = children?.toString().toLowerCase().replace(/\s+/g, '-');
+                  return (
+                    <h2 id={id} className="scroll-mt-24" {...props}>
+                      {children}
+                    </h2>
+                  );
+                },
+                h3: ({node, children, ...props}) => {
+                  const id = children?.toString().toLowerCase().replace(/\s+/g, '-');
+                  return (
+                    <h3 id={id} className="scroll-mt-24" {...props}>
+                      {children}
+                    </h3>
                   );
                 }
               }}
