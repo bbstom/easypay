@@ -25,7 +25,7 @@ async function start(ctx) {
 
     // 获取系统设置
     const settings = await Settings.findOne();
-    const siteName = settings?.siteName || 'FastPay';
+    const siteName = settings?.siteName || '可可代付';
     const websiteUrl = process.env.APP_URL || 'https://kk.vpno.eu.org';
 
     // 检查用户是否已存在
@@ -343,7 +343,7 @@ async function menu(ctx) {
 // /help 命令处理
 async function help(ctx) {
   const settings = await Settings.findOne();
-  const siteName = settings?.siteName || 'FastPay';
+  const siteName = settings?.siteName || '可可代付';
   const telegramCustomerService = settings?.telegramCustomerService || '';
   const appUrl = process.env.APP_URL || 'https://kk.vpno.eu.org';
 

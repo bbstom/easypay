@@ -7,7 +7,7 @@ const IndexPage = () => {
   const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [heroImage, setHeroImage] = useState('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop');
-  const [siteName, setSiteName] = useState('FastPay');
+  const [siteName, setSiteName] = useState('可可代付');
   const [siteDescription, setSiteDescription] = useState('是领先的自动化代付协议。支持通过法币直接为任何波场地址发放 USDT 或 TRX，无需配置私钥，无需购买能量。');
 
   useEffect(() => {

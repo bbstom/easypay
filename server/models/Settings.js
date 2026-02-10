@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema({
   // 网站基本信息
-  siteName: { type: String, default: 'FastPay' },
+  siteName: { type: String, default: '可可代付' },
   siteLogo: { type: String, default: '' },
   siteFavicon: { type: String, default: '' }, // 网站图标（favicon）
   siteDescription: { type: String, default: '安全快捷的数字货币代付平台' },
   siteKeywords: { type: String, default: 'USDT,TRX,代付,数字货币' },
   
   // SEO信息
-  seoTitle: { type: String, default: 'FastPay - 数字货币代付平台' },
+  seoTitle: { type: String, default: '可可代付 - 数字货币代付平台' },
   seoDescription: { type: String, default: '专业的USDT/TRX代付服务，安全快捷，7x24小时在线' },
   seoImage: { type: String, default: '' },
   
@@ -31,9 +31,9 @@ const settingsSchema = new mongoose.Schema({
   homeHeroImage: { type: String, default: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop' }, // 主页右侧展示图片
   
   // Footer 自定义内容
-  footerCompanyName: { type: String, default: 'FASTPAY' },
+  footerCompanyName: { type: String, default: '可可代付' },
   footerDescription: { type: String, default: '领先的自动化代付协议，为 TRON 生态提供安全、快速、便捷的 USDT 和 TRX 代付服务。' },
-  footerCopyright: { type: String, default: '© 2024 FastPay. All rights reserved.' },
+  footerCopyright: { type: String, default: '© 2024 可可代付. All rights reserved.' },
   footerLinks: { type: String, default: JSON.stringify([
     { title: '产品服务', links: [
       { name: 'USDT 代付', url: '#' },
@@ -135,7 +135,7 @@ const settingsSchema = new mongoose.Schema({
   smtpSecure: { type: Boolean, default: true },
   smtpUser: { type: String, default: '' },
   smtpPass: { type: String, default: '' },
-  smtpFromName: { type: String, default: 'FastPay' },
+  smtpFromName: { type: String, default: '可可代付' },
   smtpFromEmail: { type: String, default: '' },
   
   // 闪兑配置

@@ -24,9 +24,9 @@ class EmailService {
       });
 
       const mailOptions = {
-        from: `"${settings.smtpFromName || settings.siteName || 'FastPay'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
+        from: `"${settings.smtpFromName || settings.siteName || '可可代付'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
         to: payment.email,
-        subject: `【${settings.siteName || 'FastPay'}】支付成功，正在处理 ${payment.payType} 代付 - ${payment.platformOrderId}`,
+        subject: `【${settings.siteName || '可可代付'}】支付成功，正在处理 ${payment.payType} 代付 - ${payment.platformOrderId}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -104,8 +104,8 @@ class EmailService {
 
                 <div class="footer">
                   <p style="margin: 5px 0;">此邮件由系统自动发送，请勿回复</p>
-                  <p style="margin: 5px 0; color: #00A3FF; font-weight: bold;">${settings.siteName || 'FastPay'} - 安全快捷的数字货币代付平台</p>
-                  <p style="margin: 5px 0;">© ${new Date().getFullYear()} ${settings.siteName || 'FastPay'}. All rights reserved.</p>
+                  <p style="margin: 5px 0; color: #00A3FF; font-weight: bold;">${settings.siteName || '可可代付'} - 安全快捷的数字货币代付平台</p>
+                  <p style="margin: 5px 0;">© ${new Date().getFullYear()} ${settings.siteName || '可可代付'}. All rights reserved.</p>
                 </div>
               </div>
             </div>
@@ -147,9 +147,9 @@ class EmailService {
       const tronscanUrl = `https://tronscan.org/#/transaction/${payment.txHash}`;
 
       const mailOptions = {
-        from: `"${settings.smtpFromName || settings.siteName || 'FastPay'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
+        from: `"${settings.smtpFromName || settings.siteName || '可可代付'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
         to: payment.email,
-        subject: `【${settings.siteName || 'FastPay'}】${payment.payType} 代付完成 - ${payment.platformOrderId}`,
+        subject: `【${settings.siteName || '可可代付'}】${payment.payType} 代付完成 - ${payment.platformOrderId}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -226,13 +226,13 @@ class EmailService {
                 </div>
 
                 <p style="text-align: center; margin-top: 30px; font-size: 16px; color: #28a745; font-weight: bold;">
-                  感谢使用 ${settings.siteName || 'FastPay'}！
+                  感谢使用 ${settings.siteName || '可可代付'}！
                 </p>
 
                 <div class="footer">
                   <p style="margin: 5px 0;">此邮件由系统自动发送，请勿回复</p>
-                  <p style="margin: 5px 0; color: #28a745; font-weight: bold;">${settings.siteName || 'FastPay'} - 安全快捷的数字货币代付平台</p>
-                  <p style="margin: 5px 0;">© ${new Date().getFullYear()} ${settings.siteName || 'FastPay'}. All rights reserved.</p>
+                  <p style="margin: 5px 0; color: #28a745; font-weight: bold;">${settings.siteName || '可可代付'} - 安全快捷的数字货币代付平台</p>
+                  <p style="margin: 5px 0;">© ${new Date().getFullYear()} ${settings.siteName || '可可代付'}. All rights reserved.</p>
                 </div>
               </div>
             </div>
@@ -271,7 +271,7 @@ class EmailService {
         }
       });
       const mailOptions = {
-        from: `"${settings.smtpFromName || settings.siteName || 'FastPay'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
+        from: `"${settings.smtpFromName || settings.siteName || '可可代付'}" <${settings.smtpFromEmail || settings.smtpUser}>`,
         to: payment.email,
         subject: `订单完成通知 - ${payment.platformOrderId}`,
         html: `
@@ -341,7 +341,7 @@ class EmailService {
                 
                 <div class="footer">
                   <p>此邮件由系统自动发送，请勿回复</p>
-                  <p>© ${new Date().getFullYear()} ${settings.siteName || 'FastPay'}. All rights reserved.</p>
+                  <p>© ${new Date().getFullYear()} ${settings.siteName || '可可代付'}. All rights reserved.</p>
                 </div>
               </div>
             </div>

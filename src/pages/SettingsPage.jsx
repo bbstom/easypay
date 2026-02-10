@@ -422,10 +422,10 @@ const SettingsPage = () => {
                   <label className="text-sm font-bold text-slate-600 block mb-2">公司名称</label>
                   <input
                     type="text"
-                    value={settings.footerCompanyName || 'FASTPAY'}
+                    value={settings.footerCompanyName || '可可代付'}
                     onChange={(e) => setSettings({ ...settings, footerCompanyName: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#00A3FF] outline-none"
-                    placeholder="FASTPAY"
+                    placeholder="可可代付"
                   />
                 </div>
 
@@ -447,7 +447,7 @@ const SettingsPage = () => {
                     value={settings.footerCopyright || ''}
                     onChange={(e) => setSettings({ ...settings, footerCopyright: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#00A3FF] outline-none"
-                    placeholder="© 2024 FastPay. All rights reserved."
+                    placeholder="© 2024 可可代付. All rights reserved."
                   />
                 </div>
 
@@ -1050,7 +1050,7 @@ const SettingsPage = () => {
                     <label className="text-sm font-bold text-slate-600 block mb-2">发件人名称</label>
                     <input
                       type="text"
-                      value={settings.smtpFromName || 'FastPay'}
+                      value={settings.smtpFromName || '可可代付'}
                       onChange={(e) => setSettings({ ...settings, smtpFromName: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#00A3FF] outline-none"
                     />

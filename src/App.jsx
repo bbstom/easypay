@@ -135,7 +135,7 @@ const RuntimeDisplay = () => {
 
 const App = () => {
   const [footerSettings, setFooterSettings] = useState(null);
-  const [siteSettings, setSiteSettings] = useState({ siteName: 'FASTPAY' }); // 网站设置
+  const [siteSettings, setSiteSettings] = useState({ siteName: '可可代付' }); // 网站设置
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, loading } = useAuth();
@@ -164,7 +164,7 @@ const App = () => {
         const { data } = await axios.get('/api/settings/public');
         setFooterSettings(data);
         setSiteSettings({ 
-          siteName: data.siteName || 'FASTPAY',
+          siteName: data.siteName || '可可代付',
           siteLogo: data.siteLogo || ''
         }); // 同时设置网站名称和Logo
         
@@ -576,7 +576,7 @@ const App = () => {
                   {footerSettings.siteLogo ? (
                     <img 
                       src={footerSettings.siteLogo} 
-                      alt={footerSettings.footerCompanyName || 'FASTPAY'}
+                      alt={footerSettings.footerCompanyName || '可可代付'}
                       className="w-8 h-8 object-contain"
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -588,7 +588,7 @@ const App = () => {
                     <Zap className="text-white" size={16} />
                   </div>
                   <span className="text-lg font-black tracking-tighter text-slate-800">
-                    {footerSettings.footerCompanyName || 'FASTPAY'}
+                    {footerSettings.footerCompanyName || '可可代付'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-md">
@@ -673,7 +673,7 @@ const App = () => {
             
             <div className="border-t border-slate-200 pt-4 flex flex-col md:flex-row justify-between items-center gap-3">
               <p className="text-xs text-slate-400 font-medium">
-                {footerSettings.footerCopyright || '© 2024 FastPay. All rights reserved.'}
+                {footerSettings.footerCopyright || '© 2024 可可代付. All rights reserved.'}
               </p>
               <div className="flex gap-4">
                 {(() => {

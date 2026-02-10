@@ -84,7 +84,7 @@ const BlogDetailPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pt-24">
       <SEOHead
-        title={`${blog.seo?.title || blog.title} - EasyPay 博客`}
+        title={`${blog.seo?.title || blog.title} - 可可代付博客`}
         description={blog.seo?.description || blog.excerpt}
         keywords={blog.seo?.keywords || blog.tags?.map(t => t.name) || []}
         ogImage={blog.coverImage}
@@ -98,7 +98,7 @@ const BlogDetailPage = () => {
           "dateModified": blog.updatedAt,
           "author": {
             "@type": "Person",
-            "name": blog.author?.username || "EasyPay"
+            "name": blog.author?.username || "可可代付"
           }
         }}
       />

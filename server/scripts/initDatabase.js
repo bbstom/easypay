@@ -83,7 +83,7 @@ async function initDatabase() {
     console.log('⚙️  创建系统配置');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-    const siteName = await question('网站名称 (默认: FastPay): ') || 'FastPay';
+    const siteName = await question('网站名称 (默认: 可可代付): ') || '可可代付';
 
     const settings = await Settings.create({
       siteName: siteName,

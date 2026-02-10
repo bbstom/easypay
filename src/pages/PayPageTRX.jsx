@@ -1000,7 +1000,7 @@ const PayPageTRX = () => {
                         </p>
                         <p className="flex items-start gap-2">
                           <span className="text-green-600 mt-0.5">•</span>
-                          <span>如遇问题请联系客服：support@fastpay.com</span>
+                          <span>如遇问题请联系客服</span>
                         </p>
                       </div>
                     </div>

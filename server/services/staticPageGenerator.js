@@ -20,21 +20,21 @@ class StaticPageGenerator {
     try {
       const settings = await Settings.findOne();
       return {
-        siteName: settings?.siteName || 'EasyPay',
+        siteName: settings?.siteName || '可可代付',
         seoTitle: settings?.seoTitle || '',
-        siteDescription: settings?.siteDescription || 'EasyPay 提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
+        siteDescription: settings?.siteDescription || '可可代付提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
         seoDescription: settings?.seoDescription || '',
-        footerCompanyName: settings?.footerCompanyName || 'EasyPay',
+        footerCompanyName: settings?.footerCompanyName || '可可代付',
         footerDescription: settings?.footerDescription || '领先的自动化代付协议，为 TRON 生态提供安全、快速、便捷的 USDT 和 TRX 代付服务。'
       };
     } catch (error) {
       console.error('获取网站设置失败:', error);
       return {
-        siteName: 'EasyPay',
+        siteName: '可可代付',
         seoTitle: '',
-        siteDescription: 'EasyPay 提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
+        siteDescription: '可可代付提供专业的 USDT/TRX 代付服务，支持自动化转账、多钱包管理、能量租赁。安全、快速、可靠的加密货币支付解决方案。',
         seoDescription: '',
-        footerCompanyName: 'EasyPay',
+        footerCompanyName: '可可代付',
         footerDescription: '领先的自动化代付协议，为 TRON 生态提供安全、快速、便捷的 USDT 和 TRX 代付服务。'
       };
     }

@@ -88,7 +88,7 @@ const BlogListPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <SEOHead
-        title="博客 - USDT/TRX 代付教程和行业资讯 | EasyPay"
+        title="博客 - USDT/TRX 代付教程和行业资讯 | 可可代付"
         description="提供 USDT 代付、TRX 转账、能量租赁等详细教程，以及区块链支付行业最新资讯和最佳实践。"
         keywords={[
           'USDT 代付教程',
@@ -109,7 +109,7 @@ const BlogListPage = () => {
             <div className="w-14 h-14 bg-gradient-to-tr from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <BookOpen className="text-white" size={28} />
             </div>
-            <h1 className="text-4xl font-black text-slate-900 mb-3">EasyPay 博客</h1>
+            <h1 className="text-4xl font-black text-slate-900 mb-3">可可代付博客</h1>
             <p className="text-lg text-slate-600">区块链支付教程、行业资讯和最佳实践</p>
           </div>
 

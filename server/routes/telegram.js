@@ -812,7 +812,7 @@ router.post('/contents/init-defaults', auth, async (req, res) => {
           ]
         },
         variables: [
-          { key: 'siteName', description: '网站名称', example: 'FastPay' },
+          { key: 'siteName', description: '网站名称', example: '可可代付' },
           { key: 'username', description: '用户名', example: 'user123' },
           { key: 'telegramId', description: 'Telegram ID', example: '123456789' },
           { key: 'websiteUrl', description: '网站地址', example: 'https://kk.vpno.eu.org' }

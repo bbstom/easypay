@@ -22,7 +22,7 @@ const DEFAULT_TEMPLATES = {
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'siteName', description: '网站名称', example: 'FastPay' },
+      { key: 'siteName', description: '网站名称', example: '可可代付' },
       { key: 'username', description: '用户名', example: 'user123' },
       { key: 'telegramId', description: 'Telegram ID', example: '123456789' },
       { key: 'websiteUrl', description: '网站地址', example: 'https://example.com' }
@@ -444,7 +444,7 @@ const DEFAULT_TEMPLATES = {
       parseMode: 'HTML'
     },
     variables: [
-      { key: 'siteName', description: '网站名称', example: 'FastPay' },
+      { key: 'siteName', description: '网站名称', example: '可可代付' },
       { key: 'customerService', description: '客服联系方式', example: '@customer_service' },
       { key: 'websiteUrl', description: '网站地址', example: 'https://example.com' }
     ],
