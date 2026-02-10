@@ -511,7 +511,6 @@ async function generatePaymentQR(ctx, paymentMethod) {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '💳 打开支付链接', url: paymentUrl }],
             [{ text: '🔄 刷新状态', callback_data: `check_order_${order._id}` }],
             [{ text: '« 返回主菜单', callback_data: 'back_to_main' }]
           ]
