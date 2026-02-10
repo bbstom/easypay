@@ -22,7 +22,8 @@
     "check-tronweb": "node server/scripts/checkTronWeb.js",
     "generate-sitemap": "node scripts/generate-sitemap.js",
     "verify-sitemap": "node scripts/verify-sitemap.js",
-    "prebuild": "npm run generate-sitemap"
+    "update-domain": "node scripts/update-domain.js",
+    "prebuild": "npm run update-domain && npm run generate-sitemap"
   },
   "dependencies": {
     "axios": "^1.6.2",

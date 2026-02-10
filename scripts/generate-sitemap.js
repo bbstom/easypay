@@ -12,7 +12,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // 配置
-const DOMAIN = 'https://dd.vpno.eu.org';
+// 优先使用 SITE_URL，其次 FRONTEND_URL，最后使用默认值
+const DOMAIN = process.env.SITE_URL || process.env.FRONTEND_URL || process.env.APP_URL || 'https://dd.vpno.eu.org';
 const OUTPUT_PATH = path.join(__dirname, '../public/sitemap.xml');
 
 // 获取当前日期（YYYY-MM-DD 格式）
