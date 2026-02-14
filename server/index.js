@@ -31,6 +31,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://kk.vpno.eu.org',
+  'https://dd.vpno.eu.org',  // 添加实际使用的域名
+  process.env.APP_URL,
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -39,10 +41,19 @@ const corsOptions = {
     // 允许没有 origin 的请求（比如移动应用或 Postman）
     if (!origin) return callback(null, true);
     
+    // 检查是否在允许列表中
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // 开发环境：允许所有 localhost 和 127.0.0.1
+      if (process.env.NODE_ENV !== 'production' && 
+          (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+        callback(null, true);
+      } else {
+        console.error('❌ CORS 错误 - 不允许的来源:', origin);
+        console.log('允许的来源:', allowedOrigins);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
